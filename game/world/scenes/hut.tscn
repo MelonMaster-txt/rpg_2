@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://dlkfxxooxugt0"]
+
+[ext_resource type="Script" uid="uid://dwxh8sy4xhcpb" path="res://game/world/hut.gd" id="1_734ri"]
+[ext_resource type="Script" uid="uid://g4wxvpoyb0lo" path="res://game/world/hut_exit.gd" id="2_kblvs"]
+
+[node name="Hut" type="Node2D" unique_id=634328892]
+script = ExtResource("1_734ri")
+
+[node name="Floor" type="Node2D" parent="." unique_id=716185337]
+
+[node name="Furniture" type="Node2D" parent="." unique_id=1303240228]
+
+[node name="Family" type="Node2D" parent="." unique_id=977361465]
+
+[node name="PlayerContainer" type="Node2D" parent="." unique_id=1607572165]
+
+[node name="ExitSpawn" type="Marker2D" parent="." unique_id=1117493151]
+
+[node name="HutExit" type="Area2D" parent="." unique_id=1024482891]
+script = ExtResource("2_kblvs")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HutExit" unique_id=872173620]

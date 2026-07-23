@@ -11,11 +11,13 @@ config_version=5
 [application]
 
 config/name="New Game Project"
+run/main_scene="uid://cxtqwdbbje1b8"
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://icon.svg"
 
 [autoload]
 
+SceneManager="*uid://bwmpfdqtm3r3f"
 Dialogic="*uid://ds2q0uclmolvu"
 
 [dialogic]
