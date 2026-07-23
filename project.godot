@@ -29,9 +29,14 @@ layout/style_directory={}
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[editor]
+
+version_control/plugin_name="GitPlugin"
+version_control/autoload_on_startup=true
+
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/2.0.1/ldtk-importer/plugin.cfg", "res://addons/dialogic-main/addons/dialogic/plugin.cfg", "res://addons/dialogic/plugin.cfg")
+enabled=PackedStringArray("res://addons/2.0.1/ldtk-importer/plugin.cfg", "res://addons/dialogic/plugin.cfg")
 
 [input]
 
