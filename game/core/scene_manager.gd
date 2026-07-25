@@ -3,6 +3,9 @@ extends Node
 var current_scene: Node = null
 
 func change_scene(scene_path: String) -> void:
+	call_deferred("_do_change_scene", scene_path)
+
+func _do_change_scene(scene_path: String) -> void:
 	if current_scene != null:
 		current_scene.queue_free()
 	

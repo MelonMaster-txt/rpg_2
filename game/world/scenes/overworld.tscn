@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://w3jqtdkpom58"]
 
 [ext_resource type="Script" uid="uid://bexi6bgoamn56" path="res://game/world/overworld.gd" id="1_w3thp"]
-[ext_resource type="Script" uid="uid://c17u6pq1cpbg4" path="res://game/world/hut_entrance.gd" id="2_6rl22"]
+[ext_resource type="Script" uid="uid://d1crfkk6g4cqf" path="res://game/world/chunk_manager.gd" id="2_6rl22"]
 
 [node name="Overworld" type="Node2D" unique_id=1331714043]
 script = ExtResource("1_w3thp")
@@ -16,9 +16,5 @@ script = ExtResource("1_w3thp")
 
 [node name="PlayerSpawn" type="Marker2D" parent="." unique_id=440223861]
 
-[node name="HutEntrance" type="Area2D" parent="." unique_id=564377885]
+[node name="ChunkManager" type="Node" parent="." unique_id=1222245614]
 script = ExtResource("2_6rl22")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="HutEntrance" unique_id=520057214]
-
-[connection signal="body_entered" from="HutEntrance" to="HutEntrance" method="_on_body_entered"]

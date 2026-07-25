@@ -6,7 +6,7 @@ const PLAYER_SCENE := preload("res://game/characters/player/player.tscn")
 @onready var player_spawn: Marker2D = $PlayerSpawn
 
 func _ready() -> void:
-	spawn_player()
+	call_deferred("spawn_player")
 
 func spawn_player() -> void:
 	var player = PLAYER_SCENE.instantiate()
