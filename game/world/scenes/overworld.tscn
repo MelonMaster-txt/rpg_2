@@ -12,18 +12,20 @@ script = ExtResource("1_w3thp")
 [node name="Props" type="Node2D" parent="." unique_id=2054154392]
 
 [node name="ResourceNodeBois" parent="Props" instance=ExtResource("3_resnode")]
-position = Vector2(320, 454)
+position = Vector2(380, 454)
 resource_type = 0
 amount_min = 1
 amount_max = 3
 respawn_time = 30.0
+interact_radius = 80.0
 
 [node name="ResourceNodeBaies" parent="Props" instance=ExtResource("3_resnode")]
-position = Vector2(200, 400)
+position = Vector2(160, 420)
 resource_type = 1
 amount_min = 1
 amount_max = 2
 respawn_time = 20.0
+interact_radius = 80.0
 
 [node name="NPCs" type="Node2D" parent="." unique_id=2044321455]
 

@@ -2,18 +2,18 @@
 
 [ext_resource type="Script" path="res://game/world/resource_node.gd" id="1_res"]
 
-[node name="ResourceNode" type="Area2D"]
-script = ExtResource("1_res")
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_placeholder"]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="ResourceNode" type="Node2D"]
+script = ExtResource("1_res")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 
 [node name="InteractHint" type="Label" parent="."]
-offset_left = -40.0
-offset_top = -60.0
-offset_right = 40.0
-offset_bottom = -40.0
+offset_left = -60.0
+offset_top = -80.0
+offset_right = 60.0
+offset_bottom = -55.0
 horizontal_alignment = 1
 text = "[E] Interagir"
 

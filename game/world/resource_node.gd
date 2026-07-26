@@ -1,7 +1,7 @@
 # resource_node.gd
 # Area2D avec enfants :
 #   Sprite2D, CollisionShape2D, Label (InteractHint), Timer (RespawnTimer)
-extends Area2D
+extends Node2D
 
 enum ResourceType { BOIS, BAIES }
 
@@ -9,28 +9,20 @@ enum ResourceType { BOIS, BAIES }
 @export var amount_min: int = 1
 @export var amount_max: int = 3
 @export var respawn_time: float = 30.0
+@export var interact_radius: float = 80.0
 
 @onready var sprite = $Sprite2D
 @onready var interact_hint = $InteractHint
 @onready var respawn_timer = $RespawnTimer
-@onready var collision_shape = $CollisionShape2D
 
 var is_depleted: bool = false
 var player_nearby: bool = false
+var _player: Node2D = null
 
 func _ready() -> void:
 	respawn_timer.wait_time = respawn_time
 	respawn_timer.one_shot = true
 	respawn_timer.timeout.connect(_on_respawn)
-
-	# Supporte joueur CharacterBody2D (body) ET Area2D (area)
-	body_entered.connect(_on_body_entered)
-	body_exited.connect(_on_body_exited)
-	area_entered.connect(_on_area_entered)
-	area_exited.connect(_on_area_exited)
-
-	monitoring = true
-	monitorable = true
 	interact_hint.visible = false
 
 	if resource_type == ResourceType.BOIS:
@@ -41,36 +33,25 @@ func _ready() -> void:
 	print("[ResourceNode] Pret - type: ", resource_type)
 
 func _process(_delta: float) -> void:
-	if player_nearby and not is_depleted and Input.is_action_just_pressed("interact"):
+	# Trouver le joueur dynamiquement s'il n'est pas encore connu
+	if _player == null:
+		var players = get_tree().get_nodes_in_group("player")
+		if players.size() > 0:
+			_player = players[0]
+
+	if _player == null:
+		return
+
+	var dist = global_position.distance_to(_player.global_position)
+	var was_nearby = player_nearby
+	player_nearby = dist <= interact_radius and not is_depleted
+
+	# Afficher/cacher le hint si changement d'état
+	if player_nearby != was_nearby:
+		interact_hint.visible = player_nearby
+
+	if player_nearby and Input.is_action_just_pressed("interact"):
 		harvest()
-
-# --- Detections corps physiques (CharacterBody2D, RigidBody2D) ---
-func _on_body_entered(body) -> void:
-	print("[ResourceNode] body_entered: ", body.name, " groupes: ", body.get_groups())
-	if body.is_in_group("player"):
-		print("[ResourceNode] Joueur detecte !")
-		player_nearby = true
-		if not is_depleted:
-			interact_hint.visible = true
-
-func _on_body_exited(body) -> void:
-	if body.is_in_group("player"):
-		player_nearby = false
-		interact_hint.visible = false
-
-# --- Detections zones (Area2D) ---
-func _on_area_entered(area) -> void:
-	print("[ResourceNode] area_entered: ", area.name, " groupes: ", area.get_groups())
-	if area.is_in_group("player"):
-		print("[ResourceNode] Zone joueur detectee !")
-		player_nearby = true
-		if not is_depleted:
-			interact_hint.visible = true
-
-func _on_area_exited(area) -> void:
-	if area.is_in_group("player"):
-		player_nearby = false
-		interact_hint.visible = false
 
 func harvest() -> void:
 	var amount = randi_range(amount_min, amount_max)
@@ -86,26 +67,23 @@ func harvest() -> void:
 
 func _deplete() -> void:
 	is_depleted = true
+	player_nearby = false
 	interact_hint.visible = false
 	sprite.modulate.a = 0.3
-	collision_shape.disabled = true
 	respawn_timer.start()
 
 func _on_respawn() -> void:
 	is_depleted = false
 	sprite.modulate.a = 1.0
-	collision_shape.disabled = false
-	if player_nearby:
-		interact_hint.visible = true
 	print("[ResourceNode] Respawn !")
 
 func _show_pickup_text(msg: String) -> void:
 	var popup = Label.new()
 	popup.text = msg
-	popup.position = Vector2(-20.0, -40.0)
-	popup.modulate = Color(1.0, 1.0, 0.0, 1.0)
+	popup.position = Vector2(-20.0, -60.0)
+	popup.modulate = Color(1.0, 0.85, 0.0, 1.0)
 	add_child(popup)
 	var tw = create_tween()
-	tw.tween_property(popup, "position", Vector2(-20.0, -70.0), 0.8)
+	tw.tween_property(popup, "position", Vector2(-20.0, -100.0), 0.8)
 	tw.parallel().tween_property(popup, "modulate:a", 0.0, 0.8)
 	tw.tween_callback(popup.queue_free)
