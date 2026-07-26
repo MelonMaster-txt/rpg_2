@@ -14,6 +14,7 @@ extends Area2D
 
 var current_health: int
 var is_depleted: bool = false
+var player_in_area: bool = false
 
 
 func _ready() -> void:
@@ -21,20 +22,34 @@ func _ready() -> void:
 	label.visible = false
 	label.text = resource_name
 	add_to_group("resource_nodes")
+	body_entered.connect(_on_body_entered)
+	body_exited.connect(_on_body_exited)
+
+
+func _on_body_entered(body: Node) -> void:
+	if body.is_in_group("player") and not is_depleted:
+		player_in_area = true
+		show_label()
+
+
+func _on_body_exited(body: Node) -> void:
+	if body.is_in_group("player"):
+		player_in_area = false
+		hide_label()
 
 
 func get_interaction_text() -> String:
-	if is_depleted:
+	if is_depleted or not player_in_area:
 		return ""
 	return "E : Recolter " + resource_name
 
 
 func can_gather() -> bool:
-	return not is_depleted
+	return not is_depleted and player_in_area
 
 
 func gather() -> Dictionary:
-	if is_depleted:
+	if not can_gather():
 		return {}
 
 	current_health -= 1
@@ -54,6 +69,7 @@ func deplete() -> void:
 		return
 
 	is_depleted = true
+	player_in_area = false
 	current_health = 0
 	label.visible = false
 
