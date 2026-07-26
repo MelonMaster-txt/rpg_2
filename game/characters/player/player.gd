@@ -37,7 +37,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("zoom_out"):
 		camera.zoom *= zoom_out_factor
 
-	if event.is_action_just_pressed("interact"):
+	if event.is_action_pressed("interact"):
 		_try_gather()
 
 
