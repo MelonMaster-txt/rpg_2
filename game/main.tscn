@@ -1,8 +1,14 @@
 [gd_scene format=3 uid="uid://cxtqwdbbje1b8"]
 
 [ext_resource type="Script" uid="uid://cob5in87u7wah" path="res://game/main.gd" id="1_oa506"]
+[ext_resource type="PackedScene" path="res://game/world/resource_node.tscn" id="2_emt18"]
+[ext_resource type="PackedScene" path="res://game/ui/hud.tscn" id="3_vop5m"]
 
 [node name="Main" type="Node" unique_id=1573257830]
 script = ExtResource("1_oa506")
+
+[node name="ResourceNode" parent="." unique_id=1071291257 instance=ExtResource("2_emt18")]
+
+[node name="HUD" parent="." unique_id=1690456304 instance=ExtResource("3_vop5m")]
 
 [node name="CurrentScene" type="Node" parent="." unique_id=1219135136]
