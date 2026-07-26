@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://ctdckb5ghs7va"]
+
+[ext_resource type="Script" uid="uid://c5p8viqjwo5n4" path="res://game/world/forest_chunk_base.gd" id="1_ys2df"]
+
+[node name="ForestChunk" type="Node2D" unique_id=368279544]
+script = ExtResource("1_ys2df")
+
+[node name="Trees" type="Node2D" parent="." unique_id=1590911318]
+position = Vector2(720, 207)
+
+[node name="Berries" type="Node2D" parent="." unique_id=1838654637]
+position = Vector2(563, 430)

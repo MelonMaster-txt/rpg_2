@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://8edyn7dcsv3e"]
+
+[ext_resource type="Texture2D" uid="uid://mobtxhybql5a" path="res://Tilesets/SuperRetroWorld_Farming_Tileset.png" id="1_df6nj"]
+
+[node name="Sprite2D" type="Sprite2D" unique_id=210477819]
+texture_filter = 1
+texture = ExtResource("1_df6nj")
+region_enabled = true
+region_rect = Rect2(192, 288, 16, 16)

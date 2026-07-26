@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://kam0p1d8rvu4"]
+
+[ext_resource type="PackedScene" uid="uid://b5m51kqhm43pb" path="res://game/world/scenes/resources_node/resource_node.tscn" id="1_of1kq"]
+[ext_resource type="Texture2D" uid="uid://bpadg71sq0odg" path="res://game/world/scenes/resources_node/sprites_resources/rock_15.png" id="2_7pfov"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_8wfvp"]
+size = Vector2(12, 24)
+
+[node name="ResourceNode" unique_id=784495077 instance=ExtResource("1_of1kq")]
+resource_name = "Baies"
+resource_type = "food"
+max_health = 2
+respawn_time = 10.0
+
+[node name="GatherShape" parent="." index="0" unique_id=244779297]
+scale = Vector2(1.4405094, 1.917083)
+
+[node name="Visual" parent="." index="1" unique_id=1270561884]
+texture = ExtResource("2_7pfov")
+
+[node name="BlockerShape" parent="Blocker" parent_id_path=PackedInt32Array(836519428) index="0" unique_id=575246773]
+position = Vector2(-1, 0)
+shape = SubResource("RectangleShape2D_8wfvp")

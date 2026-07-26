@@ -10,6 +10,7 @@ func _on_body_exited(body: Node2D) -> void:
 	if body.name == "Player":
 		player_in_area = false
 
-func _process(_delta: float) -> void:
-	if player_in_area and Input.is_action_just_pressed("interact"):
+func _input(event: InputEvent) -> void:
+	if player_in_area \
+	and event.is_action_pressed("interact"):
 		SceneManager.change_scene("res://game/world/scenes/overworld.tscn")

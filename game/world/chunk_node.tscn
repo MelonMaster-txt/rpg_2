@@ -1,0 +1,8 @@
+[gd_scene format=3 uid="uid://qtvdefn1ha3q"]
+
+[ext_resource type="Script" uid="uid://c2hnd0n7ifhrw" path="res://game/world/chunk_node.gd" id="1_la8jb"]
+
+[node name="ChunkNode" type="Node2D" unique_id=1803316386]
+script = ExtResource("1_la8jb")
+
+[node name="Content" type="Node2D" parent="." unique_id=708495672]

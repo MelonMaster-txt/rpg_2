@@ -15,7 +15,6 @@ script = ExtResource("1_w3thp")
 [node name="PlayerContainer" type="Node2D" parent="." unique_id=900158804]
 
 [node name="PlayerSpawn" type="Marker2D" parent="." unique_id=440223861]
-position = Vector2(256, 454)
 
 [node name="ChunkManager" type="Node2D" parent="." unique_id=1784854116]
 script = ExtResource("2_6rl22")

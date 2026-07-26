@@ -1,0 +1,30 @@
+[gd_scene format=3 uid="uid://b5m51kqhm43pb"]
+
+[ext_resource type="Script" uid="uid://dprl6f6nsi0ex" path="res://resources_nodes/resource_node.gd" id="1_kgyiv"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mehny"]
+
+[sub_resource type="ViewportTexture" id="ViewportTexture_8743o"]
+
+[node name="ResourceNode" type="Area2D" unique_id=784495077]
+script = ExtResource("1_kgyiv")
+
+[node name="GatherShape" type="CollisionShape2D" parent="." unique_id=244779297]
+shape = SubResource("RectangleShape2D_mehny")
+
+[node name="Visual" type="Sprite2D" parent="." unique_id=1270561884]
+texture = SubResource("ViewportTexture_8743o")
+
+[node name="Label" type="Label" parent="." unique_id=2056502055]
+visible = false
+offset_left = -20.0
+offset_top = -33.0
+offset_right = 20.0
+offset_bottom = -10.0
+
+[node name="RespawnTimer" type="Timer" parent="." unique_id=709120527]
+one_shot = true
+
+[node name="Blocker" type="StaticBody2D" parent="." unique_id=836519428]
+
+[node name="BlockerShape" type="CollisionShape2D" parent="Blocker" unique_id=575246773]

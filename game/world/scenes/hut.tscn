@@ -38,3 +38,4 @@ pivot_offset = Vector2(5, 5)
 [node name="ExitSpawn" type="Marker2D" parent="." unique_id=1117493151]
 
 [connection signal="body_entered" from="HutExit" to="HutExit" method="_on_body_entered"]
+[connection signal="body_exited" from="HutExit" to="HutExit" method="_on_body_exited"]

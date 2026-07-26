@@ -1,20 +1,25 @@
 [gd_scene format=3 uid="uid://bhvsm3kc2wljb"]
 
+[ext_resource type="Script" uid="uid://bwc46yxk8vnca" path="res://game/world/chunk_visualizer.gd" id="1_kivh5"]
 [ext_resource type="Script" uid="uid://c17u6pq1cpbg4" path="res://game/world/hut_entrance.gd" id="1_upkib"]
+
+[sub_resource type="Gradient" id="Gradient_upkib"]
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_i7qbd"]
+gradient = SubResource("Gradient_upkib")
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kivh5"]
 
 [node name="HuteChunk" type="Node2D" unique_id=1023774883]
+script = ExtResource("1_kivh5")
 
-[node name="ColorRect" type="ColorRect" parent="." unique_id=641119976]
-offset_left = -83.99999
-offset_top = -149.99998
-offset_right = -43.999992
-offset_bottom = -109.999985
+[node name="HutSprite" type="Sprite2D" parent="." unique_id=1532840433]
+position = Vector2(242.2, 182.83995)
 scale = Vector2(4.6000004, 4.12)
-color = Color(1, 0.2901961, 0.39607844, 1)
+texture = SubResource("GradientTexture2D_i7qbd")
 
 [node name="HutEntrance" type="Area2D" parent="." unique_id=286798301]
+position = Vector2(242.20001, 324.83997)
 script = ExtResource("1_upkib")
 
 [node name="ColorRect" type="ColorRect" parent="HutEntrance" unique_id=862781171]
@@ -34,3 +39,4 @@ pivot_offset = Vector2(5, 5)
 shape = SubResource("RectangleShape2D_kivh5")
 
 [connection signal="body_entered" from="HutEntrance" to="HutEntrance" method="_on_body_entered"]
+[connection signal="body_exited" from="HutEntrance" to="HutEntrance" method="_on_body_exited"]

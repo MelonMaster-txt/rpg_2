@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://sl0hkptved55"]
+
+[ext_resource type="PackedScene" uid="uid://b5m51kqhm43pb" path="res://game/world/scenes/resources_node/resource_node.tscn" id="1_xiugq"]
+[ext_resource type="Texture2D" uid="uid://trd2gofsiqft" path="res://game/world/scenes/resources_node/sprites_resources/tree_04.png" id="2_06ogx"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_kgyiv"]
+size = Vector2(22, 28)
+
+[node name="ResourceNode" unique_id=784495077 instance=ExtResource("1_xiugq")]
+resource_name = "Bois"
+resource_type = "wood"
+max_health = 4
+gather_amount = 2
+
+[node name="GatherShape" parent="." index="0" unique_id=244779297]
+scale = Vector2(2.6800003, -2.78327)
+
+[node name="Visual" parent="." index="1" unique_id=1270561884]
+texture = ExtResource("2_06ogx")
+
+[node name="BlockerShape" parent="Blocker" parent_id_path=PackedInt32Array(836519428) index="0" unique_id=575246773]
+position = Vector2(0, 7)
+shape = SubResource("RectangleShape2D_kgyiv")
