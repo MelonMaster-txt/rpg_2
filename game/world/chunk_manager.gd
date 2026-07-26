@@ -4,7 +4,7 @@ const CHUNK_NODE_SCENE: PackedScene = preload("res://game/world/chunk_node.tscn"
 
 @export var chunk_size: int = 512
 @export var load_radius: int = 1
-## En éditeur seulement — désactiver en production pour les perfs
+## Désactiver en production pour les perfs
 @export var debug_draw_chunks: bool = false
 
 var _loaded_chunks: Dictionary = {}
@@ -13,11 +13,17 @@ var _last_player_chunk: Vector2i = Vector2i(999999, 999999)
 
 
 func _ready() -> void:
+	# Le joueur est spawné via call_deferred dans overworld.gd ;
+	# on diffère l'init pour être sûr qu'il existe dans le scène.
+	call_deferred("_deferred_init")
+
+
+func _deferred_init() -> void:
 	_player = _find_player()
 	if _player != null:
 		var start := _world_to_chunk(_player.global_position)
-		_load_chunks_around(start, load_radius + 1)  # précharge un rayon de plus
-	_update_chunks()
+		_load_chunks_around(start, load_radius + 1)
+		_update_chunks()
 
 
 func _process(_delta: float) -> void:
@@ -46,9 +52,12 @@ func _load_chunks_around(center: Vector2i, radius: int) -> void:
 
 
 func _update_chunks() -> void:
+	if _player == null or not is_instance_valid(_player):
+		return
+
 	var current := _world_to_chunk(_player.global_position)
 	if current == _last_player_chunk:
-		return  # rien à faire si le chunk n'a pas changé
+		return
 	_last_player_chunk = current
 
 	var needed: Array[Vector2i] = []
