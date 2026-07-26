@@ -1,4 +1,4 @@
-extends Node2D
+extends Node
 
 var world_seed: int = 123456
 

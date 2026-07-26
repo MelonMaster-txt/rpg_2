@@ -85,9 +85,12 @@ func load_content_scene() -> void:
 	instance.name = "ChunkContent_" + chunk_type
 	content.add_child(instance)
 
-	print("ChunkNode", chunk_coords, "added content instance:", instance.name, "children_in_content =", content.get_child_count())
+	print("ChunkNode", chunk_coords, "added content:", instance.name)
 
-	if instance.has_method("setup_chunk"):
+	# ✅ FIX : on appelle "setup" au lieu de "setup_chunk"
+	if instance.has_method("setup"):
+		instance.call("setup", chunk_coords, chunk_size)
+	elif instance.has_method("setup_chunk"):
 		instance.call("setup_chunk", chunk_coords, chunk_size, chunk_type)
 
 func _draw() -> void:

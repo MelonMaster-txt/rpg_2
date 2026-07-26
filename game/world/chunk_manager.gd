@@ -127,7 +127,11 @@ func _draw() -> void:
 		var center := chunk_to_world_center(coords)
 		draw_circle(center, 5.0, Color(1.0, 0.2, 0.2, 1.0))
 
-		var chunk_type := ChunkGenerator.get_chunk_type(coords)
+		# Dans _draw(), remplace la ligne problématique :
+		var chunk_type := "unknown"
+		if Engine.has_singleton("ChunkGenerator"):
+			chunk_type = ChunkGenerator.get_chunk_type(coords)
+
 		var label := "Chunk " + str(coords) + " / " + chunk_type
 		draw_string(
 			ThemeDB.fallback_font,

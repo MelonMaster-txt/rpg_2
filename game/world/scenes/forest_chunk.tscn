@@ -6,7 +6,5 @@
 script = ExtResource("1_ys2df")
 
 [node name="Trees" type="Node2D" parent="." unique_id=1590911318]
-position = Vector2(720, 207)
 
 [node name="Berries" type="Node2D" parent="." unique_id=1838654637]
-position = Vector2(563, 430)
