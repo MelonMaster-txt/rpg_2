@@ -2,7 +2,7 @@
 extends Node2D
 
 const HUT_CHUNK_SCENE: PackedScene = preload("res://game/world/scenes/hut_chunk.tscn")
-const FOREST_CHUNK_SCENE: PackedScene = preload("res://game/world/scenes/forest_chunk.tscn") # ADAPTE ICI
+const FOREST_CHUNK_SCENE: PackedScene = preload("res://game/world/scenes/forest_chunk.tscn")
 
 @export var chunk_coords: Vector2i = Vector2i.ZERO:
 	set(value):
@@ -30,8 +30,6 @@ const FOREST_CHUNK_SCENE: PackedScene = preload("res://game/world/scenes/forest_
 		if Engine.is_editor_hint():
 			queue_redraw()
 
-@onready var content: Node2D = $Content
-
 func _ready() -> void:
 	update_editor_position()
 	if Engine.is_editor_hint():
@@ -51,20 +49,17 @@ func setup(coords: Vector2i, size: int, new_chunk_type: String) -> void:
 func update_editor_position() -> void:
 	position = Vector2(chunk_coords.x * chunk_size, chunk_coords.y * chunk_size)
 
-func clear_content() -> void:
-	if content == null:
-		push_error("ChunkNode has no child named 'Content'")
-		return
-
-	for child in content.get_children():
+func clear_content_from(content_node: Node2D) -> void:
+	for child in content_node.get_children():
 		child.queue_free()
 
 func load_content_scene() -> void:
-	if content == null:
+	var content_node: Node2D = get_node_or_null("Content")
+	if content_node == null:
 		push_error("ChunkNode has no child named 'Content'")
 		return
 
-	clear_content()
+	clear_content_from(content_node)
 
 	var scene_to_instance: PackedScene = null
 
@@ -83,11 +78,17 @@ func load_content_scene() -> void:
 		return
 
 	instance.name = "ChunkContent_" + chunk_type
-	content.add_child(instance)
+	content_node.add_child(instance)
 
-	print("ChunkNode", chunk_coords, "added content:", instance.name)
+	print(
+		"ChunkNode",
+		chunk_coords,
+		"added content instance:",
+		instance.name,
+		"children_in_content =",
+		content_node.get_child_count()
+	)
 
-	# ✅ FIX : on appelle "setup" au lieu de "setup_chunk"
 	if instance.has_method("setup"):
 		instance.call("setup", chunk_coords, chunk_size)
 	elif instance.has_method("setup_chunk"):

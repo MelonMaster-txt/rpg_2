@@ -96,8 +96,8 @@ func load_chunk(coords: Vector2i) -> void:
 	var chunk_type: String = ChunkGenerator.get_chunk_type(coords)
 
 	chunk.name = "Chunk_%s_%s" % [coords.x, coords.y]
-	chunk.setup(coords, chunk_size, chunk_type)
 	add_child(chunk)
+	chunk.setup(coords, chunk_size, chunk_type)
 	loaded_chunks[coords] = chunk
 
 	print("LOAD chunk", coords, "type =", chunk_type)
