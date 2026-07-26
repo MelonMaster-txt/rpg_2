@@ -1,14 +1,7 @@
 # hud.gd
-# Attacher sur un CanvasLayer, structure attendue :
-#   CanvasLayer
-#     VBoxContainer (HUDContainer)
-#       Label (TimeLabel)
-#       Label (DayLabel)
-#       HSeparator
-#       Label (BoisLabel)
-#       Label (BaiesLabel)
-#       Label (NourritureLabel)
-#       Label (PierreLabel)
+# CanvasLayer avec enfants dans HUDContainer (VBoxContainer) :
+#   TimeLabel, DayLabel, HSeparator,
+#   BoisLabel, BaiesLabel, NourritureLabel, PierreLabel
 extends CanvasLayer
 
 @onready var time_label = $HUDContainer/TimeLabel
@@ -23,6 +16,7 @@ func _ready() -> void:
 	GameManager.time_changed.connect(_on_time_changed)
 	GameManager.day_night_changed.connect(_on_day_night_changed)
 	_refresh_all()
+	print("[HUD] Initialise")
 
 func _refresh_all() -> void:
 	_update_inventory()
@@ -44,6 +38,6 @@ func _on_time_changed(h: int, m: int, d: int) -> void:
 
 func _on_day_night_changed(is_day: bool) -> void:
 	if is_day:
-		time_label.add_theme_color_override("font_color", Color(1.0, 0.95, 0.6, 1.0))
+		time_label.add_theme_color_override("font_color", Color(1.0, 0.9, 0.4, 1.0))
 	else:
-		time_label.add_theme_color_override("font_color", Color(0.6, 0.7, 1.0, 1.0))
+		time_label.add_theme_color_override("font_color", Color(0.5, 0.6, 1.0, 1.0))

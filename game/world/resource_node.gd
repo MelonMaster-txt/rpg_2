@@ -1,9 +1,6 @@
 # resource_node.gd
-# Attacher sur un Area2D avec les enfants :
-#   - Sprite2D
-#   - CollisionShape2D
-#   - Label (InteractHint)
-#   - Timer (RespawnTimer)
+# Area2D avec enfants :
+#   Sprite2D, CollisionShape2D, Label (InteractHint), Timer (RespawnTimer)
 extends Area2D
 
 enum ResourceType { BOIS, BAIES }
@@ -25,8 +22,15 @@ func _ready() -> void:
 	respawn_timer.wait_time = respawn_time
 	respawn_timer.one_shot = true
 	respawn_timer.timeout.connect(_on_respawn)
+
+	# Supporte joueur CharacterBody2D (body) ET Area2D (area)
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
+	area_entered.connect(_on_area_entered)
+	area_exited.connect(_on_area_exited)
+
+	monitoring = true
+	monitorable = true
 	interact_hint.visible = false
 
 	if resource_type == ResourceType.BOIS:
@@ -34,12 +38,17 @@ func _ready() -> void:
 	else:
 		interact_hint.text = "[E] Cueillir des baies"
 
+	print("[ResourceNode] Pret - type: ", resource_type)
+
 func _process(_delta: float) -> void:
 	if player_nearby and not is_depleted and Input.is_action_just_pressed("interact"):
 		harvest()
 
+# --- Detections corps physiques (CharacterBody2D, RigidBody2D) ---
 func _on_body_entered(body) -> void:
+	print("[ResourceNode] body_entered: ", body.name, " groupes: ", body.get_groups())
 	if body.is_in_group("player"):
+		print("[ResourceNode] Joueur detecte !")
 		player_nearby = true
 		if not is_depleted:
 			interact_hint.visible = true
@@ -49,14 +58,30 @@ func _on_body_exited(body) -> void:
 		player_nearby = false
 		interact_hint.visible = false
 
+# --- Detections zones (Area2D) ---
+func _on_area_entered(area) -> void:
+	print("[ResourceNode] area_entered: ", area.name, " groupes: ", area.get_groups())
+	if area.is_in_group("player"):
+		print("[ResourceNode] Zone joueur detectee !")
+		player_nearby = true
+		if not is_depleted:
+			interact_hint.visible = true
+
+func _on_area_exited(area) -> void:
+	if area.is_in_group("player"):
+		player_nearby = false
+		interact_hint.visible = false
+
 func harvest() -> void:
 	var amount = randi_range(amount_min, amount_max)
 	if resource_type == ResourceType.BOIS:
 		GameManager.add_item("bois", amount)
 		_show_pickup_text("+" + str(amount) + " Bois")
+		print("[ResourceNode] Recolte bois x", amount)
 	else:
 		GameManager.add_item("baies", amount)
 		_show_pickup_text("+" + str(amount) + " Baies")
+		print("[ResourceNode] Recolte baies x", amount)
 	_deplete()
 
 func _deplete() -> void:
@@ -72,6 +97,7 @@ func _on_respawn() -> void:
 	collision_shape.disabled = false
 	if player_nearby:
 		interact_hint.visible = true
+	print("[ResourceNode] Respawn !")
 
 func _show_pickup_text(msg: String) -> void:
 	var popup = Label.new()
