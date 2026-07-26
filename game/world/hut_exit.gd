@@ -1,9 +1,12 @@
 extends Area2D
 
-# Ramène le joueur dans l'overworld quand il appuie sur [E]
-# à la sortie de la cahute.
-
 var _player_in_area: bool = false
+var _transitioning: bool = false
+
+
+func _ready() -> void:
+	body_entered.connect(_on_body_entered)
+	body_exited.connect(_on_body_exited)
 
 
 func _on_body_entered(body: Node) -> void:
@@ -17,5 +20,9 @@ func _on_body_exited(body: Node) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _player_in_area and event.is_action_pressed("interact"):
+	if _transitioning:
+		return
+	if _player_in_area and event.is_action_pressed("interact") and not event.is_echo():
+		_transitioning = true
+		set_process_unhandled_input(false)
 		SceneManager.change_scene("res://game/world/scenes/overworld.tscn")
