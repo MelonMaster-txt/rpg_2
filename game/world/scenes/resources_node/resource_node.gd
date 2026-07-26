@@ -1,18 +1,18 @@
 extends Area2D
 
-@export var resource_name: String = "Resource"
+@export var resource_name: String = "Ressource"
 @export var resource_type: String = "generic"
 @export var max_health: int = 3
 @export var gather_amount: int = 1
 @export var respawn_time: float = 12.0
 
-# Références optionnelles — tolèrent l'absence du noeud dans la scène
-var _visual: Node = null
+var _visual: Sprite2D = null
 var _label: Label = null
 var _gather_shape: CollisionShape2D = null
 var _blocker_shape: CollisionShape2D = null
+var _respawn_timer: Timer = null
 
-var current_health: int
+var current_health: int = 0
 var is_depleted: bool = false
 var player_in_area: bool = false
 
@@ -21,71 +21,98 @@ func _ready() -> void:
 	current_health = max_health
 	add_to_group("resource_nodes")
 
-	_visual        = get_node_or_null("Visual")
-	_label         = get_node_or_null("Label")
-	_gather_shape  = get_node_or_null("GatherShape")
-	_blocker_shape = get_node_or_null("Blocker/BlockerShape")
+	_visual        = get_node_or_null("Visual") as Sprite2D
+	_label         = get_node_or_null("Label") as Label
+	_gather_shape  = get_node_or_null("GatherShape") as CollisionShape2D
+	_blocker_shape = get_node_or_null("Blocker/BlockerShape") as CollisionShape2D
+	_respawn_timer = get_node_or_null("RespawnTimer") as Timer
 
 	if _label != null:
-		_label.text = resource_name
+		_label.text = "[E] " + resource_name
 		_label.visible = false
+
+	if _respawn_timer != null:
+		_respawn_timer.timeout.connect(_on_respawn)
 
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 
 
+func _unhandled_input(event: InputEvent) -> void:
+	if event.is_action_pressed("interact") and player_in_area and not is_depleted:
+		_do_gather()
+
+
 func _on_body_entered(body: Node) -> void:
 	if body.is_in_group("player") and not is_depleted:
 		player_in_area = true
-		_show_label()
+		if _label != null:
+			_label.visible = true
 
 
 func _on_body_exited(body: Node) -> void:
 	if body.is_in_group("player"):
 		player_in_area = false
-		_hide_label()
+		if _label != null:
+			_label.visible = false
 
 
-func can_gather() -> bool:
-	return not is_depleted and player_in_area
-
-
-func gather() -> Dictionary:
-	if not can_gather():
-		return {}
+func _do_gather() -> void:
 	current_health -= 1
 	if current_health <= 0:
 		_deplete()
-	return {
-		"type": resource_type,
-		"amount": gather_amount,
-		"name": resource_name,
-	}
+	else:
+		_spawn_gather_feedback()
+	# Donne la ressource au GameManager si disponible
+	if Engine.has_singleton("GameManager"):
+		var gm = Engine.get_singleton("GameManager")
+		if gm.has_method("add_item"):
+			gm.add_item(resource_type, gather_amount)
+	else:
+		var gm := get_tree().root.get_node_or_null("GameManager")
+		if gm != null and gm.has_method("add_item"):
+			gm.add_item(resource_type, gather_amount)
+		var inv := get_tree().get_first_node_in_group("inventory")
+		if inv != null and inv.has_method("add_item"):
+			inv.add_item(resource_type, gather_amount)
+	_spawn_gather_feedback()
 
 
 func _deplete() -> void:
-	if is_depleted:
-		return
 	is_depleted = true
 	player_in_area = false
-	current_health = 0
-	_hide_label()
+	if _label != null:
+		_label.visible = false
 	if _gather_shape != null:
 		_gather_shape.set_deferred("disabled", true)
 	if _blocker_shape != null:
 		_blocker_shape.set_deferred("disabled", true)
-	# Informe le ChunkManager si besoin de respawn
-	var cm := get_tree().get_first_node_in_group("chunk_manager")
-	if cm != null and cm.has_method("on_resource_harvested"):
-		cm.on_resource_harvested(self, respawn_time)
-	queue_free()
+	if _visual != null:
+		_visual.modulate.a = 0.3
+	if _respawn_timer != null:
+		_respawn_timer.start(respawn_time)
+	else:
+		# Pas de timer : disparait
+		queue_free()
 
 
-func _show_label() -> void:
-	if _label != null and not is_depleted:
-		_label.visible = true
+func _on_respawn() -> void:
+	is_depleted = false
+	current_health = max_health
+	if _gather_shape != null:
+		_gather_shape.set_deferred("disabled", false)
+	if _blocker_shape != null:
+		_blocker_shape.set_deferred("disabled", false)
+	if _visual != null:
+		_visual.modulate.a = 1.0
 
 
-func _hide_label() -> void:
-	if _label != null:
-		_label.visible = false
+func _spawn_gather_feedback() -> void:
+	var lbl := Label.new()
+	lbl.text = "+%d %s" % [gather_amount, resource_name]
+	lbl.position = Vector2(-20, -50)
+	add_child(lbl)
+	var tw := create_tween()
+	tw.tween_property(lbl, "position", lbl.position + Vector2(0, -30), 0.8)
+	tw.parallel().tween_property(lbl, "modulate:a", 0.0, 0.8)
+	tw.tween_callback(lbl.queue_free)

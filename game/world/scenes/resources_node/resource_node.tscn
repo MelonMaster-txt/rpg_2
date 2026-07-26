@@ -1,10 +1,8 @@
 [gd_scene format=3 uid="uid://b5m51kqhm43pb"]
 
-[ext_resource type="Script" uid="uid://dprl6f6nsi0ex" path="res://resources_nodes/resource_node.gd" id="1_kgyiv"]
+[ext_resource type="Script" uid="uid://dprl6f6nsi0ex" path="res://game/world/scenes/resources_node/resource_node.gd" id="1_kgyiv"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mehny"]
-
-[sub_resource type="ViewportTexture" id="ViewportTexture_8743o"]
 
 [node name="ResourceNode" type="Area2D" unique_id=784495077]
 script = ExtResource("1_kgyiv")
@@ -13,7 +11,6 @@ script = ExtResource("1_kgyiv")
 shape = SubResource("RectangleShape2D_mehny")
 
 [node name="Visual" type="Sprite2D" parent="." unique_id=1270561884]
-texture = SubResource("ViewportTexture_8743o")
 
 [node name="Label" type="Label" parent="." unique_id=2056502055]
 visible = false

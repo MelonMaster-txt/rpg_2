@@ -5,6 +5,9 @@ extends Node2D
 @export var berry_count_min: int = 1
 @export var berry_count_max: int = 4
 
+const TREE_SCENE  := "res://game/world/scenes/resources_node/tree_node.tscn"
+const BERRY_SCENE := "res://game/world/scenes/resources_node/berry_node.tscn"
+
 var _chunk_coords: Vector2i = Vector2i.ZERO
 var _chunk_size: int = 512
 
@@ -16,29 +19,25 @@ func setup(coords: Vector2i, size: int) -> void:
 
 
 func _generate() -> void:
-	# Seed déterministe : mêmes coordonnées = même forêt à chaque session
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(Vector2i(_chunk_coords.x * 73856093, _chunk_coords.y * 19349663))
 
 	var tree_count  := rng.randi_range(tree_count_min, tree_count_max)
 	var berry_count := rng.randi_range(berry_count_min, berry_count_max)
 
+	var tree_scene  := load(TREE_SCENE)  as PackedScene
+	var berry_scene := load(BERRY_SCENE) as PackedScene
+
 	for _i in tree_count:
-		_place_resource_node(rng, "wood", "Bois", "[E] Couper")
+		_place(rng, tree_scene)
 	for _i in berry_count:
-		_place_resource_node(rng, "berry", "Baies", "[E] Cueillir")
+		_place(rng, berry_scene)
 
 
-func _place_resource_node(rng: RandomNumberGenerator, rtype: String, rname: String, hint: String) -> void:
-	var node_scene := load("res://game/world/scenes/resources_node/resource_node.tscn") as PackedScene
-	if node_scene == null:
+func _place(rng: RandomNumberGenerator, scene: PackedScene) -> void:
+	if scene == null:
 		return
-	var inst: Node2D = node_scene.instantiate() as Node2D
-	# resource_node.gd utilise resource_type: String et resource_name: String
-	inst.resource_type = rtype
-	inst.resource_name = rname
-	if inst.get("harvest_label_text") != null:
-		inst.harvest_label_text = hint
+	var inst := scene.instantiate() as Node2D
 	inst.position = Vector2(
 		rng.randf_range(32.0, _chunk_size - 32.0),
 		rng.randf_range(32.0, _chunk_size - 32.0)
