@@ -6,11 +6,11 @@ extends Area2D
 @export var gather_amount: int = 1
 @export var respawn_time: float = 12.0
 
-@onready var visual = $Visual
-@onready var label = $Label
-@onready var gather_shape = $GatherShape
-@onready var blocker = $Blocker
-@onready var blocker_shape = $Blocker/BlockerShape
+# Références optionnelles — tolèrent l'absence du noeud dans la scène
+var _visual: Node = null
+var _label: Label = null
+var _gather_shape: CollisionShape2D = null
+var _blocker_shape: CollisionShape2D = null
 
 var current_health: int
 var is_depleted: bool = false
@@ -19,9 +19,17 @@ var player_in_area: bool = false
 
 func _ready() -> void:
 	current_health = max_health
-	label.visible = false
-	label.text = resource_name
 	add_to_group("resource_nodes")
+
+	_visual        = get_node_or_null("Visual")
+	_label         = get_node_or_null("Label")
+	_gather_shape  = get_node_or_null("GatherShape")
+	_blocker_shape = get_node_or_null("Blocker/BlockerShape")
+
+	if _label != null:
+		_label.text = resource_name
+		_label.visible = false
+
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 
@@ -29,19 +37,13 @@ func _ready() -> void:
 func _on_body_entered(body: Node) -> void:
 	if body.is_in_group("player") and not is_depleted:
 		player_in_area = true
-		show_label()
+		_show_label()
 
 
 func _on_body_exited(body: Node) -> void:
 	if body.is_in_group("player"):
 		player_in_area = false
-		hide_label()
-
-
-func get_interaction_text() -> String:
-	if is_depleted or not player_in_area:
-		return ""
-	return "E : Recolter " + resource_name
+		_hide_label()
 
 
 func can_gather() -> bool:
@@ -51,49 +53,39 @@ func can_gather() -> bool:
 func gather() -> Dictionary:
 	if not can_gather():
 		return {}
-
 	current_health -= 1
-
 	if current_health <= 0:
-		deplete()
-
+		_deplete()
 	return {
 		"type": resource_type,
 		"amount": gather_amount,
-		"name": resource_name
+		"name": resource_name,
 	}
 
 
-func deplete() -> void:
+func _deplete() -> void:
 	if is_depleted:
 		return
-
 	is_depleted = true
 	player_in_area = false
 	current_health = 0
-	label.visible = false
-
-	if gather_shape != null:
-		gather_shape.disabled = true
-
-	if blocker_shape != null:
-		blocker_shape.disabled = true
-
-	notify_harvested_and_remove()
-
-
-func notify_harvested_and_remove() -> void:
-	var chunk_manager = get_tree().get_first_node_in_group("chunk_manager")
-	if chunk_manager != null and chunk_manager.has_method("on_resource_harvested"):
-		chunk_manager.on_resource_harvested(self, respawn_time)
-
+	_hide_label()
+	if _gather_shape != null:
+		_gather_shape.set_deferred("disabled", true)
+	if _blocker_shape != null:
+		_blocker_shape.set_deferred("disabled", true)
+	# Informe le ChunkManager si besoin de respawn
+	var cm := get_tree().get_first_node_in_group("chunk_manager")
+	if cm != null and cm.has_method("on_resource_harvested"):
+		cm.on_resource_harvested(self, respawn_time)
 	queue_free()
 
 
-func show_label() -> void:
-	if not is_depleted:
-		label.visible = true
+func _show_label() -> void:
+	if _label != null and not is_depleted:
+		_label.visible = true
 
 
-func hide_label() -> void:
-	label.visible = false
+func _hide_label() -> void:
+	if _label != null:
+		_label.visible = false

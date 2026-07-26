@@ -10,11 +10,13 @@ const CHUNK_NODE_SCENE: PackedScene = preload("res://game/world/chunk_node.tscn"
 var _loaded_chunks: Dictionary = {}
 var _player: Node2D = null
 var _last_player_chunk: Vector2i = Vector2i(999999, 999999)
+# Compteur de frames avant de retenter find_player (pour ne pas chercher chaque frame)
+var _find_player_cooldown: int = 0
 
 
 func _ready() -> void:
-	# Le joueur est spawné via call_deferred dans overworld.gd ;
-	# on diffère l'init pour être sûr qu'il existe dans le scène.
+	# Le joueur est spawné en différé par overworld.gd ;
+	# on attend la fin du frame courant pour être sûr qu'il est dans l'arbre.
 	call_deferred("_deferred_init")
 
 
@@ -28,7 +30,11 @@ func _deferred_init() -> void:
 
 func _process(_delta: float) -> void:
 	if _player == null or not is_instance_valid(_player):
-		_player = _find_player()
+		# Retenter find_player toutes les 30 frames seulement
+		_find_player_cooldown -= 1
+		if _find_player_cooldown <= 0:
+			_find_player_cooldown = 30
+			_player = _find_player()
 		return
 	_update_chunks()
 
@@ -69,9 +75,12 @@ func _update_chunks() -> void:
 		if not _loaded_chunks.has(c):
 			_load_chunk(c)
 
+	var to_unload: Array[Vector2i] = []
 	for c in _loaded_chunks.keys():
 		if not needed.has(c):
-			_unload_chunk(c)
+			to_unload.append(c)
+	for c in to_unload:
+		_unload_chunk(c)
 
 	if debug_draw_chunks:
 		queue_redraw()
@@ -105,7 +114,6 @@ func _draw() -> void:
 	if not debug_draw_chunks:
 		return
 	for coords in _loaded_chunks.keys():
-		var top_left := Vector2(coords.x * chunk_size, coords.y * chunk_size)
-		var rect := Rect2(top_left, Vector2(chunk_size, chunk_size))
-		draw_rect(rect, Color(0.0, 1.0, 0.0, 0.15), true)
-		draw_rect(rect, Color(0.0, 1.0, 0.0, 0.8), false, 2.0)
+		var tl := Vector2(coords.x * chunk_size, coords.y * chunk_size)
+		draw_rect(Rect2(tl, Vector2(chunk_size, chunk_size)), Color(0, 1, 0, 0.15), true)
+		draw_rect(Rect2(tl, Vector2(chunk_size, chunk_size)), Color(0, 1, 0, 0.8), false, 2.0)
