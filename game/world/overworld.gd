@@ -2,13 +2,15 @@ extends Node2D
 
 const PLAYER_SCENE := preload("res://game/characters/player/player.tscn")
 
-@onready var player_container: Node2D = $PlayerContainer
-@onready var player_spawn: Marker2D = $PlayerSpawn
+@onready var _player_container: Node2D = $PlayerContainer
+@onready var _player_spawn: Marker2D   = $PlayerSpawn
+
 
 func _ready() -> void:
-	call_deferred("spawn_player")
+	call_deferred("_spawn_player")
 
-func spawn_player() -> void:
-	var player = PLAYER_SCENE.instantiate()
-	player.global_position = player_spawn.global_position
-	player_container.add_child(player)
+
+func _spawn_player() -> void:
+	var player: Node2D = PLAYER_SCENE.instantiate() as Node2D
+	player.global_position = _player_spawn.global_position
+	_player_container.add_child(player)

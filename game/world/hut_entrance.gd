@@ -1,20 +1,21 @@
 extends Area2D
 
-var player_in_area: bool = false
+# Déclenche la transition vers la scène intérieure de la cahute
+# quand le joueur appuie sur [E] dans la zone.
 
-func _on_body_entered(body: Node2D) -> void:
-	if body.name == "Player":
-		player_in_area = true
-		print("Player ENTERED HutEntrance")
+var _player_in_area: bool = false
 
-func _on_body_exited(body: Node2D) -> void:
-	if body.name == "Player":
-		player_in_area = false
-		print("Player EXITED HutEntrance")
 
-func _input(event: InputEvent) -> void:
-	if event.is_action_pressed("interact"):
-		print("HutEntrance _input received, player_in_area =", player_in_area)
-		if player_in_area:
-			print("HutEntrance: teleporting to hut")
-			SceneManager.change_scene("res://game/world/scenes/hut.tscn")
+func _on_body_entered(body: Node) -> void:
+	if body.is_in_group("player"):
+		_player_in_area = true
+
+
+func _on_body_exited(body: Node) -> void:
+	if body.is_in_group("player"):
+		_player_in_area = false
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _player_in_area and event.is_action_pressed("interact"):
+		SceneManager.change_scene("res://game/world/scenes/hut.tscn")

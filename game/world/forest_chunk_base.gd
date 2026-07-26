@@ -1,68 +1,42 @@
 extends Node2D
 
-const TREE_SCENE: PackedScene = preload("res://game/world/scenes/resources_node/tree_node.tscn")
-const BERRY_SCENE: PackedScene = preload("res://game/world/scenes/resources_node/berry_node.tscn")
+@export var tree_count_min: int = 5
+@export var tree_count_max: int = 12
+@export var berry_count_min: int = 1
+@export var berry_count_max: int = 4
 
-var chunk_coords: Vector2i = Vector2i.ZERO
-var chunk_size: int = 512
+var _chunk_coords: Vector2i = Vector2i.ZERO
+var _chunk_size: int = 512
 
-func setup(coords: Vector2i, world_chunk_size: int) -> void:
-	chunk_coords = coords
-	chunk_size = world_chunk_size
 
-	print("ForestChunkBase setup for coords =", chunk_coords, "chunk_size =", chunk_size)
-	generate_content()
+func setup(coords: Vector2i, size: int) -> void:
+	_chunk_coords = coords
+	_chunk_size   = size
+	_generate()
 
-func generate_content() -> void:
-	var trees_container: Node2D = get_node_or_null("Trees")
-	var berries_container: Node2D = get_node_or_null("Berries")
 
-	if trees_container == null:
-		push_error("ForestChunkBase: node 'Trees' introuvable dans forest_chunk_base.tscn")
+func _generate() -> void:
+	# Seed déterministe : même coordonnées = même forêt à chaque session
+	var rng := RandomNumberGenerator.new()
+	rng.seed = hash(Vector2i(_chunk_coords.x * 73856093, _chunk_coords.y * 19349663))
+
+	var tree_count  := rng.randi_range(tree_count_min, tree_count_max)
+	var berry_count := rng.randi_range(berry_count_min, berry_count_max)
+
+	for i in tree_count:
+		_place_resource_node(rng, "BOIS")
+	for i in berry_count:
+		_place_resource_node(rng, "BAIES")
+
+
+func _place_resource_node(rng: RandomNumberGenerator, rtype: String) -> void:
+	var node_scene := load("res://game/world/scenes/resources_node/resource_node.tscn") as PackedScene
+	if node_scene == null:
 		return
-
-	if berries_container == null:
-		push_error("ForestChunkBase: node 'Berries' introuvable dans forest_chunk_base.tscn")
-		return
-
-	clear_existing_content(trees_container, berries_container)
-
-	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
-	rng.seed = get_chunk_seed(chunk_coords)
-
-	print("ForestChunkBase RNG seed =", rng.seed)
-
-	var tree_count: int = rng.randi_range(6, 14)
-	var berry_count: int = rng.randi_range(2, 6)
-
-	print("ForestChunkBase generating", tree_count, "trees and", berry_count, "berries")
-
-	for i in range(tree_count):
-		var tree: Node2D = TREE_SCENE.instantiate()
-		tree.position = Vector2(
-			rng.randf_range(32.0, chunk_size - 32.0),
-			rng.randf_range(32.0, chunk_size - 32.0)
-		)
-		trees_container.add_child(tree)
-
-	for i in range(berry_count):
-		var berry: Node2D = BERRY_SCENE.instantiate()
-		berry.position = Vector2(
-			rng.randf_range(32.0, chunk_size - 32.0),
-			rng.randf_range(32.0, chunk_size - 32.0)
-		)
-		berries_container.add_child(berry)
-
-func clear_existing_content(trees_container: Node2D, berries_container: Node2D) -> void:
-	for child in trees_container.get_children():
-		child.queue_free()
-
-	for child in berries_container.get_children():
-		child.queue_free()
-
-func get_chunk_seed(coords: Vector2i) -> int:
-	return int(
-		ChunkGenerator.world_seed
-		+ coords.x * 92821
-		+ coords.y * 68917
+	var inst: Node2D = node_scene.instantiate() as Node2D
+	inst.resource_type = ForestResourceNode.Type[rtype]
+	inst.position = Vector2(
+		rng.randf_range(32.0, _chunk_size - 32.0),
+		rng.randf_range(32.0, _chunk_size - 32.0)
 	)
+	add_child(inst)
