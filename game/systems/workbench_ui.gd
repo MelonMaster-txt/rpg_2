@@ -1,8 +1,4 @@
-# WorkbenchUI - Interface de craft (branché sur GameManager)
-# Scène : CanvasLayer > Control > VBoxContainer
-#   - Title (Label)
-#   - ItemList (VBoxContainer)
-#   - CloseButton (Button)
+# WorkbenchUI - branché sur ItemDatabase (autoload) + GameManager
 extends Control
 
 @onready var item_list: VBoxContainer = $VBoxContainer/ItemList
@@ -26,22 +22,23 @@ func _build_list() -> void:
 	for child in item_list.get_children():
 		child.queue_free()
 
-	var db = get_node("/root/ItemDatabase")
-	for item_id in db.get_craftable_items():
-		var data = db.get_item(item_id)
-		var can = db.can_craft(item_id, GameManager.inventory)
+	for item_id: String in ItemDatabase.get_craftable_items():
+		var data: Dictionary = ItemDatabase.get_item(item_id)
+		var can: bool = ItemDatabase.can_craft(item_id, GameManager.inventory)
 
-		var row = HBoxContainer.new()
+		var row := HBoxContainer.new()
 
-		var lbl = Label.new()
-		var recette_str = ", ".join(
-			data["recette"].keys().map(func(k): return "%dx %s" % [data["recette"][k], k])
+		var lbl := Label.new()
+		var recette_str: String = ", ".join(
+			data["recette"].keys().map(func(k: String) -> String:
+				return "%dx %s" % [data["recette"][k], k]
+			)
 		)
 		lbl.text = "%s  [%s]" % [data["nom"], recette_str]
 		lbl.modulate = Color.WHITE if can else Color(0.5, 0.5, 0.5)
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
-		var btn = Button.new()
+		var btn := Button.new()
 		btn.text = "Crafter"
 		btn.disabled = not can
 		btn.pressed.connect(_on_craft_pressed.bind(item_id))
@@ -51,9 +48,8 @@ func _build_list() -> void:
 		item_list.add_child(row)
 
 func _on_craft_pressed(item_id: String) -> void:
-	var db = get_node("/root/ItemDatabase")
-	var data = db.get_item(item_id)
-	for resource in data["recette"]:
+	var data: Dictionary = ItemDatabase.get_item(item_id)
+	for resource: String in data["recette"]:
 		GameManager.remove_item(resource, data["recette"][resource])
 	GameManager.add_item(item_id, 1)
 	_build_list()
