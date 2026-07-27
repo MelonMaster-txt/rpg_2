@@ -4,11 +4,21 @@
 [ext_resource type="Script" uid="uid://g4wxvpoyb0lo" path="res://game/world/hut_exit.gd" id="2_kblvs"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_5hw72"]
+size = Vector2(32, 16)
 
 [node name="Hut" type="Node2D" unique_id=634328892]
 script = ExtResource("1_734ri")
 
 [node name="Floor" type="Node2D" parent="." unique_id=716185337]
+
+[node name="FloorRect" type="ColorRect" parent="Floor" unique_id=111111111]
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = -400.0
+offset_top = -300.0
+offset_right = 400.0
+offset_bottom = 300.0
+color = Color(0.22, 0.15, 0.1, 1)
 
 [node name="HutExit" type="Area2D" parent="." unique_id=1024482891]
 script = ExtResource("2_kblvs")
@@ -16,18 +26,13 @@ script = ExtResource("2_kblvs")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HutExit" unique_id=872173620]
 shape = SubResource("RectangleShape2D_5hw72")
 
-[node name="ColorRect" type="ColorRect" parent="HutExit" unique_id=24778929]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -5.0
-offset_top = -5.0
-offset_right = 5.0
-offset_bottom = 5.0
-grow_horizontal = 2
-grow_vertical = 2
-scale = Vector2(2, 2)
-pivot_offset = Vector2(5, 5)
+[node name="ExitLabel" type="Label" parent="HutExit" unique_id=222222221]
+offset_left = -40.0
+offset_top = -30.0
+offset_right = 40.0
+offset_bottom = -10.0
+text = "[E] Sortir"
+horizontal_alignment = 1
 
 [node name="Furniture" type="Node2D" parent="." unique_id=1303240228]
 
@@ -36,6 +41,3 @@ pivot_offset = Vector2(5, 5)
 [node name="PlayerContainer" type="Node2D" parent="." unique_id=1607572165]
 
 [node name="ExitSpawn" type="Marker2D" parent="." unique_id=1117493151]
-
-[connection signal="body_entered" from="HutExit" to="HutExit" method="_on_body_entered"]
-[connection signal="body_exited" from="HutExit" to="HutExit" method="_on_body_exited"]
