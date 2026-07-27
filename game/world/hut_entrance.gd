@@ -1,10 +1,12 @@
 extends Area2D
 
 var _player_in_area: bool = false
-var _transitioning: bool = false
+var _transitioning:  bool = false
 
 
 func _ready() -> void:
+	# Guard anti-double : on ne connecte que si le signal n'est pas
+	# déjà branché (ex: connexion ajoutée via l'éditeur dans le .tscn).
 	if not body_entered.is_connected(_on_body_entered):
 		body_entered.connect(_on_body_entered)
 	if not body_exited.is_connected(_on_body_exited):
