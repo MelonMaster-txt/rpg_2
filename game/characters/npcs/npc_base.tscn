@@ -1,14 +1,14 @@
-[gd_scene format=3 uid="uid://player_scene"]
+[gd_scene format=3 uid="uid://npc_base_scene"]
 
-[ext_resource type="Script" path="res://game/characters/player/player.gd"         id="1_player"]
+[ext_resource type="Script" path="res://game/characters/npcs/npc_base.gd"              id="1_npc"]
 [ext_resource type="Script" path="res://game/characters/shared/character_appearance.gd" id="2_appearance"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_1"]
 radius = 7.0
 height = 18.0
 
-[node name="Player" type="CharacterBody2D"]
-script = ExtResource("1_player")
+[node name="NPC" type="CharacterBody2D"]
+script = ExtResource("1_npc")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CapsuleShape2D_1")
@@ -16,7 +16,3 @@ position = Vector2(0, 4)
 
 [node name="CharacterAppearance" type="Node" parent="."]
 script = ExtResource("2_appearance")
-
-[node name="Camera2D" type="Camera2D" parent="."]
-enabled = false
-zoom = Vector2(3, 3)
