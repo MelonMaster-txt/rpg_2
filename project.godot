@@ -21,6 +21,7 @@ SceneManager="*uid://bwmpfdqtm3r3f"
 Dialogic="*uid://ds2q0uclmolvu"
 ChunkGenerator="*uid://bojuva7buehyj"
 GameManager="*uid://cc46a5g2xhwiv"
+ItemDatabase="*res://game/systems/item_database.gd"
 
 [dialogic]
 
