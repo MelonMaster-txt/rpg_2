@@ -7,13 +7,11 @@ extends CharacterBody2D
 
 @onready var camera: Camera2D = $Camera2D
 
-# Item actuellement en main (id dans ItemDatabase)
 var _held_item: String = ""
 
 signal held_item_changed(item_id: String)
 
-# Ordre de sélection rapide avec Q/E
-const QUICK_SELECT: Array = ["pioche", "arrosoir", "graine_baie"]
+const QUICK_SELECT: Array[String] = ["pioche", "arrosoir", "graine_baie"]
 var _quick_index: int = -1
 
 func _ready() -> void:
@@ -38,10 +36,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		camera.zoom *= zoom_out_factor
 	if event.is_action_pressed("interact"):
 		_try_gather()
-	# Sélection rapide d'item avec Tab
-	if event.is_action_pressed("quick_select"):
+	# Tab = cycle item en main
+	if event is InputEventKey and event.pressed and event.keycode == KEY_TAB:
 		_cycle_held_item()
-	# Désélectionner avec RMB ou Echap
+	# Echap = déséquiper
 	if event.is_action_pressed("ui_cancel"):
 		set_held_item("")
 
@@ -67,8 +65,7 @@ func set_held_item(item_id: String) -> void:
 
 func _cycle_held_item() -> void:
 	_quick_index = (_quick_index + 1) % QUICK_SELECT.size()
-	var candidate = QUICK_SELECT[_quick_index]
-	# Seulement si le joueur possède cet item
+	var candidate: String = QUICK_SELECT[_quick_index]
 	if GameManager.get_item(candidate) > 0:
 		set_held_item(candidate)
 	else:
