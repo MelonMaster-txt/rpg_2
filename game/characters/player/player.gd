@@ -2,8 +2,8 @@ extends CharacterBody2D
 
 @export var move_speed: float = 120.0
 
-@onready var camera:     Camera2D           = $Camera2D
-@onready var appearance: Node               = $CharacterAppearance
+@onready var camera:     Camera2D = $Camera2D
+@onready var appearance: Node     = $CharacterAppearance
 
 var _walk_tick:  float = 0.0
 var _walk_frame: int   = 0
@@ -14,8 +14,10 @@ func _ready() -> void:
 	add_to_group("player")
 	camera.enabled = true
 	# Apparence par défaut du joueur
-	appearance.set_skin("light")
-	appearance.set_hair("brown")
+	# set_skin_color attend une Color (pas un String)
+	appearance.set_skin_color(Color(0.85, 0.70, 0.55))   # teinte chair claire
+	appearance.set_hair("medium")                          # style de cheveux
+	appearance.set_hair_color(Color(0.35, 0.20, 0.08))    # brun
 	appearance.set_outfit("peasant")
 
 
@@ -34,18 +36,16 @@ func _update_animation(dir: Vector2, delta: float) -> void:
 	_moving = dir != Vector2.ZERO
 
 	if _moving:
-		# Direction
 		if abs(dir.x) > abs(dir.y):
 			appearance.set_direction("right" if dir.x > 0 else "left")
 		else:
 			appearance.set_direction("down" if dir.y > 0 else "up")
-		# Cycle de marche (4 frames, 8 pas/sec)
 		_walk_tick += delta * 8.0
 		_walk_frame = (int(_walk_tick) % 4)
 		appearance.set_walk_frame(_walk_frame)
 	else:
 		_walk_tick = 0.0
-		appearance.set_walk_frame(0)  # idle
+		appearance.set_walk_frame(0)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -58,8 +58,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _try_gather() -> void:
-	var best: Node  = null
-	var best_dist   := INF
+	var best: Node = null
+	var best_dist  := INF
 	for node in get_tree().get_nodes_in_group("resource_nodes"):
 		if not node.has_method("gather") or not node.can_gather():
 			continue
@@ -77,8 +77,8 @@ func _try_gather() -> void:
 
 func _to_inv_key(t: String) -> String:
 	match t:
-		"wood",  "bois":              return "bois"
-		"berry", "baies", "berries":  return "baies"
-		"stone", "pierre", "rock":    return "pierre"
-		"food",  "nourriture":        return "nourriture"
-		_:                            return t
+		"wood",  "bois":             return "bois"
+		"berry", "baies", "berries": return "baies"
+		"stone", "pierre", "rock":   return "pierre"
+		"food",  "nourriture":       return "nourriture"
+		_:                           return t
