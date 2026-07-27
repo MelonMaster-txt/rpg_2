@@ -1,16 +1,4 @@
 # random_npc.gd
-# ──────────────────────────────────────────────────────────────────────
-# NPC générique rencontrable dans la forêt.
-# Utilise CharacterAppearance pour le visuel (layers LPC + RGB modulate)
-#
-# SCÈNE ATTENDUE : random_npc.tscn
-#   RandomNPC  (CharacterBody2D)  ← ce script
-#   ├─ CharacterAppearance (Node) ← character_appearance.gd
-#   ├─ CollisionShape2D
-#   ├─ InteractionArea (Area2D)
-#   │   └─ CollisionShape2D
-#   └─ NameLabel (Label)
-# ──────────────────────────────────────────────────────────────────────
 extends CharacterBody2D
 
 signal interaction_requested(npc)
@@ -26,14 +14,18 @@ signal npc_captured(npc)
 var current_hp:   int
 var _appearance:  Node
 var _name_label:  Label
-var _player_near: bool = false
+var _player_near: bool   = false
 var _state:       String = "idle"
 
 const NAMES_MALE   := ["Bjorn","Ulf","Ragnar","Gunnar","Leif","Sigurd","Erik","Ivar"]
 const NAMES_FEMALE := ["Astrid","Freya","Sigrid","Hilde","Runa","Ylva","Ingrid","Solveig"]
 
-var _wander_timer: float = 0.0
+var _wander_timer: float  = 2.0   # délai initial pour pas agir frame 1
 var _wander_dir:   Vector2 = Vector2.ZERO
+
+# Données en attente si randomize_full appelé avant _ready
+var _pending_randomize: bool = false
+var _pending_seed:      int  = -1
 
 
 func _ready() -> void:
@@ -42,25 +34,43 @@ func _ready() -> void:
 	_name_label = $NameLabel
 	$InteractionArea.body_entered.connect(_on_player_enter)
 	$InteractionArea.body_exited.connect(_on_player_exit)
+	# Appliquer le randomize en attente s'il a été demandé avant _ready
+	if _pending_randomize:
+		_do_randomize(_pending_seed)
 
 
+# Appelé par NpcSpawner — peut être appelé avant _ready
 func randomize_full(seed_val: int = -1) -> void:
+	if not is_inside_tree() or _appearance == null:
+		# _ready pas encore passé, on mémorise
+		_pending_randomize = true
+		_pending_seed      = seed_val
+		return
+	_do_randomize(seed_val)
+
+
+func _do_randomize(seed_val: int) -> void:
+	_pending_randomize = false
 	if seed_val >= 0:
 		seed(seed_val)
 	_appearance.randomize_appearance()
+	# On lit le genre via la propriété publique (pas la var privée)
+	var gender: String = _appearance.get_appearance_data().get("gender", "male")
 	if npc_name == "":
-		npc_name = NAMES_MALE.pick_random() if _appearance._gender == "male" else NAMES_FEMALE.pick_random()
-	_name_label.text = npc_name
-	max_hp    = randi_range(20, 60)
-	strength  = randi_range(3, 12)
-	speed     = randf_range(40.0, 90.0)
+		npc_name = NAMES_MALE.pick_random() if gender == "male" else NAMES_FEMALE.pick_random()
+	if _name_label:
+		_name_label.text = npc_name
+	max_hp     = randi_range(20, 60)
+	strength   = randi_range(3, 12)
+	speed      = randf_range(40.0, 90.0)
 	is_hostile = randf() < 0.25
 	current_hp = max_hp
 
 
 func set_appearance(data: Dictionary) -> void:
-	_appearance.apply_appearance_data(data)
-	if data.has("name"):
+	if _appearance:
+		_appearance.apply_appearance_data(data)
+	if data.has("name") and _name_label:
 		npc_name = data["name"]
 		_name_label.text = npc_name
 
@@ -79,7 +89,8 @@ func _physics_process(delta: float) -> void:
 			if _wander_timer <= 0.0:
 				_state = "idle"
 				velocity = Vector2.ZERO
-				_appearance.set_walk_frame(0)
+				if _appearance:
+					_appearance.set_walk_frame(0)
 		"dead":
 			velocity = Vector2.ZERO
 
@@ -94,12 +105,13 @@ func take_damage(amount: int) -> void:
 
 func _die() -> void:
 	_state = "dead"
-	_appearance.set_eye_style("closed")
+	if _appearance:
+		_appearance.set_eye_style("closed")
 	npc_defeated.emit(self)
 
 
 func capture() -> Dictionary:
-	var data: Dictionary = _appearance.get_appearance_data()
+	var data: Dictionary = _appearance.get_appearance_data() if _appearance else {}
 	data["name"]     = npc_name
 	data["strength"] = strength
 	data["max_hp"]   = max_hp
@@ -115,13 +127,13 @@ func _unhandled_input(event: InputEvent) -> void:
 func _on_player_enter(body: Node) -> void:
 	if body.is_in_group("player"):
 		_player_near = true
-		_name_label.visible = true
+		if _name_label: _name_label.visible = true
 
 
 func _on_player_exit(body: Node) -> void:
 	if body.is_in_group("player"):
 		_player_near = false
-		_name_label.visible = false
+		if _name_label: _name_label.visible = false
 
 
 func _pick_wander_dir() -> void:
@@ -142,6 +154,8 @@ func _update_facing() -> void:
 		dominant = "right" if velocity.x > 0 else "left"
 	else:
 		dominant = "down" if velocity.y > 0 else "up"
-	_appearance.set_direction(dominant)
-	var f := (Engine.get_process_frames() / 8) % 4 + 1
-	_appearance.set_walk_frame(f)
+	if _appearance:
+		_appearance.set_direction(dominant)
+		# Correction integer division : forcer float avant modulo
+		var f: int = (Engine.get_process_frames() / 8) % 4 + 1
+		_appearance.set_walk_frame(f)
