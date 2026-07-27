@@ -16,15 +16,22 @@ signal held_item_changed(item_id: String)
 const QUICK_SELECT: Array[String] = ["pioche", "arrosoir", "graine_baie"]
 var _quick_index: int = -1
 
+var _held_item: String = ""
+signal held_item_changed(item_id: String)
+
+const QUICK_SELECT: Array[String] = ["pioche", "arrosoir", "graine_baie"]
+var _quick_index: int = -1
+
 func _ready() -> void:
 	add_to_group("player")
+if camera != null:
 	camera.enabled = true
-	# Apparence par défaut du joueur
-	# set_skin_color attend une Color (pas un String)
-	appearance.set_skin_color(Color(0.85, 0.70, 0.55))   # teinte chair claire
-	appearance.set_hair("medium")                          # style de cheveux
-	appearance.set_hair_color(Color(0.35, 0.20, 0.08))    # brun
-	appearance.set_outfit("peasant")
+# Apparence par défaut du joueur
+# set_skin_color attend une Color (pas un String)
+appearance.set_skin_color(Color(0.85, 0.70, 0.55))   # teinte chair claire
+appearance.set_hair("medium")                          # style de cheveux
+appearance.set_hair_color(Color(0.35, 0.20, 0.08))    # brun
+appearance.set_outfit("peasant")
 
 func _physics_process(_delta: float) -> void:
 	var dir := Vector2(
@@ -93,13 +100,8 @@ func _cycle_held_item() -> void:
 # --- CUEILLETTE ---
 func _try_gather() -> void:
 	var best: Node = null
-<<<<<<< HEAD
 	var best_dist  := INF
 	for node in get_tree().get_nodes_in_group("resource_nodes"):
-=======
-	var best_dist := INF
-	for node in nodes:
->>>>>>> aaadc50 (fix: restore player.gd safe, add workbench+workbench_ui to hut.tscn)
 		if not node.has_method("gather") or not node.can_gather():
 			continue
 		var d := global_position.distance_to(node.global_position)
@@ -111,9 +113,6 @@ func _try_gather() -> void:
 	var result: Dictionary = best.gather()
 	if result.is_empty():
 		return
-<<<<<<< HEAD
-	GameManager.add_item(_to_inv_key(result.get("type", "")), result.get("amount", 1))
-=======
 	var rtype: String = result.get("type", "")
 	var amount: int = result.get("amount", 1)
 	var rname: String = result.get("name", rtype)
@@ -121,7 +120,10 @@ func _try_gather() -> void:
 	if inv_key != "":
 		GameManager.add_item(inv_key, amount)
 		_show_pickup_popup("+" + str(amount) + " " + rname)
+<<<<<<< HEAD
 >>>>>>> aaadc50 (fix: restore player.gd safe, add workbench+workbench_ui to hut.tscn)
+=======
+>>>>>>> 4fcd8e38781388650a644f48d3ec26d7e2b19502
 
 func _resource_type_to_key(rtype: String) -> String:
 	match rtype:
