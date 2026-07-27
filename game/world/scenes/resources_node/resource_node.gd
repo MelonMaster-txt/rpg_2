@@ -34,8 +34,10 @@ func _ready() -> void:
 	if _respawn_timer != null:
 		_respawn_timer.timeout.connect(_on_respawn)
 
-	body_entered.connect(_on_body_entered)
-	body_exited.connect(_on_body_exited)
+	if not body_entered.is_connected(_on_body_entered):
+		body_entered.connect(_on_body_entered)
+	if not body_exited.is_connected(_on_body_exited):
+		body_exited.connect(_on_body_exited)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -57,24 +59,23 @@ func _on_body_exited(body: Node) -> void:
 			_label.visible = false
 
 
+func _resource_type_to_key(rtype: String) -> String:
+	match rtype:
+		"wood", "bois":            return "bois"
+		"berry", "baies", "berries": return "baies"
+		"stone", "pierre", "rock": return "pierre"
+		"food", "nourriture":      return "nourriture"
+		_:                         return rtype
+
+
 func _do_gather() -> void:
 	current_health -= 1
+	var inv_key: String = _resource_type_to_key(resource_type)
+	GameManager.add_item(inv_key, gather_amount)
 	if current_health <= 0:
 		_deplete()
 	else:
 		_spawn_gather_feedback()
-	# Donne la ressource au GameManager si disponible
-	if Engine.has_singleton("GameManager"):
-		var gm = Engine.get_singleton("GameManager")
-		if gm.has_method("add_item"):
-			gm.add_item(resource_type, gather_amount)
-	else:
-		var gm := get_tree().root.get_node_or_null("GameManager")
-		if gm != null and gm.has_method("add_item"):
-			gm.add_item(resource_type, gather_amount)
-		var inv := get_tree().get_first_node_in_group("inventory")
-		if inv != null and inv.has_method("add_item"):
-			inv.add_item(resource_type, gather_amount)
 	_spawn_gather_feedback()
 
 
@@ -92,7 +93,6 @@ func _deplete() -> void:
 	if _respawn_timer != null:
 		_respawn_timer.start(respawn_time)
 	else:
-		# Pas de timer : disparait
 		queue_free()
 
 
