@@ -1,20 +1,141 @@
-[gd_scene format=3 uid="uid://coyjnftabhyvi"]
+[gd_scene format=3 uid="uid://player_scene"]
 
-[ext_resource type="Script" uid="uid://cbomyqfyqylg2" path="res://game/characters/player/player.gd" id="1_yjtv7"]
+[ext_resource type="Script" path="res://game/characters/player/player.gd" id="1_player"]
 
-[sub_resource type="PlaceholderTexture2D" id="PlaceholderTexture2D_6a7ke"]
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_player"]
+radius = 8.0
+height = 20.0
 
-[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_q5p1p"]
+[sub_resource type="SpriteFrames" id="SpriteFrames_player"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": null
+}],
+"loop": true,
+"name": &"idle_down",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": null
+}],
+"loop": true,
+"name": &"idle_up",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": null
+}],
+"loop": true,
+"name": &"idle_left",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": null
+}],
+"loop": true,
+"name": &"idle_right",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": null
+}, {
+"duration": 1.0,
+"texture": null
+}, {
+"duration": 1.0,
+"texture": null
+}, {
+"duration": 1.0,
+"texture": null
+}],
+"loop": true,
+"name": &"walk_down",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": null
+}, {
+"duration": 1.0,
+"texture": null
+}, {
+"duration": 1.0,
+"texture": null
+}, {
+"duration": 1.0,
+"texture": null
+}],
+"loop": true,
+"name": &"walk_up",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": null
+}, {
+"duration": 1.0,
+"texture": null
+}, {
+"duration": 1.0,
+"texture": null
+}, {
+"duration": 1.0,
+"texture": null
+}],
+"loop": true,
+"name": &"walk_left",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": null
+}, {
+"duration": 1.0,
+"texture": null
+}, {
+"duration": 1.0,
+"texture": null
+}, {
+"duration": 1.0,
+"texture": null
+}],
+"loop": true,
+"name": &"walk_right",
+"speed": 8.0
+}]
 
-[node name="Player" type="CharacterBody2D" unique_id=1355747292]
-script = ExtResource("1_yjtv7")
+[node name="Player" type="CharacterBody2D" unique_id=1]
+script = ExtResource("1_player")
 
-[node name="Sprite2D" type="Sprite2D" parent="." unique_id=321157934]
-scale = Vector2(16, 16)
-texture = SubResource("PlaceholderTexture2D_6a7ke")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2]
+shape = SubResource("CapsuleShape2D_player")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1457796930]
-shape = SubResource("CapsuleShape2D_q5p1p")
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=3]
+sprite_frames = SubResource("SpriteFrames_player")
+animation = &"idle_down"
 
-[node name="Camera2D" type="Camera2D" parent="." unique_id=1475343160]
-position_smoothing_enabled = true
+[node name="Camera2D" type="Camera2D" parent="." unique_id=4]
+enabled = false
+zoom = Vector2(3, 3)
+
+[node name="Shadow" type="ColorRect" parent="." unique_id=5]
+offset_left = -8.0
+offset_top = 4.0
+offset_right = 8.0
+offset_bottom = 10.0
+color = Color(0, 0, 0, 0.3)
+
+[node name="InteractLabel" type="Label" parent="." unique_id=6]
+offset_left = -30.0
+offset_top = -36.0
+offset_right = 30.0
+offset_bottom = -20.0
+text = ""
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(1, 1, 0.6, 1)
