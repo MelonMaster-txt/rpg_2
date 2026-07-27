@@ -1,4 +1,4 @@
-# HUD Inventaire - branché sur ItemDatabase (autoload) + GameManager
+# HUD Inventaire - branche sur ItemDatabase (autoload) + GameManager
 extends Control
 
 @onready var slots_container: HBoxContainer = $HBoxContainer
@@ -18,14 +18,15 @@ func _ready() -> void:
 		player.held_item_changed.connect(_on_held_item_changed)
 
 func _build_slots() -> void:
-	for item_id: String in SLOT_ORDER:
+	for item_id in SLOT_ORDER:
 		var data: Dictionary = ItemDatabase.get_item(item_id)
 		if data.is_empty():
 			continue
 		var slot := VBoxContainer.new()
 		slot.name = item_id
 		var icon_lbl := Label.new()
-		icon_lbl.text = (data.get("nom", item_id) as String).left(3).to_upper()
+		var nom: String = data.get("nom", item_id)
+		icon_lbl.text = nom.left(3).to_upper()
 		icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		icon_lbl.add_theme_font_size_override("font_size", 10)
 		var qty_lbl := Label.new()
@@ -39,12 +40,14 @@ func _build_slots() -> void:
 		_slot_labels[item_id] = qty_lbl
 
 func _refresh_all() -> void:
-	for item_id: String in _slot_labels:
+	for item_id in _slot_labels:
 		var qty: int = GameManager.get_item(item_id)
-		(_slot_labels[item_id] as Label).text = str(qty)
+		var qty_lbl: Label = _slot_labels[item_id] as Label
+		qty_lbl.text = str(qty)
 		var slot: Node = slots_container.get_node_or_null(item_id)
 		if slot:
-			(slot as CanvasItem).modulate = Color.WHITE if qty > 0 else Color(0.5, 0.5, 0.5)
+			var ci: CanvasItem = slot as CanvasItem
+			ci.modulate = Color.WHITE if qty > 0 else Color(0.5, 0.5, 0.5)
 
 func _on_inventory_changed(_item: String, _amount: int) -> void:
 	_refresh_all()
@@ -54,4 +57,5 @@ func _on_held_item_changed(item_id: String) -> void:
 		held_label.text = ""
 	else:
 		var data: Dictionary = ItemDatabase.get_item(item_id)
-		held_label.text = "✋ " + (data.get("nom", item_id) as String)
+		var nom: String = data.get("nom", item_id)
+		held_label.text = "✋ " + nom
