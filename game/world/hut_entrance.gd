@@ -1,10 +1,17 @@
 extends Area2D
 
 var _player_in_area: bool = false
-var _transitioning: bool = false
+var _transitioning:  bool = false
 
 
 func _ready() -> void:
+	# IMPORTANT : ne pas connecter ici si les signaux sont déjà
+	# branchés dans la scène .tscn via l'éditeur Godot.
+	# On utilise connect() UNIQUEMENT en code — retirer les connexions
+	# dans le panneau Node > Signals de la scène pour éviter le double.
+	#
+	# Si tu préfères tout gérer en code : supprime les connexions dans
+	# l'éditeur et laisse ce bloc actif.
 	if not body_entered.is_connected(_on_body_entered):
 		body_entered.connect(_on_body_entered)
 	if not body_exited.is_connected(_on_body_exited):

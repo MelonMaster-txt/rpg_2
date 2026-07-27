@@ -1,29 +1,13 @@
 # character_appearance.gd
-# Système de layers visuels pour tout personnage (joueur, NPC, famille)
-#
-# LAYERS (ordre d'empilement, z_index croissant) :
-#   0 - hair_back   (cheveux derrière)
-#   1 - body        (corps)
-#   2 - outfit      (tenue)
-#   3 - head        (tête / visage)
-#   4 - eyes        (yeux)
-#   5 - hair_front  (cheveux devant)
-#
-# ⚠ Si les sprites PNG sont absents du dossier res://game/characters/shared/sprites/
-#   les layers s'affichent en rectangles de couleur unie (fallback visuel).
-#   Ajoutez vos spritesheets LPC dans ce dossier pour activer le vrai rendu.
+# Rendu procédural LPC-style — pas de sprites PNG requis.
+# Chaque layer est un Node2D avec des draw calls (corps, tête, yeux, cheveux, tenue)
+# Les couleurs sont fully customisables via l'API publique.
 extends Node
 
-const BASE    := "res://game/characters/shared/sprites/"
 const HFRAMES := 9
 const VFRAMES := 4
 
-const DIR_ROW := {
-	"down":  0,
-	"left":  1,
-	"right": 2,
-	"up":    3,
-}
+const DIR_ROW := { "down": 0, "left": 1, "right": 2, "up": 3 }
 
 const GENDERS    := ["male", "female"]
 const OUTFITS    := ["peasant", "guard", "mage", "farmer"]
@@ -34,7 +18,6 @@ var _gender:    String = "male"
 var _outfit:    String = "peasant"
 var _hair:      String = "medium"
 var _eye_style: String = "normal"
-
 var _direction: String = "down"
 var _frame:     int    = 0
 
@@ -43,17 +26,12 @@ var _color_hair:   Color = Color(0.40, 0.25, 0.10)
 var _color_eyes:   Color = Color(0.20, 0.50, 0.80)
 var _color_outfit: Color = Color(0.65, 0.45, 0.25)
 
-var _s_hair_back:  ColorRect
-var _s_body:       ColorRect
-var _s_outfit:     ColorRect
-var _s_head:       ColorRect
-var _s_eyes:       ColorRect
-var _s_hair_front: ColorRect
-
+var _draw_node: Node2D = null
 var _layers_ready: bool = false
-
-# Données en attente si randomize_full/apply appelé avant _ready
 var _pending_data: Dictionary = {}
+
+# Offset de marche pour animation
+var _walk_offset: float = 0.0
 
 
 func _ready() -> void:
@@ -61,102 +39,75 @@ func _ready() -> void:
 
 
 func _build_layers_deferred() -> void:
-	_s_hair_back  = _make_rect(0, Color(0.3, 0.2, 0.1))
-	_s_body       = _make_rect(1, _color_skin)
-	_s_outfit     = _make_rect(2, _color_outfit)
-	_s_head       = _make_rect(3, _color_skin)
-	_s_eyes       = _make_rect(4, _color_eyes)
-	_s_hair_front = _make_rect(5, _color_hair)
+	_draw_node = Node2D.new()
+	_draw_node.set_script(preload("res://game/characters/shared/char_draw.gd"))
+	get_parent().add_child(_draw_node)
+	_draw_node._appearance = self
 	_layers_ready = true
-	# Appliquer les données en attente
 	if not _pending_data.is_empty():
 		apply_appearance_data(_pending_data)
 		_pending_data = {}
-	else:
-		_refresh_colors()
+	_draw_node.queue_redraw()
 
 
-func _make_rect(z: int, color: Color) -> ColorRect:
-	var r := ColorRect.new()
-	r.z_index = z
-	r.size    = Vector2(32, 32)
-	r.position = Vector2(-16, -16)
-	r.color   = color
-	get_parent().add_child(r)
-	return r
-
-
-# ════════════════════════════════════════════════════
-#  API PUBLIQUE — APPARENCE
-# ════════════════════════════════════════════════════
+# ════ API APPARENCE ════════════════════════════════════════════════
 
 func set_gender(g: String) -> void:
 	if g not in GENDERS: return
 	_gender = g
-	if _layers_ready: _refresh_colors()
+	_redraw()
 
 func set_outfit(o: String) -> void:
 	if o not in OUTFITS: return
 	_outfit = o
-	if _layers_ready: _refresh_colors()
+	_redraw()
 
 func set_hair(h: String) -> void:
 	if h not in HAIRS: return
 	_hair = h
-	if _layers_ready: _refresh_colors()
+	_redraw()
 
 func set_eye_style(s: String) -> void:
 	if s not in EYE_STYLES: return
 	_eye_style = s
-	if _layers_ready: _refresh_colors()
+	_redraw()
 
 
-# ════════════════════════════════════════════════════
-#  API PUBLIQUE — COULEURS RGB
-# ════════════════════════════════════════════════════
+# ════ API COULEURS ══════════════════════════════════════════════════
 
 func set_skin_color(c: Color) -> void:
 	_color_skin = c
-	if not _layers_ready: return
-	if _s_body: _s_body.color = c
-	if _s_head: _s_head.color = c
+	_redraw()
 
 func set_hair_color(c: Color) -> void:
 	_color_hair = c
-	if not _layers_ready: return
-	if _s_hair_back:  _s_hair_back.color  = c
-	if _s_hair_front: _s_hair_front.color = c
+	_redraw()
 
 func set_eyes_color(c: Color) -> void:
 	_color_eyes = c
-	if not _layers_ready: return
-	if _s_eyes: _s_eyes.color = c
+	_redraw()
 
 func set_outfit_color(c: Color) -> void:
 	_color_outfit = c
-	if not _layers_ready: return
-	if _s_outfit: _s_outfit.color = c
+	_redraw()
 
 
-# ════════════════════════════════════════════════════
-#  API PUBLIQUE — ANIMATION
-# ════════════════════════════════════════════════════
+# ════ API ANIMATION ══════════════════════════════════════════════════
 
 func set_direction(dir: String) -> void:
 	if dir not in DIR_ROW: return
 	_direction = dir
+	_redraw()
 
-# Animation frame (no-op en mode ColorRect, prêt pour Sprite2D)
-func set_walk_frame(_f: int) -> void:
-	pass
+func set_walk_frame(f: int) -> void:
+	_frame = clampi(f, 0, HFRAMES - 1)
+	_walk_offset = sin(_frame * PI / 2.0) * 2.0
+	_redraw()
 
 
-# ════════════════════════════════════════════════════
-#  API PUBLIQUE — RANDOM / DATA
-# ════════════════════════════════════════════════════
+# ════ API DATA ══════════════════════════════════════════════════════
 
 func randomize_appearance() -> void:
-	# Si pas encore prêt, on stocke et on applique dans _build_layers_deferred
 	var data := {
 		"gender":       GENDERS.pick_random(),
 		"hair":         HAIRS.pick_random(),
@@ -169,28 +120,19 @@ func randomize_appearance() -> void:
 	}
 	if not _layers_ready:
 		_pending_data = data
-		# Stocker aussi dans les vars d'état pour get_appearance_data()
-		_gender    = data["gender"]
-		_hair      = data["hair"]
-		_outfit    = data["outfit"]
-		_eye_style = data["eye_style"]
-		_color_skin   = data["skin_color"]
-		_color_hair   = data["hair_color"]
-		_color_eyes   = data["eyes_color"]
-		_color_outfit = data["outfit_color"]
+		_gender = data["gender"]; _hair = data["hair"]
+		_outfit = data["outfit"]; _eye_style = data["eye_style"]
+		_color_skin = data["skin_color"]; _color_hair = data["hair_color"]
+		_color_eyes = data["eyes_color"]; _color_outfit = data["outfit_color"]
 		return
 	apply_appearance_data(data)
 
 
 func get_appearance_data() -> Dictionary:
 	return {
-		"gender":       _gender,
-		"outfit":       _outfit,
-		"hair":         _hair,
-		"eye_style":    _eye_style,
-		"skin_color":   _color_skin,
-		"hair_color":   _color_hair,
-		"eyes_color":   _color_eyes,
+		"gender": _gender, "outfit": _outfit, "hair": _hair,
+		"eye_style": _eye_style, "skin_color": _color_skin,
+		"hair_color": _color_hair, "eyes_color": _color_eyes,
 		"outfit_color": _color_outfit,
 	}
 
@@ -206,12 +148,8 @@ func apply_appearance_data(data: Dictionary) -> void:
 	if data.has("outfit_color"): set_outfit_color(data["outfit_color"])
 
 
-# ════════════════════════════════════════════════════
-#  INTERNE
-# ════════════════════════════════════════════════════
+# ════ INTERNE ═══════════════════════════════════════════════════════
 
-func _refresh_colors() -> void:
-	set_skin_color(_color_skin)
-	set_hair_color(_color_hair)
-	set_eyes_color(_color_eyes)
-	set_outfit_color(_color_outfit)
+func _redraw() -> void:
+	if _layers_ready and _draw_node:
+		_draw_node.queue_redraw()
