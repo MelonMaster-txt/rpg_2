@@ -25,7 +25,7 @@ extends Node
 
 const BASE := "res://game/characters/shared/sprites/"
 
-# ── Constantes spritesheet ───────────────────────────────────────────
+# ── Constantes spritesheet ─────────────────────────────────────
 const HFRAMES := 9
 const VFRAMES := 4
 
@@ -37,13 +37,13 @@ const DIR_ROW := {
 	"up":    3,
 }
 
-# ── Options disponibles ──────────────────────────────────────────────
+# ── Options disponibles ──────────────────────────────────────
 const GENDERS  := ["male", "female"]
 const OUTFITS  := ["peasant", "guard", "mage", "farmer"]
 const HAIRS    := ["short", "medium", "long", "bald"]
 const EYE_STYLES := ["normal", "closed", "angry", "sad"]
 
-# ── State ────────────────────────────────────────────────────────────
+# ── State ──────────────────────────────────────────────────────────────
 var _gender:    String = "male"
 var _outfit:    String = "peasant"
 var _hair:      String = "medium"
@@ -58,7 +58,7 @@ var _color_hair:   Color = Color(0.40, 0.25, 0.10)  # brun défaut
 var _color_eyes:   Color = Color(0.20, 0.50, 0.80)  # bleu défaut
 var _color_outfit: Color = Color(0.65, 0.45, 0.25)  # paysan défaut
 
-# ── Nodes Sprite2D ──────────────────────────────────────────────────
+# ── Nodes Sprite2D ──────────────────────────────────────────────
 var _s_hair_back:  Sprite2D
 var _s_body:       Sprite2D
 var _s_outfit:     Sprite2D
@@ -266,10 +266,10 @@ func _load(filename: String) -> Texture2D:
 # ════════════════════════════════════════════════════════════════════
 
 func _apply_frame() -> void:
-	var row := DIR_ROW.get(_direction, 0)
-	var col := _frame
+	var row: int = DIR_ROW.get(_direction, 0)
+	var col: int = _frame
 	# frame index dans une sheet hframes×vframes
-	var fidx := row * HFRAMES + col
+	var fidx: int = row * HFRAMES + col
 	for spr in [_s_hair_back, _s_body, _s_outfit, _s_head, _s_eyes, _s_hair_front]:
 		if spr and spr.texture:
 			spr.frame = fidx
