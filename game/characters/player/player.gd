@@ -1,20 +1,10 @@
 extends CharacterBody2D
 
 @export var move_speed: float = 120.0
+@export var zoom_in_factor: float = 1.2
+@export var zoom_out_factor: float = 0.8
 
-@onready var camera:     Camera2D = $Camera2D
-@onready var appearance: Node     = $CharacterAppearance
-
-var _walk_tick:  float = 0.0
-var _walk_frame: int   = 0
-var _moving:     bool  = false
-
-
-var _held_item: String = ""
-signal held_item_changed(item_id: String)
-
-const QUICK_SELECT: Array[String] = ["pioche", "arrosoir", "graine_baie"]
-var _quick_index: int = -1
+@onready var camera: Camera2D = $Camera2D
 
 var _held_item: String = ""
 signal held_item_changed(item_id: String)
@@ -24,54 +14,33 @@ var _quick_index: int = -1
 
 func _ready() -> void:
 	add_to_group("player")
-if camera != null:
-	camera.enabled = true
-# Apparence par défaut du joueur
-# set_skin_color attend une Color (pas un String)
-appearance.set_skin_color(Color(0.85, 0.70, 0.55))   # teinte chair claire
-appearance.set_hair("medium")                          # style de cheveux
-appearance.set_hair_color(Color(0.35, 0.20, 0.08))    # brun
-appearance.set_outfit("peasant")
+	if camera != null:
+		camera.enabled = true
 
 func _physics_process(_delta: float) -> void:
 	var dir := Vector2(
 		Input.get_action_strength("ui_right") - Input.get_action_strength("ui_left"),
-		Input.get_action_strength("ui_down")  - Input.get_action_strength("ui_up")
+		Input.get_action_strength("ui_down") - Input.get_action_strength("ui_up")
 	).normalized()
-
 	velocity = dir * move_speed
 	move_and_slide()
-	_update_animation(dir, delta)
-
-
-func _update_animation(dir: Vector2, delta: float) -> void:
-	_moving = dir != Vector2.ZERO
-
-	if _moving:
-		if abs(dir.x) > abs(dir.y):
-			appearance.set_direction("right" if dir.x > 0 else "left")
-		else:
-			appearance.set_direction("down" if dir.y > 0 else "up")
-		_walk_tick += delta * 8.0
-		_walk_frame = (int(_walk_tick) % 4)
-		appearance.set_walk_frame(_walk_frame)
-	else:
-		_walk_tick = 0.0
-		appearance.set_walk_frame(0)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if camera == null:
+		return
 	if event.is_action_pressed("zoom_in"):
-		camera.zoom *= 1.2
-	if event.is_action_pressed("zoom_out"):
-		camera.zoom *= 0.8
-	if event.is_action_pressed("interact"):
+		camera.zoom *= zoom_in_factor
+	elif event.is_action_pressed("zoom_out"):
+		camera.zoom *= zoom_out_factor
+	elif event.is_action_pressed("interact"):
 		_try_gather()
-	if event is InputEventKey and (event as InputEventKey).pressed and (event as InputEventKey).keycode == KEY_TAB:
-		_cycle_held_item()
-	if event.is_action_pressed("ui_cancel"):
+	elif event.is_action_pressed("ui_cancel"):
 		set_held_item("")
+	elif event is InputEventKey:
+		var key_event := event as InputEventKey
+		if key_event.pressed and key_event.keycode == KEY_TAB:
+			_cycle_held_item()
 
-# --- INVENTAIRE ---
 func get_inventory() -> Dictionary:
 	return GameManager.inventory
 
@@ -81,7 +50,6 @@ func add_item(item_id: String, amount: int = 1) -> void:
 func remove_item(item_id: String, amount: int = 1) -> bool:
 	return GameManager.remove_item(item_id, amount)
 
-# --- ITEM EN MAIN ---
 func get_held_item() -> String:
 	return _held_item
 
@@ -97,11 +65,11 @@ func _cycle_held_item() -> void:
 	else:
 		set_held_item("")
 
-# --- CUEILLETTE ---
 func _try_gather() -> void:
+	var nodes := get_tree().get_nodes_in_group("resource_nodes")
 	var best: Node = null
-	var best_dist  := INF
-	for node in get_tree().get_nodes_in_group("resource_nodes"):
+	var best_dist := INF
+	for node in nodes:
 		if not node.has_method("gather") or not node.can_gather():
 			continue
 		var d := global_position.distance_to(node.global_position)
@@ -120,10 +88,6 @@ func _try_gather() -> void:
 	if inv_key != "":
 		GameManager.add_item(inv_key, amount)
 		_show_pickup_popup("+" + str(amount) + " " + rname)
-<<<<<<< HEAD
->>>>>>> aaadc50 (fix: restore player.gd safe, add workbench+workbench_ui to hut.tscn)
-=======
->>>>>>> 4fcd8e38781388650a644f48d3ec26d7e2b19502
 
 func _resource_type_to_key(rtype: String) -> String:
 	match rtype:

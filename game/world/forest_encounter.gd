@@ -1,5 +1,5 @@
 # forest_encounter.gd
-# À attacher sur forest.tscn
+# A attacher sur une scene foret
 extends Node
 
 @export var encounter_interval: float = 15.0
@@ -16,14 +16,12 @@ func _ready() -> void:
 	await get_tree().process_frame
 	var players := get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
-	await get_tree().process_frame
-	var players := get_tree().get_nodes_in_group("player")
-	if players.size() > 0:
 		_player = players[0]
 
 
 func _process(delta: float) -> void:
-	if not _player: return
+	if not _player:
+		return
 	_timer += delta
 	if _timer >= encounter_interval:
 		_timer = 0.0
@@ -31,8 +29,11 @@ func _process(delta: float) -> void:
 
 
 func _roll_encounter() -> void:
-	if randf() > encounter_chance: return
+	if randf() > encounter_chance:
+		return
 	var count := randi_range(group_size_min, group_size_max)
 	NpcSpawner.spawn_random_around(_player.global_position, spawn_radius, count)
+
+
 func clear_encounters() -> void:
 	NpcSpawner.despawn_all()
