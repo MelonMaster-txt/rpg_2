@@ -1,13 +1,12 @@
-# WorkbenchUI - branché sur ItemDatabase (autoload) + GameManager
+# WorkbenchUI - branche sur ItemDatabase (autoload) + GameManager
 extends Control
 
-@onready var item_list: VBoxContainer  = $VBoxContainer/ItemList
-@onready var close_btn: Button         = $VBoxContainer/CloseButton
+@onready var item_list: VBoxContainer = $VBoxContainer/ItemList
+@onready var close_btn: Button        = $VBoxContainer/CloseButton
 
 func _ready() -> void:
 	add_to_group("workbench_ui")
 	visible = false
-	# Le bouton doit fonctionner meme quand l'arbre est pause
 	close_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 	close_btn.pressed.connect(close)
 
@@ -24,18 +23,19 @@ func _build_list() -> void:
 	for child in item_list.get_children():
 		child.queue_free()
 
-	for item_id: String in ItemDatabase.get_craftable_items():
+	var craftable: Array = ItemDatabase.get_craftable_items()
+	for item_id in craftable:
 		var data: Dictionary = ItemDatabase.get_item(item_id)
 		var can: bool = ItemDatabase.can_craft(item_id, GameManager.inventory)
 
 		var row := HBoxContainer.new()
 
 		var lbl := Label.new()
-		var recette_str: String = ", ".join(
-			data["recette"].keys().map(func(k: String) -> String:
-				return "%dx %s" % [data["recette"][k], k]
-			)
-		)
+		var keys: Array = data["recette"].keys()
+		var parts: Array = []
+		for k in keys:
+			parts.append("%dx %s" % [data["recette"][k], k])
+		var recette_str: String = ", ".join(parts)
 		lbl.text = "%s  [%s]" % [data["nom"], recette_str]
 		lbl.modulate = Color.WHITE if can else Color(0.5, 0.5, 0.5)
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -52,7 +52,8 @@ func _build_list() -> void:
 
 func _on_craft_pressed(item_id: String) -> void:
 	var data: Dictionary = ItemDatabase.get_item(item_id)
-	for resource: String in data["recette"]:
+	var resources: Array = data["recette"].keys()
+	for resource in resources:
 		GameManager.remove_item(resource, data["recette"][resource])
 	GameManager.add_item(item_id, 1)
 	_build_list()
