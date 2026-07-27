@@ -28,13 +28,25 @@ func remove_item(item: String, amount: int = 1) -> bool:
 func get_item(item: String) -> int:
 	return inventory.get(item, 0)
 
+# ─── SPAWN POSITION ───────────────────────────────────────────────────────────
+# Sauvegarde la position du joueur avant un changement de scène
+var saved_spawn_position: Vector2 = Vector2.ZERO
+var has_saved_position: bool = false
+
+func save_spawn_position(pos: Vector2) -> void:
+	saved_spawn_position = pos
+	has_saved_position = true
+
+func consume_spawn_position() -> Vector2:
+	has_saved_position = false
+	return saved_spawn_position
+
 # ─── TEMPS ────────────────────────────────────────────────────────────────────
-# 1 jour in-game = 240 secondes réelles (modifiable)
 const DAY_DURATION: float = 240.0
 
-var current_time: float = 0.0   # secondes dans la journée (0 → DAY_DURATION)
+var current_time: float = 0.0
 var current_day: int = 1
-var hour: int = 6               # on commence à 6h du matin
+var hour: int = 6
 var minute: int = 0
 var is_day: bool = true
 
@@ -47,9 +59,8 @@ func _process(delta: float) -> void:
 		current_time = 0.0
 		current_day += 1
 
-	# Convertir en heure (6h → 30h, soit 24h cyclé sur DAY_DURATION)
-	var progress: float = current_time / DAY_DURATION  # 0.0 → 1.0
-	var game_hour_float: float = 6.0 + progress * 24.0  # commence à 6h
+	var progress: float = current_time / DAY_DURATION
+	var game_hour_float: float = 6.0 + progress * 24.0
 	var real_hour: int = int(game_hour_float) % 24
 	var real_minute: int = int((game_hour_float - int(game_hour_float)) * 60)
 

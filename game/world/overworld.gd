@@ -12,5 +12,9 @@ func _ready() -> void:
 
 func _spawn_player() -> void:
 	var player: Node2D = PLAYER_SCENE.instantiate() as Node2D
-	player.global_position = _player_spawn.global_position
+	# Si une position de retour est mémorisée (ex: sortie de cahute), on l'utilise
+	if GameManager.has_saved_position:
+		player.global_position = GameManager.consume_spawn_position()
+	else:
+		player.global_position = _player_spawn.global_position
 	_player_container.add_child(player)

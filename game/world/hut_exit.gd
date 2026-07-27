@@ -27,4 +27,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _player_in_area and event.is_action_pressed("interact") and not event.is_echo():
 		_transitioning = true
 		set_process_unhandled_input(false)
+		# Mémorise la position de sortie pour respawn devant la cahute
+		var player := get_tree().get_first_node_in_group("player")
+		if player != null:
+			GameManager.save_spawn_position(player.global_position + Vector2(0, 60))
 		SceneManager.change_scene("res://game/world/scenes/overworld.tscn")
