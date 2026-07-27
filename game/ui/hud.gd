@@ -1,12 +1,12 @@
 # HUD.gd — Interface principale (inventaire + temps)
 extends CanvasLayer
 
-@onready var time_label: Label = $HUDPanel/HUDContainer/TimeRow/TimeLabel
-@onready var day_label: Label = $HUDPanel/HUDContainer/DayLabel
-@onready var bois_label: Label = $HUDPanel/HUDContainer/BoisLabel
-@onready var baies_label: Label = $HUDPanel/HUDContainer/BaiesLabel
+@onready var time_label: Label     = $HUDPanel/HUDContainer/TimeLabel
+@onready var day_label: Label      = $HUDPanel/HUDContainer/DayLabel
+@onready var bois_label: Label     = $HUDPanel/HUDContainer/BoisLabel
+@onready var baies_label: Label    = $HUDPanel/HUDContainer/BaiesLabel
 @onready var nourriture_label: Label = $HUDPanel/HUDContainer/NourritureLabel
-@onready var pierre_label: Label = $HUDPanel/HUDContainer/PierreLabel
+@onready var pierre_label: Label   = $HUDPanel/HUDContainer/PierreLabel
 
 func _ready() -> void:
 	GameManager.inventory_changed.connect(_on_inventory_changed)
@@ -17,17 +17,17 @@ func _ready() -> void:
 func _refresh_all() -> void:
 	_update_inventory()
 	time_label.text = "⏰ " + GameManager.get_time_string()
-	day_label.text = "📅 Jour %d" % GameManager.current_day
+	day_label.text  = "📅 Jour %d" % GameManager.current_day
 
 func _update_inventory() -> void:
-	bois_label.text = "🪵  %d" % GameManager.get_item("bois")
-	baies_label.text = "🍇  %d" % GameManager.get_item("baies")
+	bois_label.text       = "🪵  %d" % GameManager.get_item("bois")
+	baies_label.text      = "🍇  %d" % GameManager.get_item("baies")
 	nourriture_label.text = "🍖  %d" % GameManager.get_item("nourriture")
-	pierre_label.text = "🪨  %d" % GameManager.get_item("pierre")
+	pierre_label.text     = "🪨  %d" % GameManager.get_item("pierre")
 
-func _on_inventory_changed(item: String, _amount: int) -> void:
+func _on_inventory_changed(_item: String, _amount: int) -> void:
 	_update_inventory()
-	_flash_label(item)
+	_flash_label(_item)
 
 func _flash_label(item: String) -> void:
 	var lbl: Label = null
@@ -44,7 +44,7 @@ func _flash_label(item: String) -> void:
 
 func _on_time_changed(h: int, m: int, d: int) -> void:
 	time_label.text = "⏰ %02d:%02d" % [h, m]
-	day_label.text = "📅 Jour %d" % d
+	day_label.text  = "📅 Jour %d" % d
 
 func _on_day_night_changed(is_day: bool) -> void:
 	if is_day:

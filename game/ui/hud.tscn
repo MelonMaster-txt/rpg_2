@@ -27,40 +27,37 @@ anchors_preset = 0
 offset_left = 12.0
 offset_top = 12.0
 offset_right = 200.0
-offset_bottom = 230.0
+offset_bottom = 220.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hud")
 
 [node name="HUDContainer" type="VBoxContainer" parent="HUDPanel"]
 theme_override_constants/separation = 6
 
-[node name="TimeRow" type="HBoxContainer" parent="HUDContainer"]
-theme_override_constants/separation = 6
-
-[node name="TimeLabel" type="Label" parent="HUDContainer/TimeRow"]
+[node name="TimeLabel" type="Label" parent="HUDPanel/HUDContainer"]
 text = "⏰ 06:00"
 theme_override_font_sizes/font_size = 15
 theme_override_colors/font_color = Color(1.0, 0.95, 0.6, 1)
 
-[node name="DayLabel" type="Label" parent="HUDContainer"]
+[node name="DayLabel" type="Label" parent="HUDPanel/HUDContainer"]
 text = "📅 Jour 1"
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.8, 0.9, 1.0, 1)
 
-[node name="HSeparator" type="HSeparator" parent="HUDContainer"]
+[node name="HSeparator" type="HSeparator" parent="HUDPanel/HUDContainer"]
 theme_override_colors/separator = Color(1, 1, 1, 0.15)
 
-[node name="BoisLabel" type="Label" parent="HUDContainer"]
+[node name="BoisLabel" type="Label" parent="HUDPanel/HUDContainer"]
 text = "🪵 Bois : 0"
 theme_override_font_sizes/font_size = 13
 
-[node name="BaiesLabel" type="Label" parent="HUDContainer"]
+[node name="BaiesLabel" type="Label" parent="HUDPanel/HUDContainer"]
 text = "🍇 Baies : 0"
 theme_override_font_sizes/font_size = 13
 
-[node name="NourritureLabel" type="Label" parent="HUDContainer"]
+[node name="NourritureLabel" type="Label" parent="HUDPanel/HUDContainer"]
 text = "🍖 Nourriture : 0"
 theme_override_font_sizes/font_size = 13
 
-[node name="PierreLabel" type="Label" parent="HUDContainer"]
+[node name="PierreLabel" type="Label" parent="HUDPanel/HUDContainer"]
 text = "🪨 Pierre : 0"
 theme_override_font_sizes/font_size = 13
