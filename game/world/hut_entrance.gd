@@ -5,13 +5,8 @@ var _transitioning:  bool = false
 
 
 func _ready() -> void:
-	# IMPORTANT : ne pas connecter ici si les signaux sont déjà
-	# branchés dans la scène .tscn via l'éditeur Godot.
-	# On utilise connect() UNIQUEMENT en code — retirer les connexions
-	# dans le panneau Node > Signals de la scène pour éviter le double.
-	#
-	# Si tu préfères tout gérer en code : supprime les connexions dans
-	# l'éditeur et laisse ce bloc actif.
+	# Guard anti-double : on ne connecte que si le signal n'est pas
+	# déjà branché (ex: connexion ajoutée via l'éditeur dans le .tscn).
 	if not body_entered.is_connected(_on_body_entered):
 		body_entered.connect(_on_body_entered)
 	if not body_exited.is_connected(_on_body_exited):
