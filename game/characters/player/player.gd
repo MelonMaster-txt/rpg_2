@@ -1,3 +1,4 @@
+# player.gd — avec système inventaire + item en main
 extends CharacterBody2D
 
 @export var move_speed: float = 120.0
@@ -6,11 +7,19 @@ extends CharacterBody2D
 
 @onready var camera: Camera2D = $Camera2D
 
+# Item actuellement en main (id dans ItemDatabase)
+var _held_item: String = ""
+
+signal held_item_changed(item_id: String)
+
+# Ordre de sélection rapide avec Q/E
+const QUICK_SELECT: Array = ["pioche", "arrosoir", "graine_baie"]
+var _quick_index: int = -1
+
 func _ready() -> void:
 	add_to_group("player")
 	if camera != null:
 		camera.enabled = true
-
 
 func _physics_process(_delta: float) -> void:
 	var dir := Vector2(
@@ -19,7 +28,6 @@ func _physics_process(_delta: float) -> void:
 	).normalized()
 	velocity = dir * move_speed
 	move_and_slide()
-
 
 func _unhandled_input(event: InputEvent) -> void:
 	if camera == null:
@@ -30,7 +38,43 @@ func _unhandled_input(event: InputEvent) -> void:
 		camera.zoom *= zoom_out_factor
 	if event.is_action_pressed("interact"):
 		_try_gather()
+	# Sélection rapide d'item avec Tab
+	if event.is_action_pressed("quick_select"):
+		_cycle_held_item()
+	# Désélectionner avec RMB ou Echap
+	if event.is_action_pressed("ui_cancel"):
+		set_held_item("")
 
+# ─── INVENTAIRE ──────────────────────────────────────────────────────────────
+
+func get_inventory() -> Dictionary:
+	return GameManager.inventory
+
+func add_item(item_id: String, amount: int = 1) -> void:
+	GameManager.add_item(item_id, amount)
+
+func remove_item(item_id: String, amount: int = 1) -> bool:
+	return GameManager.remove_item(item_id, amount)
+
+# ─── ITEM EN MAIN ─────────────────────────────────────────────────────────────
+
+func get_held_item() -> String:
+	return _held_item
+
+func set_held_item(item_id: String) -> void:
+	_held_item = item_id
+	held_item_changed.emit(item_id)
+
+func _cycle_held_item() -> void:
+	_quick_index = (_quick_index + 1) % QUICK_SELECT.size()
+	var candidate = QUICK_SELECT[_quick_index]
+	# Seulement si le joueur possède cet item
+	if GameManager.get_item(candidate) > 0:
+		set_held_item(candidate)
+	else:
+		set_held_item("")
+
+# ─── CUEILLETTE ───────────────────────────────────────────────────────────────
 
 func _try_gather() -> void:
 	var nodes := get_tree().get_nodes_in_group("resource_nodes")
@@ -61,14 +105,12 @@ func _try_gather() -> void:
 		GameManager.add_item(inv_key, amount)
 		_show_pickup_popup("+" + str(amount) + " " + rname)
 
-
 func _resource_type_to_key(rtype: String) -> String:
 	match rtype:
 		"wood":            return "bois"
 		"berry", "baies":  return "baies"
 		"stone", "pierre": return "pierre"
 		_:                 return rtype
-
 
 func _show_pickup_popup(msg: String) -> void:
 	var popup := Label.new()
