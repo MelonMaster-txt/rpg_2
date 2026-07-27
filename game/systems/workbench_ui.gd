@@ -31,8 +31,7 @@ func _build_list() -> void:
 		var lbl := Label.new()
 		var recette_str: String = ", ".join(
 			data["recette"].keys().map(func(k: String) -> String:
-				return "%dx %s" % [data["recette"][k], k]
-			)
+				return "%dx %s" % [data["recette"][k], k])
 		)
 		lbl.text = "%s  [%s]" % [data["nom"], recette_str]
 		lbl.modulate = Color.WHITE if can else Color(0.5, 0.5, 0.5)
