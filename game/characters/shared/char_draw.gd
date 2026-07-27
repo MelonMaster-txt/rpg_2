@@ -19,7 +19,6 @@ func _draw() -> void:
 		return
 
 	var a := _appearance
-	# Typage explicite Color obligatoire en GDScript 4
 	var skin:   Color  = a._color_skin
 	var hair:   Color  = a._color_hair
 	var eyes:   Color  = a._color_eyes
@@ -49,9 +48,9 @@ func _draw() -> void:
 	# —— Bras ——
 	var arm_swing: float = -wo if dir in ["left", "right", "down"] else 0.0
 	draw_rect(Rect2(-W - AW, -4.0 + arm_swing, AW, AH), suit.darkened(0.1))
-	draw_rect(Rect2(-W - AW, -4.0 + arm_swing + AH, AW, 3), skin)
+	draw_rect(Rect2(-W - AW, -4.0 + arm_swing + float(AH), AW, 3), skin)
 	draw_rect(Rect2(W, -4.0 - arm_swing, AW, AH), suit.darkened(0.1))
-	draw_rect(Rect2(W, -4.0 - arm_swing + AH, AW, 3), skin)
+	draw_rect(Rect2(W, -4.0 - arm_swing + float(AH), AW, 3), skin)
 
 	# —— Cou ——
 	draw_rect(Rect2(-3, -10, 6, 6), skin)
@@ -89,8 +88,9 @@ func _draw() -> void:
 	match a._hair:
 		"short":
 			draw_rect(Rect2(-TW, head_y - 2, TW * 2, 4), hair)
-			draw_rect(Rect2(-TW, head_y, 3, TH / 2), hair)
-			draw_rect(Rect2(TW - 3, head_y, 3, TH / 2), hair)
+			# cast float pour éviter integer division sur TH / 2
+			draw_rect(Rect2(-TW, head_y, 3, float(TH) / 2.0), hair)
+			draw_rect(Rect2(TW - 3, head_y, 3, float(TH) / 2.0), hair)
 		"medium":
 			draw_rect(Rect2(-TW, head_y - 3, TW * 2, 5), hair)
 			draw_rect(Rect2(-TW, head_y, 3, TH), hair)

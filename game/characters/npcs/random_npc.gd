@@ -20,10 +20,9 @@ var _state:       String = "idle"
 const NAMES_MALE   := ["Bjorn","Ulf","Ragnar","Gunnar","Leif","Sigurd","Erik","Ivar"]
 const NAMES_FEMALE := ["Astrid","Freya","Sigrid","Hilde","Runa","Ylva","Ingrid","Solveig"]
 
-var _wander_timer: float  = 2.0   # délai initial pour pas agir frame 1
+var _wander_timer: float  = 2.0
 var _wander_dir:   Vector2 = Vector2.ZERO
 
-# Données en attente si randomize_full appelé avant _ready
 var _pending_randomize: bool = false
 var _pending_seed:      int  = -1
 
@@ -34,15 +33,12 @@ func _ready() -> void:
 	_name_label = $NameLabel
 	$InteractionArea.body_entered.connect(_on_player_enter)
 	$InteractionArea.body_exited.connect(_on_player_exit)
-	# Appliquer le randomize en attente s'il a été demandé avant _ready
 	if _pending_randomize:
 		_do_randomize(_pending_seed)
 
 
-# Appelé par NpcSpawner — peut être appelé avant _ready
 func randomize_full(seed_val: int = -1) -> void:
 	if not is_inside_tree() or _appearance == null:
-		# _ready pas encore passé, on mémorise
 		_pending_randomize = true
 		_pending_seed      = seed_val
 		return
@@ -54,7 +50,6 @@ func _do_randomize(seed_val: int) -> void:
 	if seed_val >= 0:
 		seed(seed_val)
 	_appearance.randomize_appearance()
-	# On lit le genre via la propriété publique (pas la var privée)
 	var gender: String = _appearance.get_appearance_data().get("gender", "male")
 	if npc_name == "":
 		npc_name = NAMES_MALE.pick_random() if gender == "male" else NAMES_FEMALE.pick_random()
@@ -156,6 +151,6 @@ func _update_facing() -> void:
 		dominant = "down" if velocity.y > 0 else "up"
 	if _appearance:
 		_appearance.set_direction(dominant)
-		# Correction integer division : forcer float avant modulo
+		# Correction integer division : forcer le cast float
 		var f: int = (Engine.get_process_frames() / 8) % 4 + 1
 		_appearance.set_walk_frame(f)
