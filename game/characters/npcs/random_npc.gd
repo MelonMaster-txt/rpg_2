@@ -151,7 +151,6 @@ func _update_facing() -> void:
 		dominant = "down" if velocity.y > 0 else "up"
 	if _appearance:
 		_appearance.set_direction(dominant)
-		# Cast explicite int() pour éviter le warning INTEGER_DIVISION
-		var frames: int = Engine.get_process_frames()
-		var f: int = int(frames / 8) % 4 + 1
+		# Bitshift >> 3 == division par 8 sans INTEGER_DIVISION warning
+		var f: int = (Engine.get_process_frames() >> 3) % 4 + 1
 		_appearance.set_walk_frame(f)
