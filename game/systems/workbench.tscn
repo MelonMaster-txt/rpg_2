@@ -1,21 +1,21 @@
-[gd_scene load_steps=3 format=3 uid="uid://workbench"]
+[gd_scene format=3 uid="uid://workbench"]
 
-[ext_resource type="Script" path="res://game/systems/workbench.gd" id="1_wb"]
+[ext_resource type="Script" uid="uid://chbveiot1jpj3" path="res://game/systems/workbench.gd" id="1_wb"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
 size = Vector2(48, 32)
 
-[node name="Workbench" type="Area2D"]
+[node name="Workbench" type="Area2D" unique_id=1741741687]
 script = ExtResource("1_wb")
 
-[node name="Visual" type="ColorRect" parent="."]
+[node name="Visual" type="ColorRect" parent="." unique_id=1693339125]
 offset_left = -24.0
 offset_top = -16.0
 offset_right = 24.0
 offset_bottom = 16.0
 color = Color(0.45, 0.25, 0.1, 1)
 
-[node name="Label" type="Label" parent="."]
+[node name="Label" type="Label" parent="." unique_id=164823824]
 offset_left = -24.0
 offset_top = -8.0
 offset_right = 24.0
@@ -23,7 +23,6 @@ offset_bottom = 8.0
 text = "WB"
 horizontal_alignment = 1
 vertical_alignment = 1
-add_theme_font_size_override("font_size") = 9
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=992034512]
 shape = SubResource("RectangleShape2D_1")
