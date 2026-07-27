@@ -151,6 +151,7 @@ func _update_facing() -> void:
 		dominant = "down" if velocity.y > 0 else "up"
 	if _appearance:
 		_appearance.set_direction(dominant)
-		# Correction integer division : forcer le cast float
-		var f: int = (Engine.get_process_frames() / 8) % 4 + 1
+		# Cast explicite int() pour éviter le warning INTEGER_DIVISION
+		var frames: int = Engine.get_process_frames()
+		var f: int = int(frames / 8) % 4 + 1
 		_appearance.set_walk_frame(f)
