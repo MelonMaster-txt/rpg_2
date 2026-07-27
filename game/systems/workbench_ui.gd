@@ -1,12 +1,14 @@
 # WorkbenchUI - branché sur ItemDatabase (autoload) + GameManager
 extends Control
 
-@onready var item_list: VBoxContainer = $VBoxContainer/ItemList
-@onready var close_btn: Button = $VBoxContainer/CloseButton
+@onready var item_list: VBoxContainer  = $VBoxContainer/ItemList
+@onready var close_btn: Button         = $VBoxContainer/CloseButton
 
 func _ready() -> void:
 	add_to_group("workbench_ui")
 	visible = false
+	# Le bouton doit fonctionner meme quand l'arbre est pause
+	close_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 	close_btn.pressed.connect(close)
 
 func open() -> void:
@@ -31,7 +33,8 @@ func _build_list() -> void:
 		var lbl := Label.new()
 		var recette_str: String = ", ".join(
 			data["recette"].keys().map(func(k: String) -> String:
-				return "%dx %s" % [data["recette"][k], k])
+				return "%dx %s" % [data["recette"][k], k]
+			)
 		)
 		lbl.text = "%s  [%s]" % [data["nom"], recette_str]
 		lbl.modulate = Color.WHITE if can else Color(0.5, 0.5, 0.5)
@@ -40,6 +43,7 @@ func _build_list() -> void:
 		var btn := Button.new()
 		btn.text = "Crafter"
 		btn.disabled = not can
+		btn.process_mode = Node.PROCESS_MODE_ALWAYS
 		btn.pressed.connect(_on_craft_pressed.bind(item_id))
 
 		row.add_child(lbl)

@@ -5,6 +5,7 @@ extends CharacterBody2D
 @export var zoom_out_factor: float = 0.8
 
 @onready var camera: Camera2D = $Camera2D
+@onready var appearance: Node = $CharacterAppearance
 
 var _held_item: String = ""
 signal held_item_changed(item_id: String)
@@ -12,18 +13,45 @@ signal held_item_changed(item_id: String)
 const QUICK_SELECT: Array[String] = ["pioche", "arrosoir", "graine_baie"]
 var _quick_index: int = -1
 
+# Animation
+var _anim_timer: float = 0.0
+const ANIM_STEP: float = 0.12
+var _walk_frame: int = 0
+
 func _ready() -> void:
 	add_to_group("player")
 	if camera != null:
 		camera.enabled = true
 
-func _physics_process(_delta: float) -> void:
+func _physics_process(delta: float) -> void:
 	var dir := Vector2(
 		Input.get_action_strength("ui_right") - Input.get_action_strength("ui_left"),
 		Input.get_action_strength("ui_down") - Input.get_action_strength("ui_up")
 	).normalized()
 	velocity = dir * move_speed
 	move_and_slide()
+	_update_animation(dir, delta)
+
+func _update_animation(dir: Vector2, delta: float) -> void:
+	if appearance == null:
+		return
+	if dir != Vector2.ZERO:
+		# Direction
+		if abs(dir.x) > abs(dir.y):
+			appearance.set_direction("right" if dir.x > 0 else "left")
+		else:
+			appearance.set_direction("down" if dir.y > 0 else "up")
+		# Frame de marche
+		_anim_timer += delta
+		if _anim_timer >= ANIM_STEP:
+			_anim_timer = 0.0
+			_walk_frame = (_walk_frame + 1) % 8
+			appearance.set_walk_frame(_walk_frame)
+	else:
+		# Idle : frame 0
+		_walk_frame = 0
+		_anim_timer = 0.0
+		appearance.set_walk_frame(0)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if camera == null:
@@ -32,8 +60,6 @@ func _unhandled_input(event: InputEvent) -> void:
 		camera.zoom *= zoom_in_factor
 	elif event.is_action_pressed("zoom_out"):
 		camera.zoom *= zoom_out_factor
-	elif event.is_action_pressed("interact"):
-		_try_gather()
 	elif event.is_action_pressed("ui_cancel"):
 		set_held_item("")
 	elif event is InputEventKey:
@@ -64,44 +90,3 @@ func _cycle_held_item() -> void:
 		set_held_item(candidate)
 	else:
 		set_held_item("")
-
-func _try_gather() -> void:
-	var nodes := get_tree().get_nodes_in_group("resource_nodes")
-	var best: Node = null
-	var best_dist := INF
-	for node in nodes:
-		if not node.has_method("gather") or not node.can_gather():
-			continue
-		var d := global_position.distance_to(node.global_position)
-		if d < best_dist:
-			best_dist = d
-			best = node
-	if best == null:
-		return
-	var result: Dictionary = best.gather()
-	if result.is_empty():
-		return
-	var rtype: String = result.get("type", "")
-	var amount: int = result.get("amount", 1)
-	var rname: String = result.get("name", rtype)
-	var inv_key: String = _resource_type_to_key(rtype)
-	if inv_key != "":
-		GameManager.add_item(inv_key, amount)
-		_show_pickup_popup("+" + str(amount) + " " + rname)
-
-func _resource_type_to_key(rtype: String) -> String:
-	match rtype:
-		"wood": return "bois"
-		"berry", "baies": return "baies"
-		"stone", "pierre": return "pierre"
-		_: return rtype
-
-func _show_pickup_popup(msg: String) -> void:
-	var popup := Label.new()
-	popup.text = msg
-	popup.position = global_position + Vector2(-20.0, -60.0)
-	get_tree().current_scene.add_child(popup)
-	var tw := create_tween()
-	tw.tween_property(popup, "position", popup.position + Vector2(0.0, -40.0), 0.8)
-	tw.parallel().tween_property(popup, "modulate:a", 0.0, 0.8)
-	tw.tween_callback(popup.queue_free)
