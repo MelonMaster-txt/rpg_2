@@ -1,10 +1,15 @@
-[gd_scene format=3 uid="uid://dlkfxxooxugt0"]
+[gd_scene load_steps=5 format=3 uid="uid://dlkfxxooxugt0"]
 
 [ext_resource type="Script" uid="uid://dwxh8sy4xhcpb" path="res://game/world/hut.gd" id="1_734ri"]
 [ext_resource type="Script" uid="uid://g4wxvpoyb0lo" path="res://game/world/hut_exit.gd" id="2_kblvs"]
+[ext_resource type="Script" path="res://game/systems/workbench.gd" id="3_wb"]
+[ext_resource type="Script" path="res://game/systems/workbench_ui.gd" id="4_wbui"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_5hw72"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_exit"]
 size = Vector2(64, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wb"]
+size = Vector2(48, 32)
 
 [node name="Hut" type="Node2D" unique_id=634328892]
 script = ExtResource("1_734ri")
@@ -23,7 +28,7 @@ position = Vector2(0, 200)
 script = ExtResource("2_kblvs")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HutExit" unique_id=872173620]
-shape = SubResource("RectangleShape2D_5hw72")
+shape = SubResource("RectangleShape2D_exit")
 
 [node name="ExitLabel" type="Label" parent="HutExit" unique_id=222222221]
 offset_left = -40.0
@@ -34,6 +39,73 @@ text = "[E] Sortir"
 horizontal_alignment = 1
 
 [node name="Furniture" type="Node2D" parent="." unique_id=1303240228]
+
+[node name="Workbench" type="Area2D" parent="Furniture" unique_id=555000001]
+position = Vector2(-80, -60)
+script = ExtResource("3_wb")
+
+[node name="Visual" type="ColorRect" parent="Furniture/Workbench" unique_id=555000002]
+offset_left = -24.0
+offset_top = -16.0
+offset_right = 24.0
+offset_bottom = 16.0
+color = Color(0.45, 0.25, 0.1, 1)
+
+[node name="WBLabel" type="Label" parent="Furniture/Workbench" unique_id=555000003]
+offset_left = -24.0
+offset_top = -8.0
+offset_right = 24.0
+offset_bottom = 8.0
+text = "WB"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Furniture/Workbench" unique_id=555000004]
+shape = SubResource("RectangleShape2D_wb")
+
+[node name="WorkbenchUILayer" type="CanvasLayer" parent="Furniture/Workbench" unique_id=555000005]
+layer = 20
+
+[node name="WorkbenchUI" type="Control" parent="Furniture/Workbench/WorkbenchUILayer" unique_id=555000006]
+script = ExtResource("4_wbui")
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -200.0
+offset_right = 160.0
+offset_bottom = 200.0
+
+[node name="Background" type="ColorRect" parent="Furniture/Workbench/WorkbenchUILayer/WorkbenchUI" unique_id=555000007]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.12, 0.1, 0.08, 0.95)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Furniture/Workbench/WorkbenchUILayer/WorkbenchUI" unique_id=555000008]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = -12.0
+offset_bottom = -12.0
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Furniture/Workbench/WorkbenchUILayer/WorkbenchUI/VBoxContainer" unique_id=555000009]
+text = "⚒ Établi"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="Furniture/Workbench/WorkbenchUILayer/WorkbenchUI/VBoxContainer" unique_id=555000010]
+
+[node name="ItemList" type="VBoxContainer" parent="Furniture/Workbench/WorkbenchUILayer/WorkbenchUI/VBoxContainer" unique_id=555000011]
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
+[node name="CloseButton" type="Button" parent="Furniture/Workbench/WorkbenchUILayer/WorkbenchUI/VBoxContainer" unique_id=555000012]
+text = "Fermer"
 
 [node name="Family" type="Node2D" parent="." unique_id=977361465]
 

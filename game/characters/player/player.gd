@@ -1,4 +1,3 @@
-# player.gd — avec système inventaire + item en main
 extends CharacterBody2D
 
 @export var move_speed: float = 120.0
@@ -12,7 +11,6 @@ var _moving:     bool  = false
 
 
 var _held_item: String = ""
-
 signal held_item_changed(item_id: String)
 
 const QUICK_SELECT: Array[String] = ["pioche", "arrosoir", "graine_baie"]
@@ -61,15 +59,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		camera.zoom *= 0.8
 	if event.is_action_pressed("interact"):
 		_try_gather()
-	# Tab = cycle item en main
-	if event is InputEventKey and event.pressed and event.keycode == KEY_TAB:
+	if event is InputEventKey and (event as InputEventKey).pressed and (event as InputEventKey).keycode == KEY_TAB:
 		_cycle_held_item()
-	# Echap = déséquiper
 	if event.is_action_pressed("ui_cancel"):
 		set_held_item("")
 
-# ─── INVENTAIRE ──────────────────────────────────────────────────────────────
-
+# --- INVENTAIRE ---
 func get_inventory() -> Dictionary:
 	return GameManager.inventory
 
@@ -79,8 +74,7 @@ func add_item(item_id: String, amount: int = 1) -> void:
 func remove_item(item_id: String, amount: int = 1) -> bool:
 	return GameManager.remove_item(item_id, amount)
 
-# ─── ITEM EN MAIN ─────────────────────────────────────────────────────────────
-
+# --- ITEM EN MAIN ---
 func get_held_item() -> String:
 	return _held_item
 
@@ -96,12 +90,16 @@ func _cycle_held_item() -> void:
 	else:
 		set_held_item("")
 
-# ─── CUEILLETTE ───────────────────────────────────────────────────────────────
-
+# --- CUEILLETTE ---
 func _try_gather() -> void:
 	var best: Node = null
+<<<<<<< HEAD
 	var best_dist  := INF
 	for node in get_tree().get_nodes_in_group("resource_nodes"):
+=======
+	var best_dist := INF
+	for node in nodes:
+>>>>>>> aaadc50 (fix: restore player.gd safe, add workbench+workbench_ui to hut.tscn)
 		if not node.has_method("gather") or not node.can_gather():
 			continue
 		var d := global_position.distance_to(node.global_position)
@@ -113,14 +111,24 @@ func _try_gather() -> void:
 	var result: Dictionary = best.gather()
 	if result.is_empty():
 		return
+<<<<<<< HEAD
 	GameManager.add_item(_to_inv_key(result.get("type", "")), result.get("amount", 1))
+=======
+	var rtype: String = result.get("type", "")
+	var amount: int = result.get("amount", 1)
+	var rname: String = result.get("name", rtype)
+	var inv_key: String = _resource_type_to_key(rtype)
+	if inv_key != "":
+		GameManager.add_item(inv_key, amount)
+		_show_pickup_popup("+" + str(amount) + " " + rname)
+>>>>>>> aaadc50 (fix: restore player.gd safe, add workbench+workbench_ui to hut.tscn)
 
 func _resource_type_to_key(rtype: String) -> String:
 	match rtype:
-		"wood":            return "bois"
-		"berry", "baies":  return "baies"
+		"wood": return "bois"
+		"berry", "baies": return "baies"
 		"stone", "pierre": return "pierre"
-		_:                 return rtype
+		_: return rtype
 
 func _show_pickup_popup(msg: String) -> void:
 	var popup := Label.new()
