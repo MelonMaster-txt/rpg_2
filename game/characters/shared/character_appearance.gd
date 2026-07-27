@@ -38,9 +38,9 @@ const DIR_ROW := {
 }
 
 # ── Options disponibles ──────────────────────────────────────
-const GENDERS  := ["male", "female"]
-const OUTFITS  := ["peasant", "guard", "mage", "farmer"]
-const HAIRS    := ["short", "medium", "long", "bald"]
+const GENDERS    := ["male", "female"]
+const OUTFITS    := ["peasant", "guard", "mage", "farmer"]
+const HAIRS      := ["short", "medium", "long", "bald"]
 const EYE_STYLES := ["normal", "closed", "angry", "sad"]
 
 # ── State ──────────────────────────────────────────────────────────────
@@ -50,13 +50,12 @@ var _hair:      String = "medium"
 var _eye_style: String = "normal"
 
 var _direction: String = "down"
-var _frame:     int    = 0          # 0 = idle, 1-8 = walk
+var _frame:     int    = 0
 
-# Couleurs (toutes blanches par défaut = aspect "gris" des sprites)
-var _color_skin:   Color = Color(0.85, 0.70, 0.55)  # teinte peau défaut
-var _color_hair:   Color = Color(0.40, 0.25, 0.10)  # brun défaut
-var _color_eyes:   Color = Color(0.20, 0.50, 0.80)  # bleu défaut
-var _color_outfit: Color = Color(0.65, 0.45, 0.25)  # paysan défaut
+var _color_skin:   Color = Color(0.85, 0.70, 0.55)
+var _color_hair:   Color = Color(0.40, 0.25, 0.10)
+var _color_eyes:   Color = Color(0.20, 0.50, 0.80)
+var _color_outfit: Color = Color(0.65, 0.45, 0.25)
 
 # ── Nodes Sprite2D ──────────────────────────────────────────────
 var _s_hair_back:  Sprite2D
@@ -66,32 +65,37 @@ var _s_head:       Sprite2D
 var _s_eyes:       Sprite2D
 var _s_hair_front: Sprite2D
 
+var _layers_ready: bool = false
+
 
 # ════════════════════════════════════════════════════════════════════
 #  INIT
 # ════════════════════════════════════════════════════════════════════
 func _ready() -> void:
-	_build_layers()
-	_refresh_all_textures()
-	_apply_frame()
+	# On diffère la construction des layers au prochain frame
+	# pour éviter "Parent node is busy setting up children"
+	call_deferred("_build_layers_deferred")
 
 
-func _build_layers() -> void:
+func _build_layers_deferred() -> void:
 	_s_hair_back  = _make_sprite(0)
 	_s_body       = _make_sprite(1)
 	_s_outfit     = _make_sprite(2)
 	_s_head       = _make_sprite(3)
 	_s_eyes       = _make_sprite(4)
 	_s_hair_front = _make_sprite(5)
+	_layers_ready = true
+	_refresh_all_textures()
+	_apply_frame()
 
 
 func _make_sprite(z: int) -> Sprite2D:
-	var s          := Sprite2D.new()
-	s.z_index       = z
-	s.centered      = true
-	s.hframes       = HFRAMES
-	s.vframes       = VFRAMES
-	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST  # pixel art net
+	var s := Sprite2D.new()
+	s.z_index        = z
+	s.centered       = true
+	s.hframes        = HFRAMES
+	s.vframes        = VFRAMES
+	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	get_parent().add_child(s)
 	return s
 
@@ -103,6 +107,7 @@ func _make_sprite(z: int) -> Sprite2D:
 func set_gender(g: String) -> void:
 	if g not in GENDERS: return
 	_gender = g
+	if not _layers_ready: return
 	_reload_body()
 	_reload_head()
 	_apply_frame()
@@ -111,6 +116,7 @@ func set_gender(g: String) -> void:
 func set_outfit(o: String) -> void:
 	if o not in OUTFITS: return
 	_outfit = o
+	if not _layers_ready: return
 	_reload_outfit()
 	_apply_frame()
 
@@ -118,6 +124,7 @@ func set_outfit(o: String) -> void:
 func set_hair(h: String) -> void:
 	if h not in HAIRS: return
 	_hair = h
+	if not _layers_ready: return
 	_reload_hair()
 	_apply_frame()
 
@@ -125,6 +132,7 @@ func set_hair(h: String) -> void:
 func set_eye_style(s: String) -> void:
 	if s not in EYE_STYLES: return
 	_eye_style = s
+	if not _layers_ready: return
 	_reload_eyes()
 	_apply_frame()
 
@@ -135,23 +143,27 @@ func set_eye_style(s: String) -> void:
 
 func set_skin_color(c: Color) -> void:
 	_color_skin = c
-	_s_body.modulate  = c
-	_s_head.modulate  = c
+	if not _layers_ready: return
+	_s_body.modulate = c
+	_s_head.modulate = c
 
 
 func set_hair_color(c: Color) -> void:
 	_color_hair = c
+	if not _layers_ready: return
 	_s_hair_back.modulate  = c
 	_s_hair_front.modulate = c
 
 
 func set_eyes_color(c: Color) -> void:
 	_color_eyes = c
+	if not _layers_ready: return
 	_s_eyes.modulate = c
 
 
 func set_outfit_color(c: Color) -> void:
 	_color_outfit = c
+	if not _layers_ready: return
 	_s_outfit.modulate = c
 
 
@@ -162,12 +174,14 @@ func set_outfit_color(c: Color) -> void:
 func set_direction(dir: String) -> void:
 	if dir not in DIR_ROW: return
 	_direction = dir
-	_apply_frame()
+	if _layers_ready:
+		_apply_frame()
 
 
 func set_walk_frame(f: int) -> void:
 	_frame = clampi(f, 0, HFRAMES - 1)
-	_apply_frame()
+	if _layers_ready:
+		_apply_frame()
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -219,7 +233,6 @@ func _refresh_all_textures() -> void:
 	_reload_head()
 	_reload_eyes()
 	_reload_hair()
-	# Applique les couleurs courantes
 	set_skin_color(_color_skin)
 	set_hair_color(_color_hair)
 	set_eyes_color(_color_eyes)
@@ -266,9 +279,8 @@ func _load(filename: String) -> Texture2D:
 # ════════════════════════════════════════════════════════════════════
 
 func _apply_frame() -> void:
-	var row: int = DIR_ROW.get(_direction, 0)
-	var col: int = _frame
-	# frame index dans une sheet hframes×vframes
+	var row:  int = DIR_ROW.get(_direction, 0)
+	var col:  int = _frame
 	var fidx: int = row * HFRAMES + col
 	for spr in [_s_hair_back, _s_body, _s_outfit, _s_head, _s_eyes, _s_hair_front]:
 		if spr and spr.texture:
