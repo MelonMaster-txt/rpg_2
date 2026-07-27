@@ -1,3 +1,9 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# Fichiers auto-generés par Godot (ne pas commiter)
+*.uid
+*.tmp
+*.import
+.import/
