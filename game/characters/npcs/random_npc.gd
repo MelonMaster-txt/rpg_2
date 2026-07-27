@@ -1,7 +1,7 @@
 # random_npc.gd
 # ──────────────────────────────────────────────────────────────────────
 # NPC générique rencontrable dans la forêt.
-# Utilise CharacterAppearance pour le visuel (layers LPC + RGB modulate).
+# Utilise CharacterAppearance pour le visuel (layers LPC + RGB modulate)
 #
 # SCÈNE ATTENDUE : random_npc.tscn
 #   RandomNPC  (CharacterBody2D)  ← ce script
@@ -99,7 +99,7 @@ func _die() -> void:
 
 
 func capture() -> Dictionary:
-	var data := _appearance.get_appearance_data()
+	var data: Dictionary = _appearance.get_appearance_data()
 	data["name"]     = npc_name
 	data["strength"] = strength
 	data["max_hp"]   = max_hp
