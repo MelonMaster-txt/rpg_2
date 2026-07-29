@@ -1,7 +1,7 @@
 # noise_debug.gd - Panel debug noise, toggle avec F2
 extends PanelContainer
 
-const SAVE_PATH   := "user://noise_settings.cfg"
+const SAVE_PATH    := "user://noise_settings.cfg"
 const PREVIEW_SIZE := 256
 
 var _g_seed        : int   = 42
@@ -18,7 +18,7 @@ var _d_freq        : float = 0.008
 var _d_octaves     : int   = 2
 var _accent_thr    : float = 0.4
 
-var _thresholds: Array[float] = [0.3, 0.1, -0.1, -0.3]
+var _thresholds: Array[float]  = [0.3, 0.1, -0.1, -0.3]
 var _grass_colors: Array[Color] = [
 	Color(0.27, 0.58, 0.18), Color(0.24, 0.55, 0.16),
 	Color(0.22, 0.52, 0.15), Color(0.18, 0.44, 0.12),
@@ -48,19 +48,19 @@ const FRACTAL_TYPES := [
 ]
 
 func _ready() -> void:
-	add_to_group("noise_debug_panel")
+	# On met le groupe sur le CanvasLayer PARENT (le root de la scene noise_debug.tscn)
+	# C'est lui qu'on toggle pour afficher/cacher tout le panel
+	get_parent().add_to_group("noise_debug_root")
 	custom_minimum_size = Vector2(370, 0)
 	_load_cfg()
 	_build_ui()
 	_refresh()
 
 func _build_ui() -> void:
-	# Layout principal : titre + boutons fixes en haut, scroll en dessous
 	var outer := VBoxContainer.new()
 	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(outer)
 
-	# --- TITRE + ACTIONS FIXES (toujours visibles) ---
 	_add_title(outer, "Ground Painter - Noise Debug  [F2]")
 
 	_status_lbl = Label.new()
@@ -72,27 +72,26 @@ func _build_ui() -> void:
 	outer.add_child(btn_row)
 
 	var btn_save := Button.new()
-	btn_save.text = "💾 Sauvegarder"
+	btn_save.text = "Sauvegarder"
 	btn_save.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn_save.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
 	btn_save.pressed.connect(_save_cfg)
 	btn_row.add_child(btn_save)
 
 	var btn_repaint := Button.new()
-	btn_repaint.text = "🖌 Repaint"
+	btn_repaint.text = "Repaint"
 	btn_repaint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn_repaint.pressed.connect(_repaint_all_chunks)
 	btn_row.add_child(btn_repaint)
 
 	var btn_load := Button.new()
-	btn_load.text = "🔄 Recharger"
+	btn_load.text = "Recharger"
 	btn_load.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	btn_load.pressed.connect(func(): _load_cfg(); _refresh())
 	btn_row.add_child(btn_load)
 
-	# --- SCROLL : tout le reste ---
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(370, 580)
+	scroll.custom_minimum_size = Vector2(370, 560)
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	outer.add_child(scroll)
 
@@ -108,10 +107,11 @@ func _build_ui() -> void:
 
 	var live_row := HBoxContainer.new()
 	vbox.add_child(live_row)
-	var live_lbl := Label.new(); live_lbl.text = "Repaint chunks live"
-	live_lbl.custom_minimum_size.x = 180; live_row.add_child(live_lbl)
+	var live_lbl := Label.new()
+	live_lbl.text = "Repaint chunks live"
+	live_lbl.custom_minimum_size.x = 180
+	live_row.add_child(live_lbl)
 	var live_toggle := CheckButton.new()
-	live_toggle.button_pressed = false
 	live_toggle.toggled.connect(func(on: bool): _live_mode = on)
 	live_row.add_child(live_toggle)
 
@@ -211,13 +211,13 @@ func _load_cfg() -> void:
 
 func _build_ground_noise() -> FastNoiseLite:
 	var n := FastNoiseLite.new()
-	n.noise_type         = _g_type as FastNoiseLite.NoiseType
-	n.seed               = _g_seed
-	n.frequency          = _g_freq
-	n.fractal_type       = _g_fbm as FastNoiseLite.FractalType
-	n.fractal_octaves    = _g_octaves
-	n.fractal_lacunarity = _g_lacunarity
-	n.fractal_gain       = _g_gain
+	n.noise_type          = _g_type as FastNoiseLite.NoiseType
+	n.seed                = _g_seed
+	n.frequency           = _g_freq
+	n.fractal_type        = _g_fbm as FastNoiseLite.FractalType
+	n.fractal_octaves     = _g_octaves
+	n.fractal_lacunarity  = _g_lacunarity
+	n.fractal_gain        = _g_gain
 	n.domain_warp_enabled = _g_warp_amp > 0.0
 	if _g_warp_amp > 0.0:
 		n.domain_warp_amplitude = _g_warp_amp
@@ -267,10 +267,10 @@ func _add_option(p: VBoxContainer, label: String, items: Array, current_val: int
 func _add_slider(p: VBoxContainer, label: String, min_v: float, max_v: float, default_v: float, step_v: float, on_change: Callable) -> void:
 	var row := HBoxContainer.new(); p.add_child(row)
 	var lbl := Label.new(); lbl.text = label; lbl.custom_minimum_size.x = 100; row.add_child(lbl)
-	var s := HSlider.new(); s.min_value=min_v; s.max_value=max_v; s.value=default_v; s.step=step_v
+	var s := HSlider.new(); s.min_value = min_v; s.max_value = max_v; s.value = default_v; s.step = step_v
 	s.size_flags_horizontal = Control.SIZE_EXPAND_FILL; row.add_child(s)
-	var vl := Label.new(); vl.text = str(snapped(default_v,step_v)); vl.custom_minimum_size.x=48; row.add_child(vl)
-	s.value_changed.connect(func(v: float): vl.text=str(snapped(v,step_v)); on_change.call(v))
+	var vl := Label.new(); vl.text = str(snapped(default_v, step_v)); vl.custom_minimum_size.x = 48; row.add_child(vl)
+	s.value_changed.connect(func(v: float): vl.text = str(snapped(v, step_v)); on_change.call(v))
 
 func _add_color_row(p: VBoxContainer, colors: Array, labels: Array, on_change: Callable) -> void:
 	var row := HBoxContainer.new(); p.add_child(row)
@@ -278,6 +278,6 @@ func _add_color_row(p: VBoxContainer, colors: Array, labels: Array, on_change: C
 		var col := VBoxContainer.new(); row.add_child(col)
 		var lbl := Label.new(); lbl.text = labels[i] if i < labels.size() else str(i)
 		lbl.add_theme_font_size_override("font_size", 9); col.add_child(lbl)
-		var cp := ColorPickerButton.new(); cp.color = colors[i]; cp.custom_minimum_size = Vector2(48,28)
+		var cp := ColorPickerButton.new(); cp.color = colors[i]; cp.custom_minimum_size = Vector2(48, 28)
 		var idx := i
 		cp.color_changed.connect(func(c: Color): on_change.call(idx, c)); col.add_child(cp)

@@ -26,11 +26,11 @@ func _ready() -> void:
 	debug_menu.name = "DebugMenu"
 	add_child(debug_menu)
 
-	# Noise debug F2 - instancie la scene directement (elle contient deja son CanvasLayer)
-	# On la cache via le groupe "noise_debug_panel" dans le script
-	var nd := NOISE_DEBUG_SCN.instantiate()
-	nd.visible = false
-	add_child(nd)
+	# Noise debug F2 - la scene contient un CanvasLayer root
+	# On instantie et on cache le CanvasLayer root directement
+	var nd_scene := NOISE_DEBUG_SCN.instantiate()
+	nd_scene.visible = false  # CanvasLayer root cache au depart
+	add_child(nd_scene)
 
 	# Listener F2
 	var listener := Node.new()
