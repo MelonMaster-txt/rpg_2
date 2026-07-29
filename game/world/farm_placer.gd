@@ -2,7 +2,8 @@
 extends Node2D
 
 const FARM_TILE_SCENE := preload("res://game/world/farm_tile.tscn")
-const GRID := 32
+const GRID:      int   = 32
+const GRID_F:    float = 32.0  # version float pour les divisions sans warning
 
 var _container: Node = null
 var _tile_map: Dictionary = {}
@@ -30,7 +31,7 @@ func interact_at(world_pos: Vector2) -> bool:
 		if is_instance_valid(existing) and existing.has_method("_try_interact"):
 			existing._try_interact()
 		return true
-	# Nouvelle tuile — nom different de "tile" pour eviter le warning de shadowing
+	# Nouvelle tuile
 	var new_tile: Node2D = FARM_TILE_SCENE.instantiate()
 	new_tile.global_position = grid_pos
 	_container.add_child(new_tile)
@@ -39,10 +40,10 @@ func interact_at(world_pos: Vector2) -> bool:
 	return true
 
 func _snap(pos: Vector2) -> Vector2:
-	var half := GRID / 2.0
+	var half: float = GRID_F * 0.5
 	return Vector2(
-		floor(pos.x / GRID) * GRID + half,
-		floor(pos.y / GRID) * GRID + half
+		floor(pos.x / GRID_F) * GRID_F + half,
+		floor(pos.y / GRID_F) * GRID_F + half
 	)
 
 func _key(pos: Vector2) -> String:
