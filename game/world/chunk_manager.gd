@@ -1,118 +1,175 @@
-# chunk_manager.gd
-# Gere le chargement / déchargement des chunks autour du joueur.
-#
-# OPTIMISATIONS :
-#  1. File d'attente avec BUDGET TEMPS : on charge autant de chunks que possible
-#     dans une fenêtre de X millisecondes par frame (pas de compteur fixe).
-#  2. Tri par distance : toujours charger le plus proche d'abord.
-#  3. Visibilité : les chunks hors caméra sont mis en mode "invisible"
-#     (process_mode = DISABLED) pour économiser CPU et draw calls.
-#  4. Preload anticipé : au démarrage on charge load_radius+1 pour avoir
-#     une marge avant que le joueur ne bouge.
+## ChunkManager — Pipeline asynchrone inspiré de Minecraft
+##
+## Architecture en 3 couches :
+##   1. TICKETS  : chaque chunk a un niveau de priorité (ACTIVE / LAZY / SLEEP)
+##   2. THREAD   : tout le calcul de génération se fait hors main thread
+##   3. POOL     : les nodes chunk sont recyclés, jamais détruits/recréés
 extends Node2D
 
 const CHUNK_NODE_SCENE: PackedScene = preload("res://game/world/chunk_node.tscn")
 
-@export var chunk_size:          int   = 512
-@export var load_radius:         int   = 1
-## Budget en millisecondes alloué au chargement de chunks par frame
-## 4ms = très lisse, 8ms = chargement plus rapide, 16ms = tout en une frame (ancien comportement)
-@export var load_budget_ms:      float = 4.0
-@export var debug_draw_chunks:   bool  = false
+# --- Niveaux de ticket (inspiré Minecraft) ---
+enum TicketLevel {
+	ACTIVE = 0,   # Chunk visible, pleinement actif (rendu + process)
+	LAZY   = 1,   # Chunk en mémoire, invisible, process désactivé
+	SLEEP  = 2,   # Chunk dans le pool, non attaché à la scène
+}
 
-var _loaded_chunks:      Dictionary     = {}
-var _player:             Node2D         = null
-var _last_player_chunk:  Vector2i       = Vector2i(999999, 999999)
-var _find_player_cooldown: int          = 0
-var _load_queue:         Array[Vector2i] = []
-## Cache de la région visible en chunk-coords (mis à jour chaque frame)
-var _visible_rect:       Rect2i          = Rect2i()
+@export var chunk_size:         int  = 512
+@export var load_radius:        int  = 1
+## Rayon supplémentaire chargé en LAZY (en mémoire mais inactif)
+@export var lazy_radius:        int  = 2
+## Spawn chunks : toujours en ACTIVE, jamais déchargés (comme Minecraft)
+@export var spawn_chunk_radius: int  = 1
+@export var debug_draw_chunks:  bool = false
+
+# --- État interne ---
+var _loaded_chunks:  Dictionary = {}   # Vector2i → chunk node
+var _ticket_levels:  Dictionary = {}   # Vector2i → TicketLevel
+var _chunk_pool:     Array      = []   # nodes en attente de réutilisation
+var _gen_queue:      Array      = []   # Vector2i à générer (thread)
+var _ready_queue:    Array      = []   # {coords, data} prêts à appliquer (main thread)
+var _gen_thread:     Thread     = null
+var _thread_mutex:   Mutex      = Mutex.new()
+var _thread_running: bool       = false
+
+var _player:            Node2D   = null
+var _last_player_chunk: Vector2i = Vector2i(999999, 999999)
+var _find_player_cd:    int      = 0
+var _spawn_center:      Vector2i = Vector2i(0, 0)
 
 
 func _ready() -> void:
+	_gen_thread     = Thread.new()
+	_thread_running = true
+	_gen_thread.start(_generation_thread_loop)
 	call_deferred("_deferred_init")
 
 
 func _deferred_init() -> void:
 	_player = _find_player()
-	if _player == null:
-		return
-	var start := _world_to_chunk(_player.global_position)
-	# Preload région élargie dès le démarrage
-	for x in range(start.x - (load_radius + 1), start.x + load_radius + 2):
-		for y in range(start.y - (load_radius + 1), start.y + load_radius + 2):
-			var c := Vector2i(x, y)
-			if not _loaded_chunks.has(c):
-				_load_queue.append(c)
-	# Le chunk du joueur est chargé immédiatement
-	if not _loaded_chunks.has(start):
-		_load_chunk(start)
-		_load_queue.erase(start)
-	_sort_queue_by_distance()
+	if _player != null:
+		_spawn_center = _world_to_chunk(_player.global_position)
+		_load_chunks_around(_spawn_center, load_radius + 1)
+		_update_chunks()
 
 
 func _process(_delta: float) -> void:
+	_flush_ready_queue()
 	if _player == null or not is_instance_valid(_player):
-		_find_player_cooldown -= 1
-		if _find_player_cooldown <= 0:
-			_find_player_cooldown = 30
+		_find_player_cd -= 1
+		if _find_player_cd <= 0:
+			_find_player_cd = 30
 			_player = _find_player()
 		return
-
-	_update_visible_rect()
 	_update_chunks()
-	_process_load_queue()
-	_update_chunk_visibility()
 
 
-func _find_player() -> Node2D:
-	var direct: Node = get_node_or_null("../PlayerContainer/Player")
-	if direct is Node2D:
-		return direct as Node2D
-	var group := get_tree().get_nodes_in_group("player")
-	if group.size() > 0 and group[0] is Node2D:
-		return group[0] as Node2D
-	return null
+func _exit_tree() -> void:
+	_thread_running = false
+	_thread_mutex.lock()
+	_gen_queue.append(null)  # signal d'arrêt
+	_thread_mutex.unlock()
+	if _gen_thread and _gen_thread.is_started():
+		_gen_thread.wait_to_finish()
 
 
-## Met à jour le rectangle de chunks actuellement dans la caméra
-func _update_visible_rect() -> void:
-	var cam: Camera2D = get_viewport().get_camera_2d()
-	if cam == null:
-		return
-	var vp_size: Vector2 = get_viewport().get_visible_rect().size
-	var zoom: Vector2    = cam.zoom
-	var half: Vector2    = (vp_size / zoom) * 0.5
-	var cam_pos: Vector2 = cam.global_position
-	var top_left  := _world_to_chunk(cam_pos - half - Vector2(chunk_size, chunk_size))
-	var bot_right := _world_to_chunk(cam_pos + half + Vector2(chunk_size, chunk_size))
-	_visible_rect = Rect2i(top_left, bot_right - top_left + Vector2i(1, 1))
+# ---------------------------------------------------------------------------
+# THREAD — calcul pur, zéro accès au scene tree
+# ---------------------------------------------------------------------------
+func _generation_thread_loop() -> void:
+	while _thread_running:
+		_thread_mutex.lock()
+		var coords = null
+		if _gen_queue.size() > 0:
+			coords = _gen_queue.pop_front()
+		_thread_mutex.unlock()
 
-
-## Active/désactive le process des chunks selon leur visibilité caméra
-func _update_chunk_visibility() -> void:
-	for coords in _loaded_chunks.keys():
-		var chunk: Node = _loaded_chunks[coords]
-		if not is_instance_valid(chunk):
+		if coords == null:
+			OS.delay_msec(4)
 			continue
-		var visible: bool = _visible_rect.has_point(coords)
-		chunk.visible = visible
-		# Désactive le process des chunks invisibles = économie CPU
-		chunk.process_mode = Node.PROCESS_MODE_INHERIT if visible else Node.PROCESS_MODE_DISABLED
+
+		var data := _compute_chunk_data(coords)
+
+		_thread_mutex.lock()
+		_ready_queue.append({"coords": coords, "data": data})
+		_thread_mutex.unlock()
 
 
-func _process_load_queue() -> void:
-	if _load_queue.is_empty():
-		return
-	var t_start: int = Time.get_ticks_usec()
-	var budget_us: int = int(load_budget_ms * 1000.0)
-	while not _load_queue.is_empty():
-		var elapsed: int = Time.get_ticks_usec() - t_start
-		if elapsed >= budget_us:
-			break
-		var coords: Vector2i = _load_queue.pop_front()
+func _compute_chunk_data(coords: Vector2i) -> Dictionary:
+	## Tout le calcul lourd ici — jamais de scene tree
+	var ctype: String = ChunkGenerator.get_chunk_type(coords)
+	return {"type": ctype}
+
+
+# ---------------------------------------------------------------------------
+# MAIN THREAD — application des données + gestion du pool
+# ---------------------------------------------------------------------------
+func _flush_ready_queue() -> void:
+	_thread_mutex.lock()
+	var batch: Array = _ready_queue.duplicate()
+	_ready_queue.clear()
+	_thread_mutex.unlock()
+
+	for item in batch:
+		var coords: Vector2i = item["coords"]
+		var data: Dictionary  = item["data"]
 		if not _loaded_chunks.has(coords):
-			_load_chunk(coords)
+			continue
+		var chunk = _loaded_chunks[coords]
+		if is_instance_valid(chunk):
+			chunk.setup(coords, chunk_size, data["type"])
+			_apply_ticket(coords)
+
+
+# ---------------------------------------------------------------------------
+# TICKETS — contrôle le niveau d'activité de chaque chunk
+# ---------------------------------------------------------------------------
+func _apply_ticket(coords: Vector2i) -> void:
+	if not _loaded_chunks.has(coords) or not _ticket_levels.has(coords):
+		return
+	var chunk = _loaded_chunks[coords]
+	if not is_instance_valid(chunk):
+		return
+	match _ticket_levels[coords]:
+		TicketLevel.ACTIVE:
+			chunk.visible = true
+			chunk.process_mode = Node.PROCESS_MODE_INHERIT
+		TicketLevel.LAZY:
+			chunk.visible = false
+			chunk.process_mode = Node.PROCESS_MODE_DISABLED
+		_:
+			pass
+
+
+# ---------------------------------------------------------------------------
+# POOL — réutilisation des nodes, zéro GC spike
+# ---------------------------------------------------------------------------
+func _get_chunk_from_pool() -> Node2D:
+	if _chunk_pool.size() > 0:
+		return _chunk_pool.pop_back() as Node2D
+	return CHUNK_NODE_SCENE.instantiate() as Node2D
+
+
+func _return_chunk_to_pool(chunk: Node2D) -> void:
+	if not is_instance_valid(chunk):
+		return
+	chunk.visible = false
+	chunk.process_mode = Node.PROCESS_MODE_DISABLED
+	if chunk.get_parent() != null:
+		chunk.get_parent().remove_child(chunk)
+	_chunk_pool.append(chunk)
+
+
+# ---------------------------------------------------------------------------
+# CHARGEMENT / DÉCHARGEMENT
+# ---------------------------------------------------------------------------
+func _load_chunks_around(center: Vector2i, radius: int) -> void:
+	for x in range(center.x - radius, center.x + radius + 1):
+		for y in range(center.y - radius, center.y + radius + 1):
+			var c := Vector2i(x, y)
+			if not _loaded_chunks.has(c):
+				_queue_load_chunk(c, TicketLevel.ACTIVE)
 
 
 func _update_chunks() -> void:
@@ -123,66 +180,97 @@ func _update_chunks() -> void:
 		return
 	_last_player_chunk = current
 
-	var needed: Array[Vector2i] = []
+	var active_set: Dictionary = {}
+	var lazy_set:   Dictionary = {}
+
+	# Spawn chunks — toujours ACTIVE
+	for x in range(_spawn_center.x - spawn_chunk_radius, _spawn_center.x + spawn_chunk_radius + 1):
+		for y in range(_spawn_center.y - spawn_chunk_radius, _spawn_center.y + spawn_chunk_radius + 1):
+			active_set[Vector2i(x, y)] = true
+
+	# Zone joueur → ACTIVE
 	for x in range(current.x - load_radius, current.x + load_radius + 1):
 		for y in range(current.y - load_radius, current.y + load_radius + 1):
-			needed.append(Vector2i(x, y))
+			active_set[Vector2i(x, y)] = true
 
-	for c in needed:
-		if not _loaded_chunks.has(c) and not _load_queue.has(c):
-			_load_queue.append(c)
+	# Anneau LAZY
+	for x in range(current.x - lazy_radius, current.x + lazy_radius + 1):
+		for y in range(current.y - lazy_radius, current.y + lazy_radius + 1):
+			var c := Vector2i(x, y)
+			if not active_set.has(c):
+				lazy_set[c] = true
 
-	# Retire de la queue ce qui n'est plus nécessaire
-	var i := _load_queue.size() - 1
-	while i >= 0:
-		if not needed.has(_load_queue[i]):
-			_load_queue.remove_at(i)
-		i -= 1
+	for c in active_set:
+		if not _loaded_chunks.has(c):
+			_queue_load_chunk(c, TicketLevel.ACTIVE)
+		else:
+			_set_ticket(c, TicketLevel.ACTIVE)
 
-	# Décharge les chunks hors rayon
-	var to_unload: Array[Vector2i] = []
+	for c in lazy_set:
+		if not _loaded_chunks.has(c):
+			_queue_load_chunk(c, TicketLevel.LAZY)
+		else:
+			_set_ticket(c, TicketLevel.LAZY)
+
+	var to_unload: Array = []
 	for c in _loaded_chunks.keys():
-		if not needed.has(c):
+		if not active_set.has(c) and not lazy_set.has(c):
 			to_unload.append(c)
 	for c in to_unload:
 		_unload_chunk(c)
-
-	_sort_queue_by_distance()
 
 	if debug_draw_chunks:
 		queue_redraw()
 
 
-func _sort_queue_by_distance() -> void:
-	if _player == null or _load_queue.is_empty():
-		return
-	var pc := _world_to_chunk(_player.global_position)
-	_load_queue.sort_custom(func(a: Vector2i, b: Vector2i) -> bool:
-		return (a - pc).length_squared() < (b - pc).length_squared()
-	)
-
-
-func _load_chunk(coords: Vector2i) -> void:
-	var chunk: Node2D = CHUNK_NODE_SCENE.instantiate()
-	var ctype: String = ChunkGenerator.get_chunk_type(coords)
+func _queue_load_chunk(coords: Vector2i, level: TicketLevel) -> void:
+	var chunk: Node2D = _get_chunk_from_pool()
 	chunk.name = "Chunk_%d_%d" % [coords.x, coords.y]
 	add_child(chunk)
-	chunk.setup(coords, chunk_size, ctype)
 	_loaded_chunks[coords] = chunk
+	_ticket_levels[coords] = level
+	_thread_mutex.lock()
+	_gen_queue.append(coords)
+	_thread_mutex.unlock()
+
+
+func _set_ticket(coords: Vector2i, level: TicketLevel) -> void:
+	if _ticket_levels.get(coords) == level:
+		return
+	_ticket_levels[coords] = level
+	_apply_ticket(coords)
 
 
 func _unload_chunk(coords: Vector2i) -> void:
+	# Spawn chunks protégés
+	var dx := abs(coords.x - _spawn_center.x)
+	var dy := abs(coords.y - _spawn_center.y)
+	if dx <= spawn_chunk_radius and dy <= spawn_chunk_radius:
+		return
 	if _loaded_chunks.has(coords):
-		var chunk: Node = _loaded_chunks[coords]
-		if is_instance_valid(chunk):
-			chunk.queue_free()
+		var chunk = _loaded_chunks[coords]
+		_return_chunk_to_pool(chunk)
 		_loaded_chunks.erase(coords)
+		_ticket_levels.erase(coords)
+
+
+# ---------------------------------------------------------------------------
+# UTILITAIRES
+# ---------------------------------------------------------------------------
+func _find_player() -> Node2D:
+	var direct: Node = get_node_or_null("../PlayerContainer/Player")
+	if direct is Node2D:
+		return direct as Node2D
+	var group := get_tree().get_nodes_in_group("player")
+	if group.size() > 0 and group[0] is Node2D:
+		return group[0] as Node2D
+	return null
 
 
 func _world_to_chunk(world_pos: Vector2) -> Vector2i:
 	return Vector2i(
-		int(floor(world_pos.x / float(chunk_size))),
-		int(floor(world_pos.y / float(chunk_size)))
+		floor(world_pos.x / chunk_size) as int,
+		floor(world_pos.y / chunk_size) as int
 	)
 
 
@@ -190,11 +278,11 @@ func _draw() -> void:
 	if not debug_draw_chunks:
 		return
 	for coords in _loaded_chunks.keys():
-		var tl := Vector2(coords.x * chunk_size, coords.y * chunk_size)
-		var col := Color(0, 1, 0, 0.8) if _visible_rect.has_point(coords) else Color(1, 0.5, 0, 0.5)
-		draw_rect(Rect2(tl, Vector2(chunk_size, chunk_size)), Color(col.r, col.g, col.b, 0.12), true)
-		draw_rect(Rect2(tl, Vector2(chunk_size, chunk_size)), col, false, 2.0)
-	for coords in _load_queue:
-		var tl := Vector2(coords.x * chunk_size, coords.y * chunk_size)
-		draw_rect(Rect2(tl, Vector2(chunk_size, chunk_size)), Color(1, 1, 0, 0.08), true)
-		draw_rect(Rect2(tl, Vector2(chunk_size, chunk_size)), Color(1, 1, 0, 0.5), false, 1.0)
+		var tl  := Vector2(coords.x * chunk_size, coords.y * chunk_size)
+		var col: Color
+		match _ticket_levels.get(coords, TicketLevel.SLEEP):
+			TicketLevel.ACTIVE: col = Color(0, 1, 0, 0.15)
+			TicketLevel.LAZY:   col = Color(1, 0.6, 0, 0.10)
+			_:                  col = Color(0.5, 0.5, 0.5, 0.05)
+		draw_rect(Rect2(tl, Vector2(chunk_size, chunk_size)), col, true)
+		draw_rect(Rect2(tl, Vector2(chunk_size, chunk_size)), Color(col.r, col.g, col.b, 0.8), false, 2.0)
