@@ -1,6 +1,6 @@
 # forest_chunk_base.gd
 # OPTIMISATION : spawn différé des ressources (1 par frame max)
-# + le sol est maintenant un unique _draw() via ground_painter (0 node enfant).
+# + sol peint via ground_painter.paint_chunk() avec Perlin noise mondial continu
 extends Node2D
 
 @export var tree_count_min:  int = 5
@@ -44,13 +44,13 @@ static func _ensure_scene_cache() -> void:
 func _paint_ground() -> void:
 	var script: GDScript = load(GROUND_SCRIPT) as GDScript
 	if script == null:
+		push_error("forest_chunk_base: ground_painter.gd introuvable")
 		return
-	var painter := Node2D.new()
+	var painter := Node.new()
 	painter.set_script(script)
 	painter.name = "Ground"
-	painter.z_index = -10
 	add_child(painter)
-	painter.paint(_chunk_coords, _chunk_size)
+	painter.paint_chunk(_chunk_coords)
 
 
 func _build_spawn_queue() -> void:
@@ -79,7 +79,7 @@ func _build_spawn_queue() -> void:
 func _spawn_next() -> void:
 	if _spawn_queue.is_empty():
 		return
-	var data: Array       = _spawn_queue.pop_front()
+	var data: Array        = _spawn_queue.pop_front()
 	var scene: PackedScene = data[0]
 	var pos: Vector2       = data[1]
 	if scene != null:
