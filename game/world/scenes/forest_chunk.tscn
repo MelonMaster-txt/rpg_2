@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://ctdckb5ghs7va"]
 
-[ext_resource type="Script" uid="uid://c5p8viqjwo5n4" path="res://game/world/forest_chunk_base.gd" id="1_ys2df"]
+[ext_resource type="Script" path="res://game/world/forest_chunk_base.gd" id="1_ys2df"]
 
 [node name="ForestChunk" type="Node2D" unique_id=368279544]
 script = ExtResource("1_ys2df")

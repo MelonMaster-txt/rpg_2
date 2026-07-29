@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3 uid="uid://b_noise_debug"]
+
+[ext_resource type="Script" path="res://game/world/noise_debug.gd" id="1"]
+
+[node name="NoiseDebug" type="CanvasLayer"]
+layer = 10
+
+[node name="NoiseDebugPanel" type="PanelContainer" parent="."]
+anchors_preset = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 340.0
+offset_bottom = 620.0
+script = ExtResource("1")
