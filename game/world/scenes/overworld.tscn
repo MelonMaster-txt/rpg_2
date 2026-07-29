@@ -13,4 +13,6 @@ position = Vector2(256, 256)
 
 [node name="FarmContainer" type="Node2D" parent="."]
 
+[node name="ChunkManager" type="Node2D" parent="."]
+
 [node name="HUD" parent="." instance=ExtResource("2_hud")]

@@ -1,19 +1,24 @@
 extends Node2D
 
-const PLAYER_SCENE    := preload("res://game/characters/player/player.tscn")
-const FARM_PLACER_SCR := preload("res://game/world/farm_placer.gd")
+const PLAYER_SCENE     := preload("res://game/characters/player/player.tscn")
+const FARM_PLACER_SCR  := preload("res://game/world/farm_placer.gd")
+const CHUNK_MANAGER_SCR := preload("res://game/world/chunk_manager.gd")
 
-@onready var _player_container: Node2D = $PlayerContainer
+@onready var _player_container: Node2D  = $PlayerContainer
 @onready var _player_spawn:     Marker2D = $PlayerSpawn
-@onready var _farm_container:   Node2D = $FarmContainer
-
-var _farm_placer: Node = null
+@onready var _farm_container:   Node2D  = $FarmContainer
+@onready var _chunk_manager:    Node2D  = $ChunkManager
 
 func _ready() -> void:
-	_farm_placer = FARM_PLACER_SCR.new()
-	_farm_placer.name = "FarmPlacer"
-	add_child(_farm_placer)
-	_farm_placer.init(_farm_container)
+	# Attache le script ChunkManager au noeud vide
+	_chunk_manager.set_script(CHUNK_MANAGER_SCR)
+
+	# Farm placer
+	var fp := FARM_PLACER_SCR.new()
+	fp.name = "FarmPlacer"
+	add_child(fp)
+	fp.init(_farm_container)
+
 	call_deferred("_spawn_player")
 
 func _spawn_player() -> void:
