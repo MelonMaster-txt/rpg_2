@@ -80,7 +80,7 @@ func _exit_tree() -> void:
 func _generation_thread_loop() -> void:
 	while _thread_running:
 		_thread_mutex.lock()
-		var coords = null
+		var coords: Variant = null
 		if _gen_queue.size() > 0:
 			coords = _gen_queue.pop_front()
 		_thread_mutex.unlock()
@@ -89,7 +89,7 @@ func _generation_thread_loop() -> void:
 			OS.delay_msec(4)
 			continue
 
-		var data := _compute_chunk_data(coords)
+		var data: Dictionary = _compute_chunk_data(coords as Vector2i)
 
 		_thread_mutex.lock()
 		_ready_queue.append({"coords": coords, "data": data})
@@ -97,7 +97,6 @@ func _generation_thread_loop() -> void:
 
 
 func _compute_chunk_data(coords: Vector2i) -> Dictionary:
-	## Tout le calcul lourd ici — jamais de scene tree
 	var ctype: String = ChunkGenerator.get_chunk_type(coords)
 	return {"type": ctype}
 
@@ -111,12 +110,12 @@ func _flush_ready_queue() -> void:
 	_ready_queue.clear()
 	_thread_mutex.unlock()
 
-	for item in batch:
+	for item: Dictionary in batch:
 		var coords: Vector2i = item["coords"]
 		var data: Dictionary  = item["data"]
 		if not _loaded_chunks.has(coords):
 			continue
-		var chunk = _loaded_chunks[coords]
+		var chunk: Node2D = _loaded_chunks[coords]
 		if is_instance_valid(chunk):
 			chunk.setup(coords, chunk_size, data["type"])
 			_apply_ticket(coords)
@@ -128,7 +127,7 @@ func _flush_ready_queue() -> void:
 func _apply_ticket(coords: Vector2i) -> void:
 	if not _loaded_chunks.has(coords) or not _ticket_levels.has(coords):
 		return
-	var chunk = _loaded_chunks[coords]
+	var chunk: Node2D = _loaded_chunks[coords]
 	if not is_instance_valid(chunk):
 		return
 	match _ticket_levels[coords]:
@@ -165,8 +164,8 @@ func _return_chunk_to_pool(chunk: Node2D) -> void:
 # CHARGEMENT / DÉCHARGEMENT
 # ---------------------------------------------------------------------------
 func _load_chunks_around(center: Vector2i, radius: int) -> void:
-	for x in range(center.x - radius, center.x + radius + 1):
-		for y in range(center.y - radius, center.y + radius + 1):
+	for x: int in range(center.x - radius, center.x + radius + 1):
+		for y: int in range(center.y - radius, center.y + radius + 1):
 			var c := Vector2i(x, y)
 			if not _loaded_chunks.has(c):
 				_queue_load_chunk(c, TicketLevel.ACTIVE)
@@ -175,7 +174,7 @@ func _load_chunks_around(center: Vector2i, radius: int) -> void:
 func _update_chunks() -> void:
 	if _player == null or not is_instance_valid(_player):
 		return
-	var current := _world_to_chunk(_player.global_position)
+	var current: Vector2i = _world_to_chunk(_player.global_position)
 	if current == _last_player_chunk:
 		return
 	_last_player_chunk = current
@@ -184,39 +183,39 @@ func _update_chunks() -> void:
 	var lazy_set:   Dictionary = {}
 
 	# Spawn chunks — toujours ACTIVE
-	for x in range(_spawn_center.x - spawn_chunk_radius, _spawn_center.x + spawn_chunk_radius + 1):
-		for y in range(_spawn_center.y - spawn_chunk_radius, _spawn_center.y + spawn_chunk_radius + 1):
+	for x: int in range(_spawn_center.x - spawn_chunk_radius, _spawn_center.x + spawn_chunk_radius + 1):
+		for y: int in range(_spawn_center.y - spawn_chunk_radius, _spawn_center.y + spawn_chunk_radius + 1):
 			active_set[Vector2i(x, y)] = true
 
 	# Zone joueur → ACTIVE
-	for x in range(current.x - load_radius, current.x + load_radius + 1):
-		for y in range(current.y - load_radius, current.y + load_radius + 1):
+	for x: int in range(current.x - load_radius, current.x + load_radius + 1):
+		for y: int in range(current.y - load_radius, current.y + load_radius + 1):
 			active_set[Vector2i(x, y)] = true
 
 	# Anneau LAZY
-	for x in range(current.x - lazy_radius, current.x + lazy_radius + 1):
-		for y in range(current.y - lazy_radius, current.y + lazy_radius + 1):
+	for x: int in range(current.x - lazy_radius, current.x + lazy_radius + 1):
+		for y: int in range(current.y - lazy_radius, current.y + lazy_radius + 1):
 			var c := Vector2i(x, y)
 			if not active_set.has(c):
 				lazy_set[c] = true
 
-	for c in active_set:
+	for c: Vector2i in active_set:
 		if not _loaded_chunks.has(c):
 			_queue_load_chunk(c, TicketLevel.ACTIVE)
 		else:
 			_set_ticket(c, TicketLevel.ACTIVE)
 
-	for c in lazy_set:
+	for c: Vector2i in lazy_set:
 		if not _loaded_chunks.has(c):
 			_queue_load_chunk(c, TicketLevel.LAZY)
 		else:
 			_set_ticket(c, TicketLevel.LAZY)
 
 	var to_unload: Array = []
-	for c in _loaded_chunks.keys():
+	for c: Vector2i in _loaded_chunks.keys():
 		if not active_set.has(c) and not lazy_set.has(c):
 			to_unload.append(c)
-	for c in to_unload:
+	for c: Vector2i in to_unload:
 		_unload_chunk(c)
 
 	if debug_draw_chunks:
@@ -243,12 +242,12 @@ func _set_ticket(coords: Vector2i, level: TicketLevel) -> void:
 
 func _unload_chunk(coords: Vector2i) -> void:
 	# Spawn chunks protégés
-	var dx := abs(coords.x - _spawn_center.x)
-	var dy := abs(coords.y - _spawn_center.y)
+	var dx: int = absi(coords.x - _spawn_center.x)
+	var dy: int = absi(coords.y - _spawn_center.y)
 	if dx <= spawn_chunk_radius and dy <= spawn_chunk_radius:
 		return
 	if _loaded_chunks.has(coords):
-		var chunk = _loaded_chunks[coords]
+		var chunk: Node2D = _loaded_chunks[coords]
 		_return_chunk_to_pool(chunk)
 		_loaded_chunks.erase(coords)
 		_ticket_levels.erase(coords)
@@ -261,7 +260,7 @@ func _find_player() -> Node2D:
 	var direct: Node = get_node_or_null("../PlayerContainer/Player")
 	if direct is Node2D:
 		return direct as Node2D
-	var group := get_tree().get_nodes_in_group("player")
+	var group: Array = get_tree().get_nodes_in_group("player")
 	if group.size() > 0 and group[0] is Node2D:
 		return group[0] as Node2D
 	return null
@@ -277,8 +276,8 @@ func _world_to_chunk(world_pos: Vector2) -> Vector2i:
 func _draw() -> void:
 	if not debug_draw_chunks:
 		return
-	for coords in _loaded_chunks.keys():
-		var tl  := Vector2(coords.x * chunk_size, coords.y * chunk_size)
+	for coords: Vector2i in _loaded_chunks.keys():
+		var tl: Vector2  = Vector2(coords.x * chunk_size, coords.y * chunk_size)
 		var col: Color
 		match _ticket_levels.get(coords, TicketLevel.SLEEP):
 			TicketLevel.ACTIVE: col = Color(0, 1, 0, 0.15)
