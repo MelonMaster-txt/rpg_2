@@ -18,7 +18,6 @@ config/icon="res://icon.svg"
 [autoload]
 
 SceneManager="*res://game/core/scene_manager.gd"
-Dialogic="*res://addons/dialogic/Core/DialogicGameHandler.gd"
 ChunkGenerator="*res://game/world/chunk_generator.gd"
 GameManager="*res://game/core/game_manager.gd"
 ItemDatabase="*res://game/systems/item_database.gd"
