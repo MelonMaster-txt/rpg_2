@@ -49,7 +49,7 @@ func _try_interact() -> void:
 			if held == "graine_baie" and GameManager.get_item("graine_baie") > 0:
 				GameManager.remove_item("graine_baie", 1)
 				_set_state(State.PLANTE)
-				var watered := GameManager.get_item("arrosoir") > 0
+				var watered: bool = GameManager.get_item("arrosoir") > 0
 				grow_timer.wait_time = GROW_TIME_WATERED if watered else GROW_TIME_BASE
 				grow_timer.start()
 		State.PLANTE:
