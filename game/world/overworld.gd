@@ -8,16 +8,18 @@ const FARM_PLACER_SCR := preload("res://game/world/farm_placer.gd")
 @onready var _chunk_manager    : Node2D   = $ChunkManager
 
 func _ready() -> void:
-	# Farm placer
+	# Conteneur pour les FarmTiles
+	var fc := Node2D.new()
+	fc.name = "FarmContainer"
+	add_child(fc)
+
+	# Farm placer (doit etre enfant du meme parent que FarmContainer)
 	var fp := Node2D.new()
 	fp.set_script(FARM_PLACER_SCR)
 	fp.name = "FarmPlacer"
 	add_child(fp)
 
-	# Spawner le joueur d'abord, puis laisser ChunkManager le trouver
 	_spawn_player()
-	# _deferred_init du ChunkManager sera appele au prochain frame
-	# (call_deferred deja dans chunk_manager._ready())
 
 func _spawn_player() -> void:
 	var player : Node2D = PLAYER_SCENE.instantiate() as Node2D
