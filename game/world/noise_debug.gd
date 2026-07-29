@@ -1,9 +1,9 @@
-# noise_debug.gd — Panel de debug ground_painter avec contrôle total du noise
+# noise_debug.gd - Panel debug noise, toggle avec F2
 extends PanelContainer
 
+const SAVE_PATH := "user://noise_settings.cfg"
 const PREVIEW_SIZE := 256
 
-# --- Noise Ground ---
 var _g_seed        : int   = 42
 var _g_type        : int   = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
 var _g_freq        : float = 0.003
@@ -13,31 +13,25 @@ var _g_gain        : float = 0.5
 var _g_fbm         : int   = FastNoiseLite.FRACTAL_FBM
 var _g_warp_amp    : float = 0.0
 
-# --- Noise Detail ---
 var _d_seed        : int   = 99
 var _d_freq        : float = 0.008
 var _d_octaves     : int   = 2
 var _accent_thr    : float = 0.4
 
-# --- Seuils palette ---
 var _thresholds: Array[float] = [0.3, 0.1, -0.1, -0.3]
 
-# --- Couleurs ---
 var _grass_colors: Array[Color] = [
-	Color(0.27, 0.58, 0.18),
-	Color(0.24, 0.55, 0.16),
-	Color(0.22, 0.52, 0.15),
-	Color(0.18, 0.44, 0.12),
+	Color(0.27, 0.58, 0.18), Color(0.24, 0.55, 0.16),
+	Color(0.22, 0.52, 0.15), Color(0.18, 0.44, 0.12),
 	Color(0.55, 0.38, 0.18),
 ]
 var _accent_colors: Array[Color] = [
-	Color(0.30, 0.62, 0.20),
-	Color(0.55, 0.52, 0.18),
-	Color(0.26, 0.56, 0.40),
+	Color(0.30, 0.62, 0.20), Color(0.55, 0.52, 0.18), Color(0.26, 0.56, 0.40),
 ]
 
 var _tex_rect  : TextureRect
 var _live_mode : bool = false
+var _status_lbl: Label
 
 const NOISE_TYPES := [
 	["Simplex",        FastNoiseLite.TYPE_SIMPLEX],
@@ -56,6 +50,7 @@ const FRACTAL_TYPES := [
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(370, 0)
+	_load_cfg()
 	_build_ui()
 	_refresh()
 
@@ -67,7 +62,7 @@ func _build_ui() -> void:
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(vbox)
 
-	_add_title(vbox, "Ground Painter — Noise Debug")
+	_add_title(vbox, "Ground Painter - Noise Debug  [F2]")
 
 	_tex_rect = TextureRect.new()
 	_tex_rect.custom_minimum_size = Vector2(PREVIEW_SIZE, PREVIEW_SIZE)
@@ -78,7 +73,7 @@ func _build_ui() -> void:
 	var live_row := HBoxContainer.new()
 	vbox.add_child(live_row)
 	var live_lbl := Label.new()
-	live_lbl.text = "🔴 Repaint chunks live"
+	live_lbl.text = "Repaint chunks live"
 	live_lbl.custom_minimum_size.x = 180
 	live_row.add_child(live_lbl)
 	var live_toggle := CheckButton.new()
@@ -86,46 +81,59 @@ func _build_ui() -> void:
 	live_toggle.toggled.connect(func(on: bool): _live_mode = on)
 	live_row.add_child(live_toggle)
 
-	_add_separator(vbox, "🌱 Noise Ground")
+	_add_separator(vbox, "Noise Ground")
 	_add_option(vbox, "Type",    NOISE_TYPES,   _g_type, func(i: int): _g_type = NOISE_TYPES[i][1] as int;    _refresh())
 	_add_option(vbox, "Fractal", FRACTAL_TYPES, _g_fbm,  func(i: int): _g_fbm  = FRACTAL_TYPES[i][1] as int; _refresh())
-	_add_slider(vbox, "Seed",        0,      9999, _g_seed,       1,      func(v: float): _g_seed = int(v);       _refresh())
-	_add_slider(vbox, "Frequency",   0.0005, 0.05, _g_freq,       0.0005, func(v: float): _g_freq = v;            _refresh())
-	_add_slider(vbox, "Octaves",     1,      8,    _g_octaves,    1,      func(v: float): _g_octaves = int(v);    _refresh())
-	_add_slider(vbox, "Lacunarity",  1.0,    4.0,  _g_lacunarity, 0.05,   func(v: float): _g_lacunarity = v;      _refresh())
-	_add_slider(vbox, "Gain",        0.1,    1.0,  _g_gain,       0.01,   func(v: float): _g_gain = v;            _refresh())
-	_add_slider(vbox, "Warp Amp",    0.0,    200.0,_g_warp_amp,   1.0,    func(v: float): _g_warp_amp = v;        _refresh())
+	_add_slider(vbox, "Seed",       0,      9999, _g_seed,       1,      func(v: float): _g_seed = int(v);       _refresh())
+	_add_slider(vbox, "Frequency",  0.0005, 0.05, _g_freq,       0.0005, func(v: float): _g_freq = v;            _refresh())
+	_add_slider(vbox, "Octaves",    1,      8,    _g_octaves,    1,      func(v: float): _g_octaves = int(v);    _refresh())
+	_add_slider(vbox, "Lacunarity", 1.0,    4.0,  _g_lacunarity, 0.05,   func(v: float): _g_lacunarity = v;      _refresh())
+	_add_slider(vbox, "Gain",       0.1,    1.0,  _g_gain,       0.01,   func(v: float): _g_gain = v;            _refresh())
+	_add_slider(vbox, "Warp Amp",   0.0,    200.0,_g_warp_amp,   1.0,    func(v: float): _g_warp_amp = v;        _refresh())
 
-	_add_separator(vbox, "🎨 Seuils herbe")
-	var thr_labels := ["Seuil 1 (clair)","Seuil 2","Seuil 3","Seuil 4 (foncé)"]
+	_add_separator(vbox, "Seuils herbe")
+	var thr_labels := ["Seuil 1 (clair)","Seuil 2","Seuil 3","Seuil 4 (fonce)"]
 	for i in _thresholds.size():
 		var idx := i
 		_add_slider(vbox, thr_labels[i], -1.0, 1.0, _thresholds[i], 0.01,
 			func(v: float): _thresholds[idx] = v; _refresh())
 
-	_add_separator(vbox, "🟩 Couleurs herbe")
-	var lg := ["Très clair","Clair","Moyen","Foncé","Terre"]
+	_add_separator(vbox, "Couleurs herbe")
+	var lg := ["Tres clair","Clair","Moyen","Fonce","Terre"]
 	_add_color_row(vbox, _grass_colors, lg, func(i: int, c: Color): _grass_colors[i] = c; _refresh())
 
-	_add_separator(vbox, "✨ Noise Accent")
+	_add_separator(vbox, "Noise Accent")
 	_add_slider(vbox, "Seed",      0,     9999, _d_seed,    1,     func(v: float): _d_seed = int(v);    _refresh())
 	_add_slider(vbox, "Frequency", 0.001, 0.05, _d_freq,    0.001, func(v: float): _d_freq = v;         _refresh())
 	_add_slider(vbox, "Octaves",   1,     6,    _d_octaves, 1,     func(v: float): _d_octaves = int(v); _refresh())
 	_add_slider(vbox, "Seuil",    -1.0,   1.0,  _accent_thr,0.01,  func(v: float): _accent_thr = v;    _refresh())
 
-	_add_separator(vbox, "🟧 Couleurs accent")
+	_add_separator(vbox, "Couleurs accent")
 	var la := ["Vert vif","Mousse","Bleu-vert"]
 	_add_color_row(vbox, _accent_colors, la, func(i: int, c: Color): _accent_colors[i] = c; _refresh())
 
 	_add_separator(vbox, "")
+
 	var btn_repaint := Button.new()
-	btn_repaint.text = "🔄 Repaint tous les chunks"
+	btn_repaint.text = "Repaint tous les chunks"
 	btn_repaint.pressed.connect(_repaint_all_chunks)
 	vbox.add_child(btn_repaint)
-	var btn_copy := Button.new()
-	btn_copy.text = "📋 Copier valeurs → Output"
-	btn_copy.pressed.connect(_print_values)
-	vbox.add_child(btn_copy)
+
+	var btn_save := Button.new()
+	btn_save.text = "Sauvegarder (user://noise_settings.cfg)"
+	btn_save.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
+	btn_save.pressed.connect(_save_cfg)
+	vbox.add_child(btn_save)
+
+	var btn_load := Button.new()
+	btn_load.text = "Recharger depuis fichier"
+	btn_load.pressed.connect(func(): _load_cfg(); _refresh())
+	vbox.add_child(btn_load)
+
+	_status_lbl = Label.new()
+	_status_lbl.text = ""
+	_status_lbl.add_theme_color_override("font_color", Color(0.4, 0.9, 0.3))
+	vbox.add_child(_status_lbl)
 
 func _refresh() -> void:
 	var noise   := _build_ground_noise()
@@ -144,6 +152,54 @@ func _repaint_all_chunks() -> void:
 	for painter in get_tree().get_nodes_in_group("ground_painter"):
 		if painter.has_method("repaint_with"):
 			painter.call("repaint_with", noise, noise_d, _thresholds, _grass_colors, _accent_colors, _accent_thr)
+
+func _save_cfg() -> void:
+	var cfg := ConfigFile.new()
+	cfg.set_value("ground", "seed",       _g_seed)
+	cfg.set_value("ground", "type",       _g_type)
+	cfg.set_value("ground", "freq",       _g_freq)
+	cfg.set_value("ground", "octaves",    _g_octaves)
+	cfg.set_value("ground", "lacunarity", _g_lacunarity)
+	cfg.set_value("ground", "gain",       _g_gain)
+	cfg.set_value("ground", "fbm",        _g_fbm)
+	cfg.set_value("ground", "warp_amp",   _g_warp_amp)
+	cfg.set_value("accent", "seed",       _d_seed)
+	cfg.set_value("accent", "freq",       _d_freq)
+	cfg.set_value("accent", "octaves",    _d_octaves)
+	cfg.set_value("accent", "threshold",  _accent_thr)
+	for i in _thresholds.size():
+		cfg.set_value("thresholds", "t" + str(i), _thresholds[i])
+	for i in _grass_colors.size():
+		cfg.set_value("grass_colors", "c" + str(i), _grass_colors[i])
+	for i in _accent_colors.size():
+		cfg.set_value("accent_colors", "c" + str(i), _accent_colors[i])
+	var err := cfg.save(SAVE_PATH)
+	if err == OK:
+		_status_lbl.text = "Sauvegarde OK -> " + SAVE_PATH
+	else:
+		_status_lbl.text = "Erreur sauvegarde : " + str(err)
+
+func _load_cfg() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(SAVE_PATH) != OK: return
+	_g_seed       = cfg.get_value("ground", "seed",       _g_seed)
+	_g_type       = cfg.get_value("ground", "type",       _g_type)
+	_g_freq       = cfg.get_value("ground", "freq",       _g_freq)
+	_g_octaves    = cfg.get_value("ground", "octaves",    _g_octaves)
+	_g_lacunarity = cfg.get_value("ground", "lacunarity", _g_lacunarity)
+	_g_gain       = cfg.get_value("ground", "gain",       _g_gain)
+	_g_fbm        = cfg.get_value("ground", "fbm",        _g_fbm)
+	_g_warp_amp   = cfg.get_value("ground", "warp_amp",   _g_warp_amp)
+	_d_seed       = cfg.get_value("accent", "seed",       _d_seed)
+	_d_freq       = cfg.get_value("accent", "freq",       _d_freq)
+	_d_octaves    = cfg.get_value("accent", "octaves",    _d_octaves)
+	_accent_thr   = cfg.get_value("accent", "threshold",  _accent_thr)
+	for i in _thresholds.size():
+		_thresholds[i] = cfg.get_value("thresholds", "t" + str(i), _thresholds[i])
+	for i in _grass_colors.size():
+		_grass_colors[i] = cfg.get_value("grass_colors", "c" + str(i), _grass_colors[i])
+	for i in _accent_colors.size():
+		_accent_colors[i] = cfg.get_value("accent_colors", "c" + str(i), _accent_colors[i])
 
 func _build_ground_noise() -> FastNoiseLite:
 	var n := FastNoiseLite.new()
@@ -217,16 +273,3 @@ func _add_color_row(p: VBoxContainer, colors: Array, labels: Array, on_change: C
 		var cp := ColorPickerButton.new(); cp.color = colors[i]; cp.custom_minimum_size = Vector2(48,28)
 		var idx := i
 		cp.color_changed.connect(func(c: Color): on_change.call(idx, c)); col.add_child(cp)
-
-func _print_values() -> void:
-	print("\n=== Ground Painter — Valeurs ===")
-	print("noise_type: ",_g_type," | seed: ",_g_seed," | freq: ",_g_freq)
-	print("fractal: ",_g_fbm," | octaves: ",_g_octaves," | lacunarity: ",_g_lacunarity," | gain: ",_g_gain)
-	print("warp_amp: ",_g_warp_amp)
-	print("thresholds: ",_thresholds)
-	print("detail: seed=",_d_seed," freq=",_d_freq," octaves=",_d_octaves," thr=",_accent_thr)
-	print("GRASS:")
-	for c in _grass_colors: print("  Color(",snapped(c.r,.001),",",snapped(c.g,.001),",",snapped(c.b,.001),")")
-	print("ACCENT:")
-	for c in _accent_colors: print("  Color(",snapped(c.r,.001),",",snapped(c.g,.001),",",snapped(c.b,.001),")")
-	print("================================\n")

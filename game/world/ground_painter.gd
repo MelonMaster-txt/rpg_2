@@ -97,9 +97,8 @@ func _do_paint(
 	thresholds: Array, grass_colors: Array,
 	accent_colors: Array, thr: float
 ) -> void:
-	# Division explicitement entiere via variables typees
-	var cols: int = chunk_size / tile_size if tile_size > 0 else 1
-	var rows: int = chunk_size / tile_size if tile_size > 0 else 1
+	var cols := floori(float(chunk_size) / float(tile_size))
+	var rows := floori(float(chunk_size) / float(tile_size))
 	for row in rows:
 		for col in cols:
 			var wx: int = chunk_coords.x * cols + col

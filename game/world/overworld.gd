@@ -1,9 +1,10 @@
 extends Node2D
 
-const PLAYER_SCENE    := preload("res://game/characters/player/player.tscn")
-const FARM_PLACER_SCR := preload("res://game/world/farm_placer.gd")
-const NOISE_DEBUG_SCN := preload("res://game/world/noise_debug.tscn")
-const DEBUG_MENU_SCR  := preload("res://game/ui/debug_menu.gd")
+const PLAYER_SCENE       := preload("res://game/characters/player/player.tscn")
+const FARM_PLACER_SCR    := preload("res://game/world/farm_placer.gd")
+const NOISE_DEBUG_SCN    := preload("res://game/world/noise_debug.tscn")
+const DEBUG_MENU_SCR     := preload("res://game/ui/debug_menu.gd")
+const NOISE_KEY_LISTENER := preload("res://game/world/noise_key_listener.gd")
 
 @onready var _player_container : Node2D   = $PlayerContainer
 @onready var _player_spawn     : Marker2D = $PlayerSpawn
@@ -36,14 +37,12 @@ func _ready() -> void:
 	_noise_debug_layer.visible = false
 	add_child(_noise_debug_layer)
 
-	# Capteur F2 sur CanvasLayer dedie (priorite haute, jamais avale par Node2D)
-	var key_listener := CanvasLayer.new()
-	key_listener.layer = 200
-	key_listener.name = "KeyListener"
-	var listener_node := _KeyListener.new()
-	listener_node._debug_layer = _noise_debug_layer
-	key_listener.add_child(listener_node)
-	add_child(key_listener)
+	# Listener F2 - script separe
+	var listener := Node.new()
+	listener.set_script(NOISE_KEY_LISTENER)
+	listener.name = "NoiseKeyListener"
+	listener.set("debug_layer", _noise_debug_layer)
+	add_child(listener)
 
 	_spawn_player()
 
@@ -54,14 +53,3 @@ func _spawn_player() -> void:
 	else:
 		player.global_position = _player_spawn.global_position
 	_player_container.add_child(player)
-
-
-# Noeud interne uniquement pour capter F2
-class _KeyListener extends Node:
-	var _debug_layer: CanvasLayer
-
-	func _input(event: InputEvent) -> void:
-		if event is InputEventKey and event.pressed and not event.is_echo():
-			if (event as InputEventKey).keycode == KEY_F2:
-				_debug_layer.visible = not _debug_layer.visible
-				get_viewport().set_input_as_handled()
