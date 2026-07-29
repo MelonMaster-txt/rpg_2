@@ -1,13 +1,15 @@
 @tool
 extends Node2D
 
+const SAVE_PATH := "user://noise_settings.cfg"
+
 @export var tile_size: int = 32
 
 @export_group("Noise Ground")
-@export var g_noise_type   : FastNoiseLite.NoiseType   = FastNoiseLite.TYPE_PERLIN
+@export var g_noise_type   : FastNoiseLite.NoiseType   = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
 @export var g_fractal_type : FastNoiseLite.FractalType = FastNoiseLite.FRACTAL_FBM
 @export var g_seed         : int   = 42
-@export var g_frequency    : float = 0.018
+@export var g_frequency    : float = 0.003
 @export var g_octaves      : int   = 4
 @export var g_lacunarity   : float = 2.0
 @export var g_gain         : float = 0.5
@@ -48,6 +50,8 @@ func _validate_property(_property: Dictionary) -> void:
 		_repaint()
 
 func _ready() -> void:
+	if not Engine.is_editor_hint():
+		_load_cfg()
 	_build_noises()
 	_repaint()
 
@@ -55,6 +59,8 @@ func paint(chunk_coords: Vector2i, chunk_size: int) -> void:
 	_chunk_coords = chunk_coords
 	_chunk_size   = chunk_size
 	add_to_group("ground_painter")
+	# Charge le cfg a chaque spawn de chunk -> tous les chunks ont les memes params
+	_load_cfg()
 	_build_noises()
 	_repaint()
 
@@ -65,6 +71,35 @@ func repaint_with(
 ) -> void:
 	for child in get_children(): child.queue_free()
 	_do_paint(_chunk_coords, _chunk_size, noise, noise_d, thresholds, grass_colors, accent_colors, thr)
+
+func _load_cfg() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(SAVE_PATH) != OK:
+		return
+	g_seed           = cfg.get_value("ground", "seed",       g_seed)
+	g_noise_type     = cfg.get_value("ground", "type",       g_noise_type)  as FastNoiseLite.NoiseType
+	g_frequency      = cfg.get_value("ground", "freq",       g_frequency)
+	g_octaves        = cfg.get_value("ground", "octaves",    g_octaves)
+	g_lacunarity     = cfg.get_value("ground", "lacunarity", g_lacunarity)
+	g_gain           = cfg.get_value("ground", "gain",       g_gain)
+	g_fractal_type   = cfg.get_value("ground", "fbm",        g_fractal_type) as FastNoiseLite.FractalType
+	g_warp_amp       = cfg.get_value("ground", "warp_amp",   g_warp_amp)
+	d_seed           = cfg.get_value("accent", "seed",       d_seed)
+	d_frequency      = cfg.get_value("accent", "freq",       d_frequency)
+	d_octaves        = cfg.get_value("accent", "octaves",    d_octaves)
+	accent_threshold = cfg.get_value("accent", "threshold",  accent_threshold)
+	threshold_1 = cfg.get_value("thresholds", "t0", threshold_1)
+	threshold_2 = cfg.get_value("thresholds", "t1", threshold_2)
+	threshold_3 = cfg.get_value("thresholds", "t2", threshold_3)
+	threshold_4 = cfg.get_value("thresholds", "t3", threshold_4)
+	color_grass_0  = cfg.get_value("grass_colors",  "c0", color_grass_0)
+	color_grass_1  = cfg.get_value("grass_colors",  "c1", color_grass_1)
+	color_grass_2  = cfg.get_value("grass_colors",  "c2", color_grass_2)
+	color_grass_3  = cfg.get_value("grass_colors",  "c3", color_grass_3)
+	color_grass_4  = cfg.get_value("grass_colors",  "c4", color_grass_4)
+	color_accent_0 = cfg.get_value("accent_colors", "c0", color_accent_0)
+	color_accent_1 = cfg.get_value("accent_colors", "c1", color_accent_1)
+	color_accent_2 = cfg.get_value("accent_colors", "c2", color_accent_2)
 
 func _build_noises() -> void:
 	_noise_g = FastNoiseLite.new()
