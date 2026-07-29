@@ -27,7 +27,7 @@ anchors_preset = 0
 offset_left = 12.0
 offset_top = 12.0
 offset_right = 200.0
-offset_bottom = 220.0
+offset_bottom = 80.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hud")
 
 [node name="HUDContainer" type="VBoxContainer" parent="HUDPanel"]
@@ -42,22 +42,3 @@ theme_override_colors/font_color = Color(1.0, 0.95, 0.6, 1)
 text = "📅 Jour 1"
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.8, 0.9, 1.0, 1)
-
-[node name="HSeparator" type="HSeparator" parent="HUDPanel/HUDContainer"]
-theme_override_colors/separator = Color(1, 1, 1, 0.15)
-
-[node name="BoisLabel" type="Label" parent="HUDPanel/HUDContainer"]
-text = "🪵 Bois : 0"
-theme_override_font_sizes/font_size = 13
-
-[node name="BaiesLabel" type="Label" parent="HUDPanel/HUDContainer"]
-text = "🍇 Baies : 0"
-theme_override_font_sizes/font_size = 13
-
-[node name="NourritureLabel" type="Label" parent="HUDPanel/HUDContainer"]
-text = "🍖 Nourriture : 0"
-theme_override_font_sizes/font_size = 13
-
-[node name="PierreLabel" type="Label" parent="HUDPanel/HUDContainer"]
-text = "🪨 Pierre : 0"
-theme_override_font_sizes/font_size = 13

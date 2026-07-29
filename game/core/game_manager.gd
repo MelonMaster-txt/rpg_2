@@ -3,10 +3,12 @@ extends Node
 
 # ─── INVENTAIRE ───────────────────────────────────────────────────────────────
 var inventory: Dictionary = {
-	"bois": 0,
-	"baies": 0,
-	"nourriture": 0,
-	"pierre": 0,
+	"bois":        0,
+	"baies":       0,
+	"pierre":      0,
+	"graine_baie": 0,
+	"pioche":      0,
+	"arrosoir":    0,
 }
 
 signal inventory_changed(item: String, amount: int)
@@ -29,7 +31,6 @@ func get_item(item: String) -> int:
 	return inventory.get(item, 0)
 
 # ─── SPAWN POSITION ───────────────────────────────────────────────────────────
-# Sauvegarde la position du joueur avant un changement de scène
 var saved_spawn_position: Vector2 = Vector2.ZERO
 var has_saved_position: bool = false
 

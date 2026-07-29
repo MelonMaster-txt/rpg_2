@@ -1,0 +1,63 @@
+[gd_scene load_steps=4 format=3 uid="uid://inventory_screen"]
+
+[ext_resource type="Script" path="res://game/ui/inventory_screen.gd" id="1_inv"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
+bg_color = Color(0, 0, 0, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.08, 0.08, 0.12, 0.97)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.5, 0.4, 0.8, 0.6)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+content_margin_left = 20.0
+content_margin_right = 20.0
+content_margin_top = 16.0
+content_margin_bottom = 16.0
+
+[node name="InventoryScreen" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_inv")
+
+[node name="BG" type="PanelContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+
+[node name="Panel" type="PanelContainer" parent="BG"]
+anchor_left = 0.15
+anchor_top = 0.1
+anchor_right = 0.85
+anchor_bottom = 0.9
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBox" type="VBoxContainer" parent="BG/Panel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="BG/Panel/VBox"]
+text = "🎒  Inventaire"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 22
+theme_override_colors/font_color = Color(0.9, 0.85, 1.0, 1)
+
+[node name="HSep" type="HSeparator" parent="BG/Panel/VBox"]
+theme_override_colors/separator = Color(0.5, 0.4, 0.8, 0.4)
+
+[node name="Grid" type="GridContainer" parent="BG/Panel/VBox"]
+columns = 4
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+
+[node name="CloseBtn" type="Button" parent="BG/Panel/VBox"]
+text = "Fermer  [I]"
+custom_minimum_size = Vector2(0, 36)
+theme_override_font_sizes/font_size = 14
