@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bwc46yxk8vnca" path="res://game/world/chunk_visualizer.gd" id="1_kivh5"]
 [ext_resource type="Script" uid="uid://c17u6pq1cpbg4" path="res://game/world/hut_entrance.gd" id="1_upkib"]
+[ext_resource type="PackedScene" path="res://game/world/farm_tile.tscn" id="3_farmtile"]
 
 [sub_resource type="Gradient" id="Gradient_upkib"]
 
@@ -37,6 +38,27 @@ pivot_offset = Vector2(5, 5)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HutEntrance" unique_id=2009275994]
 shape = SubResource("RectangleShape2D_kivh5")
+
+[node name="FarmTiles" type="Node2D" parent="."]
+position = Vector2(100, 380)
+
+[node name="FarmTile0" parent="FarmTiles" instance=ExtResource("3_farmtile")]
+position = Vector2(0, 0)
+
+[node name="FarmTile1" parent="FarmTiles" instance=ExtResource("3_farmtile")]
+position = Vector2(40, 0)
+
+[node name="FarmTile2" parent="FarmTiles" instance=ExtResource("3_farmtile")]
+position = Vector2(80, 0)
+
+[node name="FarmTile3" parent="FarmTiles" instance=ExtResource("3_farmtile")]
+position = Vector2(0, 40)
+
+[node name="FarmTile4" parent="FarmTiles" instance=ExtResource("3_farmtile")]
+position = Vector2(40, 40)
+
+[node name="FarmTile5" parent="FarmTiles" instance=ExtResource("3_farmtile")]
+position = Vector2(80, 40)
 
 [connection signal="body_entered" from="HutEntrance" to="HutEntrance" method="_on_body_entered"]
 [connection signal="body_exited" from="HutEntrance" to="HutEntrance" method="_on_body_exited"]

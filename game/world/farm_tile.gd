@@ -1,9 +1,3 @@
-# FarmTile - Tuile agricole interactive
-# Le ColorRect change de couleur selon l'etat du sol :
-#   brun clair  = sol vierge
-#   brun fonce  = bêché
-#   vert         = plante en croissance
-#   jaune dore   = pret a recolter
 extends StaticBody2D
 
 enum State { SOL, BECHE, PLANTE, PRET }
@@ -11,22 +5,21 @@ enum State { SOL, BECHE, PLANTE, PRET }
 const GROW_TIME_BASE:    float = 30.0
 const GROW_TIME_WATERED: float = 15.0
 
-# Les couleurs imitent la transition herbe -> terre labouree
-const COLOR_SOL:    Color = Color(0.55, 0.38, 0.18)   # terre seche
-const COLOR_BECHE:  Color = Color(0.28, 0.15, 0.05)   # terre fraiche labouree
-const COLOR_PLANTE: Color = Color(0.20, 0.55, 0.15)   # jeune pousse verte
-const COLOR_PRET:   Color = Color(0.90, 0.75, 0.10)   # baies mures, jaune
+const COLOR_SOL:    Color = Color(0.55, 0.38, 0.18)
+const COLOR_BECHE:  Color = Color(0.28, 0.15, 0.05)
+const COLOR_PLANTE: Color = Color(0.20, 0.55, 0.15)
+const COLOR_PRET:   Color = Color(0.90, 0.75, 0.10)
 
-@onready var visual:        ColorRect  = $Sprite2D
-@onready var grow_timer:    Timer      = $GrowTimer
-@onready var interact_area: Area2D     = $Area2D
-@onready var hint_label:    Label      = $HintLabel
+@onready var visual:        ColorRect = $Visual
+@onready var grow_timer:    Timer     = $GrowTimer
+@onready var interact_area: Area2D    = $InteractArea
+@onready var hint_label:    Label     = $HintLabel
 
 var state: State = State.SOL
 var _player_nearby: bool = false
 
 func _ready() -> void:
-	_update_visual()
+	visual.color = COLOR_SOL
 	_update_hint("")
 	grow_timer.timeout.connect(_on_grow_timer_timeout)
 	interact_area.body_entered.connect(_on_body_entered)
@@ -59,10 +52,10 @@ func _try_interact() -> void:
 				if grow_timer.time_left > GROW_TIME_WATERED:
 					grow_timer.wait_time = GROW_TIME_WATERED
 					grow_timer.start()
-					_show_popup("💧 Arrose !")
+					_show_popup("\U0001f4a7 Arrose !")
 		State.PRET:
 			GameManager.add_item("baies", 3)
-			_show_popup("+3 🍇 Baies")
+			_show_popup("+3 \U0001f347 Baies")
 			_set_state(State.SOL)
 
 func _set_state(new_state: State) -> void:
@@ -80,7 +73,6 @@ func _update_visual() -> void:
 		State.BECHE:  target_color = COLOR_BECHE
 		State.PLANTE: target_color = COLOR_PLANTE
 		State.PRET:   target_color = COLOR_PRET
-	# Transition douce
 	var tw := create_tween()
 	tw.tween_property(visual, "color", target_color, 0.4)
 
@@ -96,7 +88,7 @@ func _update_hint_for_player() -> void:
 		State.BECHE:  _update_hint("[E] Planter (graine baie)")
 		State.PLANTE:
 			var secs: int = int(grow_timer.time_left)
-			_update_hint("Pousse dans %ds  — [E] arroser" % secs)
+			_update_hint("Pousse dans %ds  [E] arroser" % secs)
 		State.PRET:   _update_hint("[E] Recolter les baies !")
 
 func _show_popup(msg: String) -> void:
