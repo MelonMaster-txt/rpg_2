@@ -1,4 +1,4 @@
-# FarmTile — sans StaticBody ni CollisionShape, juste Area2D de detection joueur
+# FarmTile — sol cultivable place par clic droit
 extends Node2D
 
 enum State { SOL, BECHE, PLANTE, PRET }
@@ -51,10 +51,10 @@ func _try_interact() -> void:
 			if held == "arrosoir" and grow_timer.time_left > GROW_TIME_WATERED:
 				grow_timer.wait_time = GROW_TIME_WATERED
 				grow_timer.start()
-				_show_popup("\U0001f4a7 Arrose!")
+				_show_popup("Arrose!")
 		State.PRET:
 			GameManager.add_item("baies", 3)
-			_show_popup("+3 \U0001f347")
+			_show_popup("+3 Baies")
 			_set_state(State.SOL)
 
 func _set_state(s: State) -> void:
@@ -83,7 +83,7 @@ func _update_hint_for_player() -> void:
 	match state:
 		State.SOL:    _update_hint("[E] Becher")
 		State.BECHE:  _update_hint("[E] Planter")
-		State.PLANTE: _update_hint("Pousse %ds [E] arroser" % int(grow_timer.time_left))
+		State.PLANTE: _update_hint("Pousse %ds" % int(grow_timer.time_left))
 		State.PRET:   _update_hint("[E] Recolter!")
 
 func _show_popup(msg: String) -> void:

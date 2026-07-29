@@ -1,34 +1,38 @@
-[gd_scene format=3 uid="uid://farm_tile_001"]
+[gd_scene format=3 uid="uid://farm_tile_scene"]
 
-[ext_resource type="Script" path="res://game/world/farm_tile.gd" id="1_farmtile"]
+[ext_resource type="Script" path="res://game/world/farm_tile.gd" id="1_ft"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_area"]
-size = Vector2(44, 44)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_1"]
+size = Vector2(28, 28)
 
 [node name="FarmTile" type="Node2D"]
-script = ExtResource("1_farmtile")
+script = ExtResource("1_ft")
 
 [node name="Visual" type="ColorRect" parent="."]
 offset_left = -16.0
 offset_top = -16.0
+offset_right = 16.0
+offset_bottom = 16.0
 size = Vector2(32, 32)
+position = Vector2(0, 0)
 color = Color(0.55, 0.38, 0.18, 1)
-
-[node name="InteractArea" type="Area2D" parent="."]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractArea"]
-shape = SubResource("RectangleShape2D_area")
 
 [node name="GrowTimer" type="Timer" parent="."]
 wait_time = 30.0
 one_shot = true
-autostart = false
+
+[node name="InteractArea" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractArea"]
+shape = SubResource("RectangleShape2D_1")
 
 [node name="HintLabel" type="Label" parent="."]
-offset_left = -60.0
+offset_left = -40.0
 offset_top = -36.0
-offset_right = 60.0
+offset_right = 40.0
 offset_bottom = -20.0
-horizontal_alignment = 1
+text = ""
 visible = false
+horizontal_alignment = 1
 theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(1, 1, 0.6, 1)
