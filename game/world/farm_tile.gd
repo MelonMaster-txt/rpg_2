@@ -1,11 +1,9 @@
 # FarmTile - Tuile agricole interactive
-# Structure :
-#   FarmTile (StaticBody2D)
-#     - Sprite2D  (ColorRect placeholder)
-#     - CollisionShape2D
-#     - Area2D > CollisionShape2D
-#     - GrowTimer (Timer)
-#     - HintLabel (Label)  <- hint contextuel
+# Le ColorRect change de couleur selon l'etat du sol :
+#   brun clair  = sol vierge
+#   brun fonce  = bêché
+#   vert         = plante en croissance
+#   jaune dore   = pret a recolter
 extends StaticBody2D
 
 enum State { SOL, BECHE, PLANTE, PRET }
@@ -13,10 +11,11 @@ enum State { SOL, BECHE, PLANTE, PRET }
 const GROW_TIME_BASE:    float = 30.0
 const GROW_TIME_WATERED: float = 15.0
 
-const COLOR_SOL:    Color = Color(0.55, 0.38, 0.18)
-const COLOR_BECHE:  Color = Color(0.35, 0.22, 0.08)
-const COLOR_PLANTE: Color = Color(0.20, 0.55, 0.15)
-const COLOR_PRET:   Color = Color(0.90, 0.75, 0.10)
+# Les couleurs imitent la transition herbe -> terre labouree
+const COLOR_SOL:    Color = Color(0.55, 0.38, 0.18)   # terre seche
+const COLOR_BECHE:  Color = Color(0.28, 0.15, 0.05)   # terre fraiche labouree
+const COLOR_PLANTE: Color = Color(0.20, 0.55, 0.15)   # jeune pousse verte
+const COLOR_PRET:   Color = Color(0.90, 0.75, 0.10)   # baies mures, jaune
 
 @onready var visual:        ColorRect  = $Sprite2D
 @onready var grow_timer:    Timer      = $GrowTimer
@@ -60,8 +59,10 @@ func _try_interact() -> void:
 				if grow_timer.time_left > GROW_TIME_WATERED:
 					grow_timer.wait_time = GROW_TIME_WATERED
 					grow_timer.start()
+					_show_popup("💧 Arrose !")
 		State.PRET:
 			GameManager.add_item("baies", 3)
+			_show_popup("+3 🍇 Baies")
 			_set_state(State.SOL)
 
 func _set_state(new_state: State) -> void:
@@ -73,11 +74,15 @@ func _set_state(new_state: State) -> void:
 		_update_hint("")
 
 func _update_visual() -> void:
+	var target_color: Color
 	match state:
-		State.SOL:    visual.color = COLOR_SOL
-		State.BECHE:  visual.color = COLOR_BECHE
-		State.PLANTE: visual.color = COLOR_PLANTE
-		State.PRET:   visual.color = COLOR_PRET
+		State.SOL:    target_color = COLOR_SOL
+		State.BECHE:  target_color = COLOR_BECHE
+		State.PLANTE: target_color = COLOR_PLANTE
+		State.PRET:   target_color = COLOR_PRET
+	# Transition douce
+	var tw := create_tween()
+	tw.tween_property(visual, "color", target_color, 0.4)
 
 func _update_hint(msg: String) -> void:
 	if hint_label == null:
@@ -87,12 +92,24 @@ func _update_hint(msg: String) -> void:
 
 func _update_hint_for_player() -> void:
 	match state:
-		State.SOL:    _update_hint("[E] Bêcher (pioche)")
+		State.SOL:    _update_hint("[E] Becher (pioche)")
 		State.BECHE:  _update_hint("[E] Planter (graine baie)")
 		State.PLANTE:
 			var secs: int = int(grow_timer.time_left)
-			_update_hint("Pousse dans %ds  [E arrosoir = +rapide]" % secs)
-		State.PRET:   _update_hint("[E] Récolter les baies !")
+			_update_hint("Pousse dans %ds  — [E] arroser" % secs)
+		State.PRET:   _update_hint("[E] Recolter les baies !")
+
+func _show_popup(msg: String) -> void:
+	var lbl := Label.new()
+	lbl.text = msg
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 0.4))
+	lbl.position = Vector2(-30, -40)
+	add_child(lbl)
+	var tw := create_tween()
+	tw.tween_property(lbl, "position", lbl.position + Vector2(0, -28), 0.9)
+	tw.parallel().tween_property(lbl, "modulate:a", 0.0, 0.9)
+	tw.tween_callback(lbl.queue_free)
 
 func _on_grow_timer_timeout() -> void:
 	if state == State.PLANTE:
