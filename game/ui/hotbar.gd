@@ -1,20 +1,20 @@
-# hotbar.gd - Barre d'outils visuelle en bas de l'ecran
+# hotbar.gd - Une seule case qui affiche l'outil actif
+# TAB cycle entre les outils disponibles dans l'inventaire
 extends CanvasLayer
 
-# Utilise des labels texte simples plutot qu'emoji (pas supportes par Godot sans police speciale)
 const TOOLS: Array[Dictionary] = [
-	{"id": "pioche",      "icon": "[ / ]",  "label": "Pioche",   "color": Color(0.85, 0.70, 0.45)},
-	{"id": "arrosoir",   "icon": "[~]",    "label": "Arrosoir", "color": Color(0.40, 0.75, 0.90)},
-	{"id": "graine_baie","icon": "[o]",    "label": "Graine",   "color": Color(0.55, 0.85, 0.35)},
+	{"id": "pioche",       "icon": "[ / ]", "label": "Pioche",   "color": Color(0.85, 0.70, 0.45)},
+	{"id": "arrosoir",    "icon": "[~]",   "label": "Arrosoir", "color": Color(0.40, 0.75, 0.90)},
+	{"id": "graine_baie", "icon": "[o]",   "label": "Graine",   "color": Color(0.55, 0.85, 0.35)},
 ]
 
 @onready var slots_container: HBoxContainer = $HotbarPanel/SlotsRow
 
-var _slot_panels: Array[PanelContainer] = []
+var _slot: PanelContainer = null
 
 func _ready() -> void:
 	layer = 15
-	_build_slots()
+	_build_slot()
 	call_deferred("_connect_player")
 
 func _connect_player() -> void:
@@ -30,17 +30,13 @@ func _make_style(active: bool, tool_color: Color) -> StyleBoxFlat:
 	if active:
 		s.bg_color     = Color(tool_color.r * 0.35, tool_color.g * 0.35, tool_color.b * 0.10, 0.95)
 		s.border_color = tool_color
-		s.border_width_left   = 2
-		s.border_width_top    = 2
-		s.border_width_right  = 2
-		s.border_width_bottom = 2
 	else:
 		s.bg_color     = Color(0.08, 0.08, 0.10, 0.88)
 		s.border_color = Color(1, 1, 1, 0.15)
-		s.border_width_left   = 2
-		s.border_width_top    = 2
-		s.border_width_right  = 2
-		s.border_width_bottom = 2
+	s.border_width_left   = 2
+	s.border_width_top    = 2
+	s.border_width_right  = 2
+	s.border_width_bottom = 2
 	s.corner_radius_top_left     = 8
 	s.corner_radius_top_right    = 8
 	s.corner_radius_bottom_right = 8
@@ -51,44 +47,72 @@ func _make_style(active: bool, tool_color: Color) -> StyleBoxFlat:
 	s.content_margin_bottom = 8
 	return s
 
-func _build_slots() -> void:
-	for t in TOOLS:
-		var pc := PanelContainer.new()
-		pc.custom_minimum_size = Vector2(64, 60)
-		pc.set_meta("tool_id",    t["id"])
-		pc.set_meta("tool_color", t["color"])
-		pc.add_theme_stylebox_override("panel", _make_style(false, t["color"]))
+func _build_slot() -> void:
+	# Vide les anciens slots si rebuild
+	for c in slots_container.get_children():
+		c.queue_free()
+	_slot = PanelContainer.new()
+	_slot.custom_minimum_size = Vector2(72, 64)
+	_slot.add_theme_stylebox_override("panel", _make_style(false, Color.WHITE))
 
-		var vb := VBoxContainer.new()
-		vb.alignment = BoxContainer.ALIGNMENT_CENTER
+	var vb := VBoxContainer.new()
+	vb.alignment = BoxContainer.ALIGNMENT_CENTER
 
-		var icon_lbl := Label.new()
-		icon_lbl.text = t["icon"]
-		icon_lbl.add_theme_font_size_override("font_size", 14)
-		icon_lbl.add_theme_color_override("font_color", t["color"])
-		icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		icon_lbl.name = "IconLabel"
+	var icon_lbl := Label.new()
+	icon_lbl.name = "IconLabel"
+	icon_lbl.text = ""
+	icon_lbl.add_theme_font_size_override("font_size", 15)
+	icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
-		var name_lbl := Label.new()
-		name_lbl.text = t["label"]
-		name_lbl.add_theme_font_size_override("font_size", 10)
-		name_lbl.add_theme_color_override("font_color", Color(0.65, 0.65, 0.65))
-		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var name_lbl := Label.new()
+	name_lbl.name = "NameLabel"
+	name_lbl.text = ""
+	name_lbl.add_theme_font_size_override("font_size", 10)
+	name_lbl.add_theme_color_override("font_color", Color(0.55, 0.55, 0.55))
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
-		vb.add_child(icon_lbl)
-		vb.add_child(name_lbl)
-		pc.add_child(vb)
-		slots_container.add_child(pc)
-		_slot_panels.append(pc)
+	var hint_lbl := Label.new()
+	hint_lbl.name = "HintLabel"
+	hint_lbl.text = "[TAB]"
+	hint_lbl.add_theme_font_size_override("font_size", 9)
+	hint_lbl.add_theme_color_override("font_color", Color(0.35, 0.35, 0.35))
+	hint_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+	vb.add_child(icon_lbl)
+	vb.add_child(name_lbl)
+	vb.add_child(hint_lbl)
+	_slot.add_child(vb)
+	slots_container.add_child(_slot)
 
 func _on_held_item_changed(item_id: String) -> void:
-	for pc in _slot_panels:
-		var tid:   String = pc.get_meta("tool_id")
-		var col: Color  = pc.get_meta("tool_color")
-		var active := (tid == item_id)
-		pc.add_theme_stylebox_override("panel", _make_style(active, col))
-		# Nom plus lumineux si actif
-		var name_lbl: Label = pc.get_child(0).get_child(1) as Label
-		if name_lbl:
-			var fc := col if active else Color(0.55, 0.55, 0.55)
-			name_lbl.add_theme_color_override("font_color", fc)
+	if _slot == null:
+		return
+	var vb := _slot.get_child(0)
+	var icon_lbl: Label = vb.get_node("IconLabel")
+	var name_lbl: Label = vb.get_node("NameLabel")
+	var hint_lbl: Label = vb.get_node("HintLabel")
+
+	if item_id == "":
+		# Aucun outil selectionne
+		_slot.add_theme_stylebox_override("panel", _make_style(false, Color.WHITE))
+		icon_lbl.text = ""
+		icon_lbl.add_theme_color_override("font_color", Color(0.4, 0.4, 0.4))
+		name_lbl.text = ""
+		hint_lbl.text = "[TAB]"
+		return
+
+	# Trouver les infos de l'outil
+	var info: Dictionary = {}
+	for t in TOOLS:
+		if t["id"] == item_id:
+			info = t
+			break
+	if info.is_empty():
+		return
+
+	_slot.add_theme_stylebox_override("panel", _make_style(true, info["color"]))
+	icon_lbl.text = info["icon"]
+	icon_lbl.add_theme_color_override("font_color", info["color"])
+	name_lbl.text = info["label"]
+	name_lbl.add_theme_color_override("font_color", info["color"])
+	hint_lbl.text = "[TAB] suiv."
