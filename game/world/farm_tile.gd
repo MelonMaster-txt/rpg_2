@@ -1,4 +1,4 @@
-# FarmTile — sol cultivable place par clic droit
+# FarmTile — sol cultivable
 extends Node2D
 
 enum State { SOL, BECHE, PLANTE, PRET }
@@ -111,3 +111,22 @@ func _on_body_exited(body: Node2D) -> void:
 	if body.is_in_group("player"):
 		_player_nearby = false
 		_update_hint("")
+
+# ─── PERSISTANCE ──────────────────────────────────────────────────────────────
+func get_save_data() -> Dictionary:
+	return {
+		"pos":       global_position,
+		"state":     int(state),
+		"time_left": grow_timer.time_left if state == State.PLANTE else 0.0,
+	}
+
+func load_save_data(data: Dictionary) -> void:
+	state = data.get("state", State.SOL) as State
+	_update_visual()
+	if state == State.PLANTE:
+		var tl: float = data.get("time_left", GROW_TIME_BASE)
+		if tl > 0.0:
+			grow_timer.wait_time = tl
+			grow_timer.start()
+		else:
+			_set_state(State.PRET)

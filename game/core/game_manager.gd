@@ -42,6 +42,29 @@ func consume_spawn_position() -> Vector2:
 	has_saved_position = false
 	return saved_spawn_position
 
+# ─── FARM TILES PERSISTANCE ───────────────────────────────────────────────────
+# Chaque entree : { "pos": Vector2, "state": int, "time_left": float }
+var farm_tiles_data: Array = []
+
+func save_farm_tiles(container: Node) -> void:
+	farm_tiles_data.clear()
+	if container == null:
+		return
+	for tile in container.get_children():
+		if not tile.has_method("get_save_data"):
+			continue
+		farm_tiles_data.append(tile.get_save_data())
+
+func restore_farm_tiles(container: Node) -> void:
+	if container == null or farm_tiles_data.is_empty():
+		return
+	var scene := load("res://game/world/farm_tile.tscn")
+	for data in farm_tiles_data:
+		var tile: Node2D = scene.instantiate()
+		tile.global_position = data["pos"]
+		container.add_child(tile)
+		tile.call_deferred("load_save_data", data)
+
 # ─── TEMPS ────────────────────────────────────────────────────────────────────
 const DAY_DURATION: float = 240.0
 
