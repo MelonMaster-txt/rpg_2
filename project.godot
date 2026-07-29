@@ -20,12 +20,11 @@ config/icon="res://icon.svg"
 
 SceneManager="*res://game/core/scene_manager.gd"
 Dialogic="*uid://ds2q0uclmolvu"
-
 ChunkGenerator="*res://game/world/chunk_generator.gd"
 GameManager="*res://game/core/game_manager.gd"
 ItemDatabase="*res://game/systems/item_database.gd"
 NpcSpawner="*res://game/characters/npcs/npc_spawner.gd"
-DebugMenu="*uid://cggqb75a8w8r"
+DebugMenu="*res://game/core/debug_menu.gd"
 
 [dialogic]
 
