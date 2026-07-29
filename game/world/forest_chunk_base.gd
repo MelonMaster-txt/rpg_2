@@ -1,3 +1,7 @@
+# forest_chunk_base.gd
+# OPTIMISATION : les scenes de ressources (arbres, baies, pierres)
+# sont instanciées une par une via call_deferred pour étaler
+# le coût sur plusieurs frames et éviter les freeze.
 extends Node2D
 
 @export var tree_count_min:  int = 5
@@ -15,11 +19,18 @@ const GROUND_SCRIPT := "res://game/world/ground_painter.gd"
 var _chunk_coords: Vector2i = Vector2i.ZERO
 var _chunk_size:   int      = 512
 
+# File de spawn : chaque entrée = [PackedScene, Vector2]
+var _spawn_queue: Array = []
+
+
 func setup(coords: Vector2i, size: int) -> void:
 	_chunk_coords = coords
 	_chunk_size   = size
 	_paint_ground()
-	_generate()
+	_build_spawn_queue()
+	# Lance le premier spawn différé
+	call_deferred("_spawn_next")
+
 
 func _paint_ground() -> void:
 	var script: GDScript = load(GROUND_SCRIPT) as GDScript
@@ -32,7 +43,8 @@ func _paint_ground() -> void:
 	painter.z_index = -10
 	painter.paint(_chunk_coords, _chunk_size)
 
-func _generate() -> void:
+
+func _build_spawn_queue() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(Vector2i(_chunk_coords.x * 73856093, _chunk_coords.y * 19349663))
 
@@ -44,19 +56,40 @@ func _generate() -> void:
 	var berry_scene := load(BERRY_SCENE) as PackedScene
 	var stone_scene := load(STONE_SCENE) as PackedScene
 
+	_spawn_queue.clear()
 	for _i in tree_count:
-		_place(rng, tree_scene)
+		_spawn_queue.append([
+			tree_scene,
+			Vector2(rng.randf_range(48.0, _chunk_size - 48.0),
+					rng.randf_range(48.0, _chunk_size - 48.0))
+		])
 	for _i in berry_count:
-		_place(rng, berry_scene)
+		_spawn_queue.append([
+			berry_scene,
+			Vector2(rng.randf_range(48.0, _chunk_size - 48.0),
+					rng.randf_range(48.0, _chunk_size - 48.0))
+		])
 	for _i in stone_count:
-		_place(rng, stone_scene)
+		_spawn_queue.append([
+			stone_scene,
+			Vector2(rng.randf_range(48.0, _chunk_size - 48.0),
+					rng.randf_range(48.0, _chunk_size - 48.0))
+		])
 
-func _place(rng: RandomNumberGenerator, scene: PackedScene) -> void:
+
+## Instancie UN seul objet par frame depuis la queue
+func _spawn_next() -> void:
+	if _spawn_queue.is_empty():
+		return
+	var data: Array = _spawn_queue.pop_front()
+	var scene: PackedScene = data[0]
+	var pos: Vector2 = data[1]
 	if scene == null:
+		call_deferred("_spawn_next")
 		return
 	var inst := scene.instantiate() as Node2D
-	inst.position = Vector2(
-		rng.randf_range(48.0, _chunk_size - 48.0),
-		rng.randf_range(48.0, _chunk_size - 48.0)
-	)
+	inst.position = pos
 	add_child(inst)
+	# Planifie le suivant à la prochaine frame
+	if not _spawn_queue.is_empty():
+		call_deferred("_spawn_next")
