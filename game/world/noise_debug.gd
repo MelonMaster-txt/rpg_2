@@ -1,7 +1,7 @@
 # noise_debug.gd - Panel debug noise, toggle avec F2
 extends PanelContainer
 
-const SAVE_PATH := "user://noise_settings.cfg"
+const SAVE_PATH   := "user://noise_settings.cfg"
 const PREVIEW_SIZE := 256
 
 var _g_seed        : int   = 42
@@ -19,7 +19,6 @@ var _d_octaves     : int   = 2
 var _accent_thr    : float = 0.4
 
 var _thresholds: Array[float] = [0.3, 0.1, -0.1, -0.3]
-
 var _grass_colors: Array[Color] = [
 	Color(0.27, 0.58, 0.18), Color(0.24, 0.55, 0.16),
 	Color(0.22, 0.52, 0.15), Color(0.18, 0.44, 0.12),
@@ -29,9 +28,9 @@ var _accent_colors: Array[Color] = [
 	Color(0.30, 0.62, 0.20), Color(0.55, 0.52, 0.18), Color(0.26, 0.56, 0.40),
 ]
 
-var _tex_rect  : TextureRect
-var _live_mode : bool = false
-var _status_lbl: Label
+var _tex_rect   : TextureRect
+var _live_mode  : bool = false
+var _status_lbl : Label
 
 const NOISE_TYPES := [
 	["Simplex",        FastNoiseLite.TYPE_SIMPLEX],
@@ -49,20 +48,57 @@ const FRACTAL_TYPES := [
 ]
 
 func _ready() -> void:
+	add_to_group("noise_debug_panel")
 	custom_minimum_size = Vector2(370, 0)
 	_load_cfg()
 	_build_ui()
 	_refresh()
 
 func _build_ui() -> void:
+	# Layout principal : titre + boutons fixes en haut, scroll en dessous
+	var outer := VBoxContainer.new()
+	outer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	add_child(outer)
+
+	# --- TITRE + ACTIONS FIXES (toujours visibles) ---
+	_add_title(outer, "Ground Painter - Noise Debug  [F2]")
+
+	_status_lbl = Label.new()
+	_status_lbl.text = ""
+	_status_lbl.add_theme_color_override("font_color", Color(0.4, 0.9, 0.3))
+	outer.add_child(_status_lbl)
+
+	var btn_row := HBoxContainer.new()
+	outer.add_child(btn_row)
+
+	var btn_save := Button.new()
+	btn_save.text = "💾 Sauvegarder"
+	btn_save.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_save.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
+	btn_save.pressed.connect(_save_cfg)
+	btn_row.add_child(btn_save)
+
+	var btn_repaint := Button.new()
+	btn_repaint.text = "🖌 Repaint"
+	btn_repaint.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_repaint.pressed.connect(_repaint_all_chunks)
+	btn_row.add_child(btn_repaint)
+
+	var btn_load := Button.new()
+	btn_load.text = "🔄 Recharger"
+	btn_load.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_load.pressed.connect(func(): _load_cfg(); _refresh())
+	btn_row.add_child(btn_load)
+
+	# --- SCROLL : tout le reste ---
 	var scroll := ScrollContainer.new()
-	scroll.custom_minimum_size = Vector2(370, 720)
-	add_child(scroll)
+	scroll.custom_minimum_size = Vector2(370, 580)
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	outer.add_child(scroll)
+
 	var vbox := VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(vbox)
-
-	_add_title(vbox, "Ground Painter - Noise Debug  [F2]")
 
 	_tex_rect = TextureRect.new()
 	_tex_rect.custom_minimum_size = Vector2(PREVIEW_SIZE, PREVIEW_SIZE)
@@ -72,10 +108,8 @@ func _build_ui() -> void:
 
 	var live_row := HBoxContainer.new()
 	vbox.add_child(live_row)
-	var live_lbl := Label.new()
-	live_lbl.text = "Repaint chunks live"
-	live_lbl.custom_minimum_size.x = 180
-	live_row.add_child(live_lbl)
+	var live_lbl := Label.new(); live_lbl.text = "Repaint chunks live"
+	live_lbl.custom_minimum_size.x = 180; live_row.add_child(live_lbl)
 	var live_toggle := CheckButton.new()
 	live_toggle.button_pressed = false
 	live_toggle.toggled.connect(func(on: bool): _live_mode = on)
@@ -103,37 +137,14 @@ func _build_ui() -> void:
 	_add_color_row(vbox, _grass_colors, lg, func(i: int, c: Color): _grass_colors[i] = c; _refresh())
 
 	_add_separator(vbox, "Noise Accent")
-	_add_slider(vbox, "Seed",      0,     9999, _d_seed,    1,     func(v: float): _d_seed = int(v);    _refresh())
-	_add_slider(vbox, "Frequency", 0.001, 0.05, _d_freq,    0.001, func(v: float): _d_freq = v;         _refresh())
-	_add_slider(vbox, "Octaves",   1,     6,    _d_octaves, 1,     func(v: float): _d_octaves = int(v); _refresh())
-	_add_slider(vbox, "Seuil",    -1.0,   1.0,  _accent_thr,0.01,  func(v: float): _accent_thr = v;    _refresh())
+	_add_slider(vbox, "Seed",      0,     9999, _d_seed,     1,     func(v: float): _d_seed = int(v);    _refresh())
+	_add_slider(vbox, "Frequency", 0.001, 0.05, _d_freq,     0.001, func(v: float): _d_freq = v;         _refresh())
+	_add_slider(vbox, "Octaves",   1,     6,    _d_octaves,  1,     func(v: float): _d_octaves = int(v); _refresh())
+	_add_slider(vbox, "Seuil",    -1.0,   1.0,  _accent_thr, 0.01,  func(v: float): _accent_thr = v;     _refresh())
 
 	_add_separator(vbox, "Couleurs accent")
 	var la := ["Vert vif","Mousse","Bleu-vert"]
 	_add_color_row(vbox, _accent_colors, la, func(i: int, c: Color): _accent_colors[i] = c; _refresh())
-
-	_add_separator(vbox, "")
-
-	var btn_repaint := Button.new()
-	btn_repaint.text = "Repaint tous les chunks"
-	btn_repaint.pressed.connect(_repaint_all_chunks)
-	vbox.add_child(btn_repaint)
-
-	var btn_save := Button.new()
-	btn_save.text = "Sauvegarder (user://noise_settings.cfg)"
-	btn_save.add_theme_color_override("font_color", Color(0.3, 1.0, 0.4))
-	btn_save.pressed.connect(_save_cfg)
-	vbox.add_child(btn_save)
-
-	var btn_load := Button.new()
-	btn_load.text = "Recharger depuis fichier"
-	btn_load.pressed.connect(func(): _load_cfg(); _refresh())
-	vbox.add_child(btn_load)
-
-	_status_lbl = Label.new()
-	_status_lbl.text = ""
-	_status_lbl.add_theme_color_override("font_color", Color(0.4, 0.9, 0.3))
-	vbox.add_child(_status_lbl)
 
 func _refresh() -> void:
 	var noise   := _build_ground_noise()
@@ -174,10 +185,7 @@ func _save_cfg() -> void:
 	for i in _accent_colors.size():
 		cfg.set_value("accent_colors", "c" + str(i), _accent_colors[i])
 	var err := cfg.save(SAVE_PATH)
-	if err == OK:
-		_status_lbl.text = "Sauvegarde OK -> " + SAVE_PATH
-	else:
-		_status_lbl.text = "Erreur sauvegarde : " + str(err)
+	_status_lbl.text = "OK -> " + SAVE_PATH if err == OK else "Erreur : " + str(err)
 
 func _load_cfg() -> void:
 	var cfg := ConfigFile.new()

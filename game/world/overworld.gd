@@ -9,8 +9,6 @@ const NOISE_KEY_LISTENER := preload("res://game/world/noise_key_listener.gd")
 @onready var _player_container : Node2D   = $PlayerContainer
 @onready var _player_spawn     : Marker2D = $PlayerSpawn
 
-var _noise_debug_layer : CanvasLayer
-
 func _ready() -> void:
 	var fc := Node2D.new()
 	fc.name = "FarmContainer"
@@ -28,20 +26,16 @@ func _ready() -> void:
 	debug_menu.name = "DebugMenu"
 	add_child(debug_menu)
 
-	# Noise debug F2 - cache par defaut
-	_noise_debug_layer = CanvasLayer.new()
-	_noise_debug_layer.layer = 101
-	_noise_debug_layer.name = "NoiseDebugLayer"
+	# Noise debug F2 - instancie la scene directement (elle contient deja son CanvasLayer)
+	# On la cache via le groupe "noise_debug_panel" dans le script
 	var nd := NOISE_DEBUG_SCN.instantiate()
-	_noise_debug_layer.add_child(nd)
-	_noise_debug_layer.visible = false
-	add_child(_noise_debug_layer)
+	nd.visible = false
+	add_child(nd)
 
-	# Listener F2 - script separe
+	# Listener F2
 	var listener := Node.new()
 	listener.set_script(NOISE_KEY_LISTENER)
 	listener.name = "NoiseKeyListener"
-	listener.set("debug_layer", _noise_debug_layer)
 	add_child(listener)
 
 	_spawn_player()
