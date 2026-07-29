@@ -1,6 +1,6 @@
-[gd_scene format=3 uid="uid://npc_base_scene"]
+[gd_scene format=3]
 
-[ext_resource type="Script" path="res://game/characters/npcs/npc_base.gd"              id="1_npc"]
+[ext_resource type="Script" path="res://game/characters/npcs/npc_base.gd" id="1_npc"]
 [ext_resource type="Script" path="res://game/characters/shared/character_appearance.gd" id="2_appearance"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_1"]

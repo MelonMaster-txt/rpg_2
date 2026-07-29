@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://npc_random"]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://game/characters/npcs/random_npc.gd" id="1"]
 [ext_resource type="Script" path="res://game/characters/shared/character_appearance.gd" id="2"]
