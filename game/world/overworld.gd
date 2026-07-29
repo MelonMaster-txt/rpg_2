@@ -8,15 +8,16 @@ const FARM_PLACER_SCR := preload("res://game/world/farm_placer.gd")
 @onready var _chunk_manager    : Node2D   = $ChunkManager
 
 func _ready() -> void:
-	# Conteneur pour les FarmTiles
+	# FarmContainer
 	var fc := Node2D.new()
 	fc.name = "FarmContainer"
 	add_child(fc)
 
-	# Farm placer (doit etre enfant du meme parent que FarmContainer)
+	# FarmPlacer dans le groupe farm_placer pour que le joueur le trouve
 	var fp := Node2D.new()
 	fp.set_script(FARM_PLACER_SCR)
 	fp.name = "FarmPlacer"
+	fp.add_to_group("farm_placer")
 	add_child(fp)
 
 	_spawn_player()

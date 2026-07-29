@@ -36,19 +36,16 @@ func _update_animation(dir: Vector2, delta: float) -> void:
 	if appearance == null:
 		return
 	if dir != Vector2.ZERO:
-		# Direction
 		if abs(dir.x) > abs(dir.y):
 			appearance.set_direction("right" if dir.x > 0 else "left")
 		else:
 			appearance.set_direction("down" if dir.y > 0 else "up")
-		# Frame de marche
 		_anim_timer += delta
 		if _anim_timer >= ANIM_STEP:
 			_anim_timer = 0.0
 			_walk_frame = (_walk_frame + 1) % 8
 			appearance.set_walk_frame(_walk_frame)
 	else:
-		# Idle : frame 0
 		_walk_frame = 0
 		_anim_timer = 0.0
 		appearance.set_walk_frame(0)
@@ -62,10 +59,21 @@ func _unhandled_input(event: InputEvent) -> void:
 		camera.zoom *= zoom_out_factor
 	elif event.is_action_pressed("ui_cancel"):
 		set_held_item("")
+	elif event.is_action_pressed("interact"):
+		_on_interact()
+		get_viewport().set_input_as_handled()
 	elif event is InputEventKey:
 		var key_event := event as InputEventKey
 		if key_event.pressed and key_event.keycode == KEY_TAB:
 			_cycle_held_item()
+
+## Appuie sur E
+func _on_interact() -> void:
+	if _held_item == "pioche":
+		# Becher / interagir avec la farm tile sous le joueur
+		var placer = get_tree().get_first_node_in_group("farm_placer")
+		if placer and placer.has_method("interact_at"):
+			placer.interact_at(global_position)
 
 func get_inventory() -> Dictionary:
 	return GameManager.inventory
