@@ -23,6 +23,9 @@ enum TicketLevel {
 @export var spawn_chunk_radius: int  = 1
 @export var debug_draw_chunks:  bool = false
 
+## Nombre maximum de chunks appliqués par frame (1 = zéro saccade, 2 = chargement plus rapide)
+@export var max_chunks_per_frame: int = 1
+
 # --- État interne ---
 var _loaded_chunks:  Dictionary = {}   # Vector2i → chunk node
 var _ticket_levels:  Dictionary = {}   # Vector2i → TicketLevel
@@ -55,6 +58,8 @@ func _deferred_init() -> void:
 
 
 func _process(_delta: float) -> void:
+	# On applique AU MAXIMUM max_chunks_per_frame chunks par frame
+	# pour éviter les saccades quand plusieurs chunks arrivent ensemble
 	_flush_ready_queue()
 	if _player == null or not is_instance_valid(_player):
 		_find_player_cd -= 1
@@ -105,12 +110,21 @@ func _compute_chunk_data(coords: Vector2i) -> Dictionary:
 # MAIN THREAD — application des données + gestion du pool
 # ---------------------------------------------------------------------------
 func _flush_ready_queue() -> void:
+	# On extrait seulement max_chunks_per_frame éléments du ready_queue
 	_thread_mutex.lock()
-	var batch: Array = _ready_queue.duplicate()
-	_ready_queue.clear()
+	var available: int = _ready_queue.size()
 	_thread_mutex.unlock()
 
-	for item: Dictionary in batch:
+	if available == 0:
+		return
+
+	var to_apply: int = mini(available, max_chunks_per_frame)
+
+	for _i: int in to_apply:
+		_thread_mutex.lock()
+		var item: Dictionary = _ready_queue.pop_front()
+		_thread_mutex.unlock()
+
 		var coords: Vector2i = item["coords"]
 		var data: Dictionary  = item["data"]
 		if not _loaded_chunks.has(coords):
@@ -268,8 +282,8 @@ func _find_player() -> Node2D:
 
 func _world_to_chunk(world_pos: Vector2) -> Vector2i:
 	return Vector2i(
-		floor(world_pos.x / chunk_size) as int,
-		floor(world_pos.y / chunk_size) as int
+		int(world_pos.x / float(chunk_size)),
+		int(world_pos.y / float(chunk_size))
 	)
 
 
