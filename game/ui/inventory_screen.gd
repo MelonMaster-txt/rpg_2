@@ -1,6 +1,5 @@
 # inventory_screen.gd
 # Panneau inventaire ouvert/ferme avec la touche I
-# Affiche tous les items + permet de manger les baies (a venir : hunger system)
 extends Control
 
 const ITEM_META := {
@@ -13,15 +12,16 @@ const ITEM_META := {
 }
 
 var _is_open: bool = false
+var _dirty: bool = false
 
-@onready var grid:       GridContainer = $BG/Panel/VBox/Grid
-@onready var title_lbl:  Label         = $BG/Panel/VBox/Title
-@onready var close_btn:  Button        = $BG/Panel/VBox/CloseBtn
+@onready var grid:      GridContainer = $BG/Panel/VBox/Grid
+@onready var close_btn: Button        = $BG/Panel/VBox/CloseBtn
 
 func _ready() -> void:
 	add_to_group("inventory_screen")
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	visible = false
+	close_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 	close_btn.pressed.connect(toggle)
 	GameManager.inventory_changed.connect(_on_inventory_changed)
 
@@ -33,18 +33,27 @@ func toggle() -> void:
 	_is_open = not _is_open
 	visible = _is_open
 	if _is_open:
-		_refresh()
+		_rebuild()
 		get_tree().paused = true
 	else:
 		get_tree().paused = false
 
 func _on_inventory_changed(_item: String, _amount: int) -> void:
 	if _is_open:
-		_refresh()
+		# On ne rebuide pas tout de suite : on attend le prochain frame
+		# pour eviter le conflit queue_free / add_child dans le meme frame
+		_dirty = true
 
-func _refresh() -> void:
+func _process(_delta: float) -> void:
+	if _dirty and _is_open:
+		_dirty = false
+		_rebuild()
+
+func _rebuild() -> void:
+	# Supprime les anciens enfants immediatement (pas queue_free)
 	for child in grid.get_children():
-		child.queue_free()
+		grid.remove_child(child)
+		child.free()
 
 	for item_id in ITEM_META:
 		var meta: Dictionary = ITEM_META[item_id]
@@ -53,13 +62,13 @@ func _refresh() -> void:
 		var card := PanelContainer.new()
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color(0.12, 0.12, 0.16, 0.95) if qty > 0 else Color(0.07, 0.07, 0.09, 0.7)
-		style.corner_radius_top_left = 6
-		style.corner_radius_top_right = 6
+		style.corner_radius_top_left    = 6
+		style.corner_radius_top_right   = 6
 		style.corner_radius_bottom_left = 6
 		style.corner_radius_bottom_right = 6
-		style.content_margin_left = 8.0
-		style.content_margin_right = 8.0
-		style.content_margin_top = 6.0
+		style.content_margin_left   = 8.0
+		style.content_margin_right  = 8.0
+		style.content_margin_top    = 6.0
 		style.content_margin_bottom = 6.0
 		card.add_theme_stylebox_override("panel", style)
 
@@ -87,7 +96,6 @@ func _refresh() -> void:
 		vbox.add_child(nom_lbl)
 		vbox.add_child(qty_lbl)
 
-		# Bouton manger si consommable et qty > 0
 		if meta["consommable"] and qty > 0:
 			var eat_btn := Button.new()
 			eat_btn.text = "Manger"
@@ -100,8 +108,6 @@ func _refresh() -> void:
 		grid.add_child(card)
 
 func _on_eat_pressed(item_id: String) -> void:
-	# TODO: brancher sur le systeme de faim quand il sera cree
-	# Pour l'instant : consomme 1 baie et affiche un message
 	if GameManager.remove_item(item_id, 1):
 		var popup := Label.new()
 		popup.text = "Miam ! (+faim bientot)"

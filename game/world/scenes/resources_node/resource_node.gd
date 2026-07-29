@@ -42,6 +42,7 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("interact") and player_in_area and not is_depleted:
+		get_viewport().set_input_as_handled()
 		_do_gather()
 
 
@@ -61,22 +62,19 @@ func _on_body_exited(body: Node) -> void:
 
 func _resource_type_to_key(rtype: String) -> String:
 	match rtype:
-		"wood", "bois":            return "bois"
+		"wood", "bois":              return "bois"
 		"berry", "baies", "berries": return "baies"
-		"stone", "pierre", "rock": return "pierre"
-		"food", "nourriture":      return "nourriture"
-		_:                         return rtype
+		"stone", "pierre", "rock":   return "pierre"
+		_:                            return rtype
 
 
 func _do_gather() -> void:
 	current_health -= 1
 	var inv_key: String = _resource_type_to_key(resource_type)
 	GameManager.add_item(inv_key, gather_amount)
+	_spawn_gather_feedback()  # UNE seule fois
 	if current_health <= 0:
 		_deplete()
-	else:
-		_spawn_gather_feedback()
-	_spawn_gather_feedback()
 
 
 func _deplete() -> void:
