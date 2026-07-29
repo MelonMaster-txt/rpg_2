@@ -1,77 +1,68 @@
 # ground_painter.gd
-# OPTIMISATION MAJEURE : plus aucun ColorRect individuel.
-# Tout le sol est dessiné en UN seul appel _draw() avec draw_rect().
-# Cout CPU : O(1) draw call au lieu de 256 nodes enfants.
-# Le calcul des tuiles est fait une seule fois dans paint() et mis en cache.
-extends Node2D
+# Peint les tiles de sol d'un chunk en utilisant le Perlin noise MONDIAL
+# du ChunkGenerator → continuité parfaite entre chunks, zéro couture visible.
+#
+# SEUILS DE SOL (valeur bruit -1..1) :
+#   < -0.25  → terre nue        (atlas 0,2)
+#   -0.25..0.05 → herbe clairsemée (atlas 0,1)
+#   >= 0.05  → herbe dense      (atlas 0,0)
+#
+# Le peintre utilise les COORDONNÉES MONDE de chaque tile, pas des coords locales.
+extends Node
 
-const TILE_SIZE:   int   = 32
-const TILE_SIZE_F: float = 32.0
+# Taille d'un chunk en tiles
+const CHUNK_SIZE: int = 16
+# Taille d'une tile en pixels
+const TILE_SIZE: int = 32
 
-const GRASS_COLORS: Array[Color] = [
-	Color(0.22, 0.52, 0.15),
-	Color(0.27, 0.58, 0.18),
-	Color(0.18, 0.44, 0.12),
-	Color(0.24, 0.55, 0.16),
-	Color(0.20, 0.48, 0.14),
-]
-const ACCENT_COLORS: Array[Color] = [
-	Color(0.30, 0.62, 0.20),
-	Color(0.55, 0.52, 0.18),
-	Color(0.26, 0.56, 0.40),
-]
+# IDs de tiles dans le TileSet (à ajuster selon ton atlas)
+const TILE_GRASS_DENSE:   Vector2i = Vector2i(0, 0)
+const TILE_GRASS_SPARSE:  Vector2i = Vector2i(0, 1)
+const TILE_DIRT:          Vector2i = Vector2i(0, 2)
+const TILE_LAYER: int = 0
 
-# Cache plat : [pos_x, pos_y, r, g, b] * nb_tuiles
-# Stocke uniquement les tuiles d'accent (les autres sont fillées par couleur dominante)
-var _accent_tiles: PackedFloat32Array  # [x, y, r, g, b, ...]
-var _base_color:   Color = Color(0.22, 0.52, 0.15)
-var _chunk_size:   int   = 512
-var _ready_to_draw: bool = false
+# Référence au TileMapLayer du chunk parent
+@export var tilemap: NodePath = NodePath("TileMapLayer")
 
+var _tilemap_node: TileMapLayer
 
-func paint(chunk_coords: Vector2i, chunk_size: int) -> void:
-	_chunk_size = chunk_size
-	var rng := RandomNumberGenerator.new()
-	rng.seed = hash(Vector2i(chunk_coords.x * 5381 + 1, chunk_coords.y * 9973 + 7))
+func _ready() -> void:
+	_tilemap_node = get_node_or_null(tilemap)
 
-	var cols: int = int(chunk_size / TILE_SIZE_F)
-	var rows: int = int(chunk_size / TILE_SIZE_F)
-
-	# Couleur dominante = la plus fréquente de la palette (première)
-	_base_color = GRASS_COLORS[rng.randi() % GRASS_COLORS.size()]
-
-	# On ne stocke QUE les tuiles qui diffèrent de la base (accents + variations)
-	_accent_tiles.clear()
-	for row: int in rows:
-		for col: int in cols:
-			var roll: float = rng.randf()
-			var color: Color
-			if roll < 0.06:
-				color = ACCENT_COLORS[rng.randi() % ACCENT_COLORS.size()]
-			elif roll < 0.45:
-				color = GRASS_COLORS[rng.randi() % GRASS_COLORS.size()]
-			else:
-				continue  # == base color, pas besoin de stocker
-			_accent_tiles.append(float(col * TILE_SIZE))
-			_accent_tiles.append(float(row * TILE_SIZE))
-			_accent_tiles.append(color.r)
-			_accent_tiles.append(color.g)
-			_accent_tiles.append(color.b)
-
-	_ready_to_draw = true
-	queue_redraw()  # Un seul redraw, jamais rappelé sauf si le chunk bouge
-
-
-func _draw() -> void:
-	if not _ready_to_draw:
+# Peint toutes les tiles d'un chunk.
+# chunk_coords : position du chunk dans la grille de chunks (ex: Vector2i(2,-1))
+func paint_chunk(chunk_coords: Vector2i) -> void:
+	if not _tilemap_node:
+		push_error("GroundPainter: TileMapLayer introuvable sur '%s'" % tilemap)
 		return
-	# 1. Fond uniforme = 1 seul draw call
-	draw_rect(Rect2(Vector2.ZERO, Vector2(_chunk_size, _chunk_size)), _base_color)
-	# 2. Tuiles différentes = draw_rect individuel mais SANS node
-	const STRIDE: int = 5
-	var count: int    = int(_accent_tiles.size() / float(STRIDE))
-	for i: int in count:
-		var base: int = i * STRIDE
-		var pos := Vector2(_accent_tiles[base], _accent_tiles[base + 1])
-		var col := Color(_accent_tiles[base + 2], _accent_tiles[base + 3], _accent_tiles[base + 4])
-		draw_rect(Rect2(pos, Vector2(TILE_SIZE_F, TILE_SIZE_F)), col)
+
+	var cg: Node = get_node("/root/ChunkGenerator")
+
+	for local_y in CHUNK_SIZE:
+		for local_x in CHUNK_SIZE:
+			# Coordonnée MONDE de cette tile
+			var wx: int = chunk_coords.x * CHUNK_SIZE + local_x
+			var wy: int = chunk_coords.y * CHUNK_SIZE + local_y
+
+			var v: float = cg.get_ground_noise(wx, wy)
+			var atlas_coords: Vector2i = _noise_to_tile(v)
+
+			_tilemap_node.set_cell(
+				Vector2i(local_x, local_y),
+				TILE_LAYER,
+				atlas_coords
+			)
+
+# Convertit une valeur de bruit (-1..1) en coordonnées d'atlas
+func _noise_to_tile(v: float) -> Vector2i:
+	if v < -0.25:
+		return TILE_DIRT
+	elif v < 0.05:
+		return TILE_GRASS_SPARSE
+	else:
+		return TILE_GRASS_DENSE
+
+# Efface toutes les tiles du chunk (utile pour le pooling)
+func clear_chunk() -> void:
+	if _tilemap_node:
+		_tilemap_node.clear()
