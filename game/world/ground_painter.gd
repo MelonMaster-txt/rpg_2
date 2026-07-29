@@ -33,16 +33,16 @@ func paint(chunk_coords: Vector2i, chunk_size: int) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(Vector2i(chunk_coords.x * 5381 + 1, chunk_coords.y * 9973 + 7))
 
-	var cols: int = int(chunk_size / float(TILE_SIZE))
-	var rows: int = int(chunk_size / float(TILE_SIZE))
+	var cols: int = chunk_size / TILE_SIZE
+	var rows: int = chunk_size / TILE_SIZE
 
 	# Couleur dominante = la plus fréquente de la palette (première)
 	_base_color = GRASS_COLORS[rng.randi() % GRASS_COLORS.size()]
 
 	# On ne stocke QUE les tuiles qui diffèrent de la base (accents + variations)
 	_accent_tiles.clear()
-	for row in rows:
-		for col in cols:
+	for row: int in rows:
+		for col: int in cols:
 			var roll: float = rng.randf()
 			var color: Color
 			if roll < 0.06:
@@ -68,8 +68,8 @@ func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, Vector2(_chunk_size, _chunk_size)), _base_color)
 	# 2. Tuiles différentes = draw_rect individuel mais SANS node
 	var stride: int = 5
-	var count: int  = int(_accent_tiles.size() / stride)
-	for i in count:
+	var count: int  = _accent_tiles.size() / stride
+	for i: int in count:
 		var base: int = i * stride
 		var pos := Vector2(_accent_tiles[base], _accent_tiles[base + 1])
 		var col := Color(_accent_tiles[base + 2], _accent_tiles[base + 3], _accent_tiles[base + 4])

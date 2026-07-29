@@ -5,7 +5,6 @@ const FARM_PLACER_SCR := preload("res://game/world/farm_placer.gd")
 
 @onready var _player_container : Node2D   = $PlayerContainer
 @onready var _player_spawn     : Marker2D = $PlayerSpawn
-@onready var _chunk_manager    : Node2D   = $ChunkManager
 
 func _ready() -> void:
 	# FarmContainer
