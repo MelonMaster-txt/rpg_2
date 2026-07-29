@@ -1,36 +1,41 @@
-# farm_placer.gd — autoload ou noeud dans overworld
-# Clic droit n'importe ou = poser une FarmTile sous le curseur (grille 32px)
-extends Node
+# farm_placer.gd
+# Clic droit n'importe ou -> place une FarmTile snappee sur grille 32px
+extends Node2D
 
-const FARM_TILE_SCENE := preload("res://game/world/farm_tile.tscn")
+const FARM_TILE_SCR := preload("res://game/world/farm_tile.gd")
 const GRID := 32
 
-var _container: Node2D = null
+var _container : Node2D = null
 
-func init(container: Node2D) -> void:
-	_container = container
+func _ready() -> void:
+	# Retrouve FarmContainer dans le parent (overworld)
+	_container = get_parent().get_node_or_null("FarmContainer")
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _container == null:
-		return
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
-		if mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT:
+		if mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
 			_place_tile(mb.global_position)
+			get_viewport().set_input_as_handled()
 
 func _place_tile(screen_pos: Vector2) -> void:
-	# Convertit coords ecran -> monde via la camera du joueur
-	var vp := get_viewport()
-	var world_pos: Vector2 = vp.get_canvas_transform().affine_inverse() * screen_pos
-	# Snap sur grille 32px
-	world_pos = Vector2(
-		snappedi(int(world_pos.x), GRID),
-		snappedi(int(world_pos.y), GRID)
+	if _container == null:
+		return
+	var cam := get_viewport().get_camera_2d()
+	var world_pos : Vector2
+	if cam:
+		world_pos = screen_pos + cam.get_screen_center_position() - get_viewport_rect().size / 2.0
+	else:
+		world_pos = screen_pos
+	var snapped := Vector2(
+		floor(world_pos.x / GRID) * GRID,
+		floor(world_pos.y / GRID) * GRID
 	)
-	# Evite les doublons
+	# Anti doublon
 	for child in _container.get_children():
-		if child.position == world_pos:
+		if child is Node2D and (child as Node2D).global_position == snapped:
 			return
-	var tile := FARM_TILE_SCENE.instantiate() as Node2D
-	tile.position = world_pos
+	var tile : Node2D = Node2D.new()
+	tile.set_script(FARM_TILE_SCR)
+	tile.global_position = snapped
 	_container.add_child(tile)

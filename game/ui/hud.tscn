@@ -36,12 +36,12 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_hud")
 theme_override_constants/separation = 6
 
 [node name="TimeLabel" type="Label" parent="HUDPanel/HUDContainer"]
-text = "\u23f0 06:00"
+text = "[H] 06:00"
 theme_override_font_sizes/font_size = 15
 theme_override_colors/font_color = Color(1.0, 0.95, 0.6, 1)
 
 [node name="DayLabel" type="Label" parent="HUDPanel/HUDContainer"]
-text = "\U0001f4c5 Jour 1"
+text = "[J] Jour 1"
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.8, 0.9, 1.0, 1)
 
