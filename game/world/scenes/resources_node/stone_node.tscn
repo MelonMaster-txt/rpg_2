@@ -3,18 +3,21 @@
 [ext_resource type="PackedScene" uid="uid://b5m51kqhm43pb" path="res://game/world/scenes/resources_node/resource_node.tscn" id="1_stone"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_stone"]
-size = Vector2(18, 14)
+size = Vector2(20, 16)
 
-[node name="ResourceNode" unique_id=784495077 instance=ExtResource("1_stone")]
+[node name="ResourceNode" unique_id=784495078 instance=ExtResource("1_stone")]
 resource_name = "Pierre"
 resource_type = "stone"
 max_health = 3
 gather_amount = 2
 respawn_time = 20.0
 
-[node name="GatherShape" parent="." index="0" unique_id=244779297]
-scale = Vector2(2.2, 2.0)
+[node name="GatherShape" parent="." index="0" unique_id=244779298]
+scale = Vector2(2.4, 2.0)
 
-[node name="BlockerShape" parent="Blocker" parent_id_path=PackedInt32Array(836519428) index="0" unique_id=575246773]
+[node name="Visual" parent="." index="1" unique_id=1270561885]
+texture = null
+
+[node name="BlockerShape" parent="Blocker" parent_id_path=PackedInt32Array(836519428) index="0" unique_id=575246774]
 position = Vector2(0, 4)
 shape = SubResource("RectangleShape2D_stone")

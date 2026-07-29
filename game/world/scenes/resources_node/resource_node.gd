@@ -6,7 +6,16 @@ extends Area2D
 @export var gather_amount: int = 1
 @export var respawn_time: float = 12.0
 
-var _visual: Sprite2D = null
+# Couleur du carre de placeholder selon le type
+const TYPE_COLORS := {
+	"wood":   Color(0.20, 0.50, 0.15),  # vert fonce - arbre
+	"berry":  Color(0.55, 0.10, 0.60),  # violet    - baies
+	"stone":  Color(0.55, 0.55, 0.55),  # gris      - pierre
+}
+const DEFAULT_COLOR := Color(0.6, 0.4, 0.2)
+
+var _visual: Node2D   = null
+var _color_rect: ColorRect = null
 var _label: Label = null
 var _gather_shape: CollisionShape2D = null
 var _blocker_shape: CollisionShape2D = null
@@ -21,11 +30,17 @@ func _ready() -> void:
 	current_health = max_health
 	add_to_group("resource_nodes")
 
-	_visual        = get_node_or_null("Visual") as Sprite2D
+	_visual        = get_node_or_null("Visual")
 	_label         = get_node_or_null("Label") as Label
 	_gather_shape  = get_node_or_null("GatherShape") as CollisionShape2D
 	_blocker_shape = get_node_or_null("Blocker/BlockerShape") as CollisionShape2D
 	_respawn_timer = get_node_or_null("RespawnTimer") as Timer
+
+	# Cree un ColorRect comme sprite placeholder si pas de texture
+	if _visual != null:
+		var sprite := _visual as Sprite2D
+		if sprite != null and sprite.texture == null:
+			_build_color_rect()
 
 	if _label != null:
 		_label.text = "[E] " + resource_name
@@ -38,6 +53,25 @@ func _ready() -> void:
 		body_entered.connect(_on_body_entered)
 	if not body_exited.is_connected(_on_body_exited):
 		body_exited.connect(_on_body_exited)
+
+
+func _build_color_rect() -> void:
+	var color: Color = TYPE_COLORS.get(resource_type, DEFAULT_COLOR)
+	_color_rect = ColorRect.new()
+	_color_rect.color = color
+	# Taille selon le type
+	var sz: Vector2
+	match resource_type:
+		"wood":  sz = Vector2(20, 28)
+		"berry": sz = Vector2(12, 12)
+		"stone": sz = Vector2(22, 16)
+		_:       sz = Vector2(16, 16)
+	_color_rect.size = sz
+	_color_rect.position = -sz / 2.0
+	if _visual != null:
+		_visual.add_child(_color_rect)
+	else:
+		add_child(_color_rect)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -72,7 +106,7 @@ func _do_gather() -> void:
 	current_health -= 1
 	var inv_key: String = _resource_type_to_key(resource_type)
 	GameManager.add_item(inv_key, gather_amount)
-	_spawn_gather_feedback()  # UNE seule fois
+	_spawn_gather_feedback()
 	if current_health <= 0:
 		_deplete()
 
@@ -86,8 +120,10 @@ func _deplete() -> void:
 		_gather_shape.set_deferred("disabled", true)
 	if _blocker_shape != null:
 		_blocker_shape.set_deferred("disabled", true)
-	if _visual != null:
-		_visual.modulate.a = 0.3
+	if _color_rect != null:
+		_color_rect.modulate.a = 0.25
+	elif _visual != null and _visual is CanvasItem:
+		(_visual as CanvasItem).modulate.a = 0.3
 	if _respawn_timer != null:
 		_respawn_timer.start(respawn_time)
 	else:
@@ -101,8 +137,10 @@ func _on_respawn() -> void:
 		_gather_shape.set_deferred("disabled", false)
 	if _blocker_shape != null:
 		_blocker_shape.set_deferred("disabled", false)
-	if _visual != null:
-		_visual.modulate.a = 1.0
+	if _color_rect != null:
+		_color_rect.modulate.a = 1.0
+	elif _visual != null and _visual is CanvasItem:
+		(_visual as CanvasItem).modulate.a = 1.0
 
 
 func _spawn_gather_feedback() -> void:
