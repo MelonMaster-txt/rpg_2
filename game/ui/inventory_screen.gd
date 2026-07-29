@@ -25,10 +25,6 @@ func _ready() -> void:
 	close_btn.pressed.connect(toggle)
 	GameManager.inventory_changed.connect(_on_inventory_changed)
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("open_inventory"):
-		toggle()
-
 func toggle() -> void:
 	_is_open = not _is_open
 	visible = _is_open
@@ -40,8 +36,6 @@ func toggle() -> void:
 
 func _on_inventory_changed(_item: String, _amount: int) -> void:
 	if _is_open:
-		# On ne rebuide pas tout de suite : on attend le prochain frame
-		# pour eviter le conflit queue_free / add_child dans le meme frame
 		_dirty = true
 
 func _process(_delta: float) -> void:
@@ -50,7 +44,6 @@ func _process(_delta: float) -> void:
 		_rebuild()
 
 func _rebuild() -> void:
-	# Supprime les anciens enfants immediatement (pas queue_free)
 	for child in grid.get_children():
 		grid.remove_child(child)
 		child.free()

@@ -5,8 +5,10 @@ const DEBUG_MENU_SCR := preload("res://game/ui/debug_menu.gd")
 
 @onready var time_label: Label = $HUDPanel/HUDContainer/TimeLabel
 @onready var day_label:  Label = $HUDPanel/HUDContainer/DayLabel
+@onready var inventory_screen = $InventoryScreen
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	# Menu debug
 	var dm := CanvasLayer.new()
 	dm.set_script(DEBUG_MENU_SCR)
@@ -16,6 +18,11 @@ func _ready() -> void:
 	GameManager.time_changed.connect(_on_time_changed)
 	GameManager.day_night_changed.connect(_on_day_night_changed)
 	_refresh_all()
+
+func _unhandled_key_input(event: InputEvent) -> void:
+	if event.is_action_pressed("open_inventory"):
+		get_viewport().set_input_as_handled()
+		inventory_screen.toggle()
 
 func _refresh_all() -> void:
 	time_label.text = "Heure: " + GameManager.get_time_string()
