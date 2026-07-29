@@ -22,8 +22,8 @@ func _ready() -> void:
 func _build_ui() -> void:
 	_panel = PanelContainer.new()
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.05, 0.05, 0.08, 0.93)
-	style.border_color = Color(1.0, 0.4, 0.1, 0.9)
+	style.bg_color      = Color(0.05, 0.05, 0.08, 0.93)
+	style.border_color  = Color(1.0, 0.4, 0.1, 0.9)
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(8)
 	style.content_margin_left   = 14
@@ -38,27 +38,23 @@ func _build_ui() -> void:
 	vb.add_theme_constant_override("separation", 6)
 	_panel.add_child(vb)
 
-	# Titre
 	var title := Label.new()
-	title.text = "DEBUG  [F1]"
+	title.text = "DEBUG  [F1]  |  Noise: [F2]"
 	title.add_theme_font_size_override("font_size", 13)
 	title.add_theme_color_override("font_color", Color(1.0, 0.5, 0.1))
 	vb.add_child(title)
 
 	_add_separator(vb, "-- Give --")
 
-	# Boutons give
 	for gset in GIVE_SETS:
 		var btn := Button.new()
 		btn.text = gset["label"]
-		btn.set_meta("items", gset["items"])
 		_style_btn(btn, Color(0.2, 0.7, 0.3))
 		btn.pressed.connect(_on_give_pressed.bind(gset["items"]))
 		vb.add_child(btn)
 
 	_add_separator(vb, "-- Joueur --")
 
-	# Vitesse
 	var hb := HBoxContainer.new()
 	hb.add_theme_constant_override("separation", 4)
 	var lbl_s := Label.new()
@@ -85,7 +81,6 @@ func _build_ui() -> void:
 	hb.add_child(btn_fast)
 	vb.add_child(hb)
 
-	# Vider inventaire
 	var btn_clear := Button.new()
 	btn_clear.text = "Vider inventaire"
 	_style_btn(btn_clear, Color(0.7, 0.2, 0.2))
@@ -106,27 +101,28 @@ func _style_btn(btn: Button, col: Color) -> void:
 	normal.border_color = col
 	normal.set_border_width_all(1)
 	normal.set_corner_radius_all(4)
-	normal.content_margin_left = 8
-	normal.content_margin_right = 8
-	normal.content_margin_top = 4
+	normal.content_margin_left   = 8
+	normal.content_margin_right  = 8
+	normal.content_margin_top    = 4
 	normal.content_margin_bottom = 4
 	var hover := StyleBoxFlat.new()
 	hover.bg_color = Color(col.r*0.45, col.g*0.45, col.b*0.45, 0.95)
 	hover.border_color = col
 	hover.set_border_width_all(1)
 	hover.set_corner_radius_all(4)
-	hover.content_margin_left = 8
-	hover.content_margin_right = 8
-	hover.content_margin_top = 4
+	hover.content_margin_left   = 8
+	hover.content_margin_right  = 8
+	hover.content_margin_top    = 4
 	hover.content_margin_bottom = 4
 	btn.add_theme_stylebox_override("normal", normal)
-	btn.add_theme_stylebox_override("hover", hover)
+	btn.add_theme_stylebox_override("hover",  hover)
 	btn.add_theme_stylebox_override("pressed", hover)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventKey and (event as InputEventKey).keycode == KEY_F1 and event.pressed and not event.is_echo():
-		_toggle()
-		get_viewport().set_input_as_handled()
+	if event is InputEventKey and event.pressed and not event.is_echo():
+		if (event as InputEventKey).keycode == KEY_F1:
+			_toggle()
+			get_viewport().set_input_as_handled()
 
 func _toggle() -> void:
 	_visible = not _visible
