@@ -1,73 +1,71 @@
 # ground_painter.gd
-# Peint les tiles de sol d'un chunk en utilisant le Perlin noise MONDIAL
-# du ChunkGenerator → continuité parfaite entre chunks, zéro couture visible.
-#
-# SEUILS DE SOL (valeur bruit -1..1) :
-#   < -0.25  → terre nue        (atlas 0,2)
-#   -0.25..0.05 → herbe clairsemée (atlas 0,1)
-#   >= 0.05  → herbe dense      (atlas 0,0)
-extends Node
+# Peint le sol d'un chunk via des ColorRect de 32px.
+# Utilise le Perlin noise MONDIAL du ChunkGenerator pour une continuité
+# parfaite entre chunks - plus aucune couture visible.
+extends Node2D
 
-const CHUNK_SIZE: int = 16
-const TILE_LAYER: int = 0
+const TILE_SIZE: int = 32
 
-const TILE_GRASS_DENSE:  Vector2i = Vector2i(0, 0)
-const TILE_GRASS_SPARSE: Vector2i = Vector2i(0, 1)
-const TILE_DIRT:         Vector2i = Vector2i(0, 2)
+# Palette herbe indexée par valeur de bruit
+# Index 0 = vert clair (hautes valeurs), index N = vert sombre / terre (basses valeurs)
+const GRASS_COLORS := [
+	Color(0.27, 0.58, 0.18),  # vert clair  (bruit > 0.3)
+	Color(0.24, 0.55, 0.16),  # vert neutre (bruit 0.1..0.3)
+	Color(0.22, 0.52, 0.15),  # vert moyen  (bruit -0.1..0.1)
+	Color(0.18, 0.44, 0.12),  # vert fonce  (bruit -0.3..-0.1)
+	Color(0.55, 0.38, 0.18),  # terre       (bruit < -0.3)
+]
+
+# Taches d'accent (mousses, fleurs) — déclenchées par bruit detail
+const ACCENT_COLORS := [
+	Color(0.30, 0.62, 0.20),  # vert brillant
+	Color(0.55, 0.52, 0.18),  # brun-vert (mousse)
+	Color(0.26, 0.56, 0.40),  # vert bleu
+]
 
 
-func paint_chunk(chunk_coords: Vector2i) -> void:
-	# Cherche le TileMapLayer dans le parent ou ses enfants
-	var tm: TileMapLayer = _find_tilemap()
-	if not tm:
-		push_error("GroundPainter: aucun TileMapLayer trouvé dans le chunk '%s'" % get_parent().name)
-		return
-
+func paint(chunk_coords: Vector2i, chunk_size: int) -> void:
 	var cg: Node = get_node("/root/ChunkGenerator")
 
-	for local_y in CHUNK_SIZE:
-		for local_x in CHUNK_SIZE:
-			var wx: int = chunk_coords.x * CHUNK_SIZE + local_x
-			var wy: int = chunk_coords.y * CHUNK_SIZE + local_y
-			var v: float = cg.get_ground_noise(wx, wy)
-			tm.set_cell(Vector2i(local_x, local_y), TILE_LAYER, _noise_to_tile(v))
+	var cols: int = chunk_size / TILE_SIZE
+	var rows: int = chunk_size / TILE_SIZE
+
+	for row in rows:
+		for col in cols:
+			# Coordonnée MONDE de cette tile
+			var wx: int = chunk_coords.x * cols + col
+			var wy: int = chunk_coords.y * rows + row
+
+			var v_ground: float  = cg.get_ground_noise(wx, wy)
+			var v_detail: float  = cg.get_detail_noise(wx, wy)
+
+			var rect := ColorRect.new()
+			rect.size     = Vector2(TILE_SIZE, TILE_SIZE)
+			rect.position = Vector2(col * TILE_SIZE, row * TILE_SIZE)
+
+			# Tache d'accent si le bruit de détail est très haut (> 0.55)
+			if v_detail > 0.55:
+				rect.color = ACCENT_COLORS[abs(wx * 3 + wy) % ACCENT_COLORS.size()]
+			else:
+				rect.color = _noise_to_color(v_ground)
+
+			add_child(rect)
 
 
-func _find_tilemap() -> TileMapLayer:
-	var parent: Node = get_parent()
-	if not parent:
-		return null
-	# Cas 1 : le parent lui-même est un TileMapLayer
-	if parent is TileMapLayer:
-		return parent as TileMapLayer
-	# Cas 2 : cherche parmi les enfants directs du parent
-	for child in parent.get_children():
-		if child is TileMapLayer:
-			return child as TileMapLayer
-	# Cas 3 : cherche récursivement dans tout le sous-arbre
-	return _find_tilemap_recursive(parent)
-
-
-func _find_tilemap_recursive(node: Node) -> TileMapLayer:
-	for child in node.get_children():
-		if child is TileMapLayer:
-			return child as TileMapLayer
-		var result: TileMapLayer = _find_tilemap_recursive(child)
-		if result:
-			return result
-	return null
-
-
-func _noise_to_tile(v: float) -> Vector2i:
-	if v < -0.25:
-		return TILE_DIRT
-	elif v < 0.05:
-		return TILE_GRASS_SPARSE
+# Convertit une valeur Perlin (-1..1) en couleur de la palette
+func _noise_to_color(v: float) -> Color:
+	if v > 0.3:
+		return GRASS_COLORS[0]
+	elif v > 0.1:
+		return GRASS_COLORS[1]
+	elif v > -0.1:
+		return GRASS_COLORS[2]
+	elif v > -0.3:
+		return GRASS_COLORS[3]
 	else:
-		return TILE_GRASS_DENSE
+		return GRASS_COLORS[4]
 
 
 func clear_chunk() -> void:
-	var tm: TileMapLayer = _find_tilemap()
-	if tm:
-		tm.clear()
+	for child in get_children():
+		child.queue_free()

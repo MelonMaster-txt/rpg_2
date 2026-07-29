@@ -1,6 +1,6 @@
 # forest_chunk_base.gd
 # OPTIMISATION : spawn différé des ressources (1 par frame max)
-# + sol peint via ground_painter.paint_chunk() avec Perlin noise mondial continu
+# Sol peint via ground_painter avec ColorRect + Perlin noise mondial continu
 extends Node2D
 
 @export var tree_count_min:  int = 5
@@ -17,10 +17,8 @@ const GROUND_SCRIPT := "res://game/world/ground_painter.gd"
 
 var _chunk_coords: Vector2i = Vector2i.ZERO
 var _chunk_size:   int      = 512
-# File de spawn : [PackedScene, Vector2]
 var _spawn_queue:  Array    = []
 
-# Cache des scenes pour ne pas appeler load() plusieurs fois
 static var _tree_scene_cache:  PackedScene = null
 static var _berry_scene_cache: PackedScene = null
 static var _stone_scene_cache: PackedScene = null
@@ -46,11 +44,12 @@ func _paint_ground() -> void:
 	if script == null:
 		push_error("forest_chunk_base: ground_painter.gd introuvable")
 		return
-	var painter := Node.new()
+	var painter := Node2D.new()
 	painter.set_script(script)
 	painter.name = "Ground"
+	painter.z_index = -10
 	add_child(painter)
-	painter.paint_chunk(_chunk_coords)
+	painter.paint(_chunk_coords, _chunk_size)
 
 
 func _build_spawn_queue() -> void:
