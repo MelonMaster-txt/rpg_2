@@ -36,10 +36,10 @@ extends Node2D
 
 # --- Noise Accent ---
 @export_group("Noise Accent")
-@export var d_seed            : int   = 99
-@export var d_frequency       : float = 0.06
-@export var d_octaves         : int   = 2
-@export var accent_threshold  : float = 0.4
+@export var d_seed           : int   = 99
+@export var d_frequency      : float = 0.06
+@export var d_octaves        : int   = 2
+@export var accent_threshold : float = 0.4
 
 @export_group("Couleurs Accent")
 @export var color_accent_0: Color = Color(0.30, 0.62, 0.20)
@@ -51,7 +51,6 @@ var _chunk_size   : int      = 512
 var _noise_g      : FastNoiseLite
 var _noise_d      : FastNoiseLite
 
-# En editeur : repaint a chaque changement de propriete
 func _validate_property(_property: Dictionary) -> void:
 	if Engine.is_editor_hint():
 		_build_noises()
@@ -61,7 +60,6 @@ func _ready() -> void:
 	_build_noises()
 	_repaint()
 
-# Appele par forest_chunk_base au runtime
 func paint(chunk_coords: Vector2i, chunk_size: int) -> void:
 	_chunk_coords = chunk_coords
 	_chunk_size   = chunk_size
@@ -69,7 +67,6 @@ func paint(chunk_coords: Vector2i, chunk_size: int) -> void:
 	_build_noises()
 	_repaint()
 
-# Appele par noise_debug (panel in-game F2) pour repaint live
 func repaint_with(
 	noise: FastNoiseLite, noise_d: FastNoiseLite,
 	thresholds: Array, grass_colors: Array,
@@ -80,13 +77,13 @@ func repaint_with(
 
 func _build_noises() -> void:
 	_noise_g = FastNoiseLite.new()
-	_noise_g.noise_type         = g_noise_type
-	_noise_g.seed               = g_seed
-	_noise_g.frequency          = g_frequency
-	_noise_g.fractal_type       = g_fractal_type
-	_noise_g.fractal_octaves    = g_octaves
-	_noise_g.fractal_lacunarity = g_lacunarity
-	_noise_g.fractal_gain       = g_gain
+	_noise_g.noise_type          = g_noise_type
+	_noise_g.seed                = g_seed
+	_noise_g.frequency           = g_frequency
+	_noise_g.fractal_type        = g_fractal_type
+	_noise_g.fractal_octaves     = g_octaves
+	_noise_g.fractal_lacunarity  = g_lacunarity
+	_noise_g.fractal_gain        = g_gain
 	_noise_g.domain_warp_enabled = g_warp_amp > 0.0
 	if g_warp_amp > 0.0:
 		_noise_g.domain_warp_amplitude = g_warp_amp
@@ -109,8 +106,8 @@ func _do_paint(
 	thresholds: Array, grass_colors: Array,
 	accent_colors: Array, thr: float
 ) -> void:
-	var cols: int = chunk_size / tile_size
-	var rows: int = chunk_size / tile_size
+	var cols: int = int(chunk_size / tile_size)
+	var rows: int = int(chunk_size / tile_size)
 	for row in rows:
 		for col in cols:
 			var wx: int = chunk_coords.x * cols + col
