@@ -17,10 +17,18 @@ var _anim_timer: float = 0.0
 const ANIM_STEP: float = 0.12
 var _walk_frame: int = 0
 
+# Cache du farm_placer pour eviter get_first_node_in_group a chaque interact
+var _farm_placer: Node = null
+
 func _ready() -> void:
 	add_to_group("player")
 	if camera != null:
 		camera.enabled = true
+	# On cherche le farm_placer une seule fois apres le premier frame
+	call_deferred("_cache_farm_placer")
+
+func _cache_farm_placer() -> void:
+	_farm_placer = get_tree().get_first_node_in_group("farm_placer")
 
 func _physics_process(delta: float) -> void:
 	var dir := Vector2(
@@ -59,9 +67,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("ui_cancel"):
 		set_held_item("")
 	elif event.is_action_pressed("interact") and not event.is_echo():
-		# Seulement avec la pioche ET seulement si pas dans la maison
-		# On NE marque PAS l'event comme handled ici :
-		# si farm_placer a traite l'action, il le marque lui-meme
 		if _held_item == "pioche":
 			_try_farm_interact()
 	elif event is InputEventKey:
@@ -69,13 +74,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		if key_event.pressed and key_event.keycode == KEY_TAB:
 			_cycle_held_item()
 
-## Tente de becher/interagir avec le sol.
-## NE consomme l'event QUE si le farm_placer a vraiment agi.
 func _try_farm_interact() -> void:
-	var placer = get_tree().get_first_node_in_group("farm_placer")
-	if placer == null or not placer.has_method("interact_at"):
+	# Re-cache si la scene a change (transition)
+	if _farm_placer == null or not is_instance_valid(_farm_placer):
+		_farm_placer = get_tree().get_first_node_in_group("farm_placer")
+	if _farm_placer == null or not _farm_placer.has_method("interact_at"):
 		return
-	var handled: bool = placer.interact_at(global_position)
+	var handled: bool = _farm_placer.interact_at(global_position)
 	if handled:
 		get_viewport().set_input_as_handled()
 

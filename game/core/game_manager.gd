@@ -46,16 +46,13 @@ func consume_spawn_position() -> Vector2:
 # Chaque entree : { "pos": Vector2, "state": int, "time_left": float }
 var farm_tiles_data: Array = []
 
-func save_farm_tiles(container: Node) -> void:
+func save_farm_tiles(tile_map: Dictionary) -> void:
 	farm_tiles_data.clear()
-	if container == null:
-		return
-	for tile in container.get_children():
-		if not tile.has_method("get_save_data"):
-			continue
-		farm_tiles_data.append(tile.get_save_data())
+	for tile in tile_map.values():
+		if is_instance_valid(tile) and tile.has_method("get_save_data"):
+			farm_tiles_data.append(tile.get_save_data())
 
-func restore_farm_tiles(container: Node) -> void:
+func restore_farm_tiles(container: Node, tile_map: Dictionary) -> void:
 	if container == null or farm_tiles_data.is_empty():
 		return
 	var scene := load("res://game/world/farm_tile.tscn")
@@ -63,7 +60,11 @@ func restore_farm_tiles(container: Node) -> void:
 		var tile: Node2D = scene.instantiate()
 		tile.global_position = data["pos"]
 		container.add_child(tile)
+		tile_map[_pos_key(data["pos"])] = tile
 		tile.call_deferred("load_save_data", data)
+
+func _pos_key(pos: Vector2) -> String:
+	return "%d_%d" % [int(pos.x), int(pos.y)]
 
 # ─── TEMPS ────────────────────────────────────────────────────────────────────
 const DAY_DURATION: float = 240.0

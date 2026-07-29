@@ -18,6 +18,8 @@ const COLOR_PRET:   Color = Color(0.90, 0.75, 0.10)
 
 var state: State = State.SOL
 var _player_nearby: bool = false
+# Cache du joueur pour eviter get_first_node_in_group a chaque interact
+var _player_cache: Node = null
 
 func _ready() -> void:
 	visual.color = COLOR_SOL
@@ -32,7 +34,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_try_interact()
 
 func _try_interact() -> void:
-	var player: Node = get_tree().get_first_node_in_group("player")
+	var player: Node = _player_cache
+	if player == null or not is_instance_valid(player):
+		player = get_tree().get_first_node_in_group("player")
+		_player_cache = player
 	if not player:
 		return
 	var held: String = player.get_held_item() if player.has_method("get_held_item") else ""
@@ -105,6 +110,7 @@ func _on_grow_timer_timeout() -> void:
 func _on_body_entered(body: Node2D) -> void:
 	if body.is_in_group("player"):
 		_player_nearby = true
+		_player_cache = body
 		_update_hint_for_player()
 
 func _on_body_exited(body: Node2D) -> void:
