@@ -1,12 +1,10 @@
 # farm_placer.gd
-# Gere le placement/interaction des FarmTiles
 extends Node2D
 
 const FARM_TILE_SCENE := preload("res://game/world/farm_tile.tscn")
 const GRID := 32
 
 var _container: Node = null
-# Dictionnaire position -> tile pour lookup O(1) au lieu de boucle lineaire
 var _tile_map: Dictionary = {}
 
 func _ready() -> void:
@@ -28,15 +26,16 @@ func interact_at(world_pos: Vector2) -> bool:
 	var grid_pos := _snap(world_pos)
 	var key := _key(grid_pos)
 	if _tile_map.has(key):
-		var tile = _tile_map[key]
-		if is_instance_valid(tile) and tile.has_method("_try_interact"):
-			tile._try_interact()
+		var existing = _tile_map[key]
+		if is_instance_valid(existing) and existing.has_method("_try_interact"):
+			existing._try_interact()
 		return true
-	var tile: Node2D = FARM_TILE_SCENE.instantiate()
-	tile.global_position = grid_pos
-	_container.add_child(tile)
-	_tile_map[key] = tile
-	tile.call_deferred("_try_interact")
+	# Nouvelle tuile — nom different de "tile" pour eviter le warning de shadowing
+	var new_tile: Node2D = FARM_TILE_SCENE.instantiate()
+	new_tile.global_position = grid_pos
+	_container.add_child(new_tile)
+	_tile_map[key] = new_tile
+	new_tile.call_deferred("_try_interact")
 	return true
 
 func _snap(pos: Vector2) -> Vector2:

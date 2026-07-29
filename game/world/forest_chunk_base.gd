@@ -15,13 +15,11 @@ const GROUND_SCRIPT := "res://game/world/ground_painter.gd"
 var _chunk_coords: Vector2i = Vector2i.ZERO
 var _chunk_size:   int      = 512
 
-
 func setup(coords: Vector2i, size: int) -> void:
 	_chunk_coords = coords
 	_chunk_size   = size
 	_paint_ground()
 	_generate()
-
 
 func _paint_ground() -> void:
 	var script: GDScript = load(GROUND_SCRIPT) as GDScript
@@ -33,7 +31,6 @@ func _paint_ground() -> void:
 	add_child(painter)
 	painter.z_index = -10
 	painter.paint(_chunk_coords, _chunk_size)
-
 
 func _generate() -> void:
 	var rng := RandomNumberGenerator.new()
@@ -53,7 +50,6 @@ func _generate() -> void:
 		_place(rng, berry_scene)
 	for _i in stone_count:
 		_place(rng, stone_scene)
-
 
 func _place(rng: RandomNumberGenerator, scene: PackedScene) -> void:
 	if scene == null:
