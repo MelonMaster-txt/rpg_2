@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://b5m51kqhm43pb"]
 
-[ext_resource type="Script" uid="uid://dprl6f6nsi0ex" path="res://game/world/scenes/resources_node/resource_node.gd" id="1_kgyiv"]
+[ext_resource type="Script" path="res://game/world/scenes/resources_node/resource_node.gd" id="1_kgyiv"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_mehny"]
 
