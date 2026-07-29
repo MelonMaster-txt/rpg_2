@@ -1,20 +1,12 @@
 # HUD.gd
 extends CanvasLayer
 
-const DEBUG_MENU_SCR := preload("res://game/ui/debug_menu.gd")
-
 @onready var time_label: Label = $HUDPanel/HUDContainer/TimeLabel
 @onready var day_label:  Label = $HUDPanel/HUDContainer/DayLabel
 @onready var inventory_screen = $InventoryScreen
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	# Menu debug
-	var dm := CanvasLayer.new()
-	dm.set_script(DEBUG_MENU_SCR)
-	dm.name = "DebugMenu"
-	add_child(dm)
-
 	GameManager.time_changed.connect(_on_time_changed)
 	GameManager.day_night_changed.connect(_on_day_night_changed)
 	_refresh_all()
