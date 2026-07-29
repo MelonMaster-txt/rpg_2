@@ -1,4 +1,4 @@
-# noise_debug.gd — Contrôle total du noise + repaint live sur les chunks
+# noise_debug.gd — Panel de debug ground_painter avec contrôle total du noise
 extends PanelContainer
 
 const PREVIEW_SIZE := 256
@@ -69,14 +69,12 @@ func _build_ui() -> void:
 
 	_add_title(vbox, "Ground Painter — Noise Debug")
 
-	# Preview
 	_tex_rect = TextureRect.new()
 	_tex_rect.custom_minimum_size = Vector2(PREVIEW_SIZE, PREVIEW_SIZE)
 	_tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_tex_rect.stretch_mode = TextureRect.STRETCH_SCALE
 	vbox.add_child(_tex_rect)
 
-	# Toggle live
 	var live_row := HBoxContainer.new()
 	vbox.add_child(live_row)
 	var live_lbl := Label.new()
@@ -88,90 +86,74 @@ func _build_ui() -> void:
 	live_toggle.toggled.connect(func(on: bool): _live_mode = on)
 	live_row.add_child(live_toggle)
 
-	# ---- NOISE GROUND ----
 	_add_separator(vbox, "🌱 Noise Ground")
-	_add_option(vbox, "Type",    NOISE_TYPES,   _g_type, func(i): _g_type = NOISE_TYPES[i][1];     _refresh())
-	_add_option(vbox, "Fractal", FRACTAL_TYPES, _g_fbm,  func(i): _g_fbm  = FRACTAL_TYPES[i][1];  _refresh())
-	_add_slider(vbox, "Seed",        0,      9999, _g_seed,       1,      func(v): _g_seed = int(v);       _refresh())
-	_add_slider(vbox, "Frequency",   0.0005, 0.05, _g_freq,       0.0005, func(v): _g_freq = v;            _refresh())
-	_add_slider(vbox, "Octaves",     1,      8,    _g_octaves,    1,      func(v): _g_octaves = int(v);    _refresh())
-	_add_slider(vbox, "Lacunarity",  1.0,    4.0,  _g_lacunarity, 0.05,   func(v): _g_lacunarity = v;      _refresh())
-	_add_slider(vbox, "Gain",        0.1,    1.0,  _g_gain,       0.01,   func(v): _g_gain = v;            _refresh())
-	_add_slider(vbox, "Warp Amp",    0.0,    200.0,_g_warp_amp,   1.0,    func(v): _g_warp_amp = v;        _refresh())
+	_add_option(vbox, "Type",    NOISE_TYPES,   _g_type, func(i: int): _g_type = NOISE_TYPES[i][1] as int;    _refresh())
+	_add_option(vbox, "Fractal", FRACTAL_TYPES, _g_fbm,  func(i: int): _g_fbm  = FRACTAL_TYPES[i][1] as int; _refresh())
+	_add_slider(vbox, "Seed",        0,      9999, _g_seed,       1,      func(v: float): _g_seed = int(v);       _refresh())
+	_add_slider(vbox, "Frequency",   0.0005, 0.05, _g_freq,       0.0005, func(v: float): _g_freq = v;            _refresh())
+	_add_slider(vbox, "Octaves",     1,      8,    _g_octaves,    1,      func(v: float): _g_octaves = int(v);    _refresh())
+	_add_slider(vbox, "Lacunarity",  1.0,    4.0,  _g_lacunarity, 0.05,   func(v: float): _g_lacunarity = v;      _refresh())
+	_add_slider(vbox, "Gain",        0.1,    1.0,  _g_gain,       0.01,   func(v: float): _g_gain = v;            _refresh())
+	_add_slider(vbox, "Warp Amp",    0.0,    200.0,_g_warp_amp,   1.0,    func(v: float): _g_warp_amp = v;        _refresh())
 
-	# ---- SEUILS ----
 	_add_separator(vbox, "🎨 Seuils herbe")
 	var thr_labels := ["Seuil 1 (clair)","Seuil 2","Seuil 3","Seuil 4 (foncé)"]
 	for i in _thresholds.size():
 		var idx := i
 		_add_slider(vbox, thr_labels[i], -1.0, 1.0, _thresholds[i], 0.01,
-			func(v): _thresholds[idx] = v; _refresh())
+			func(v: float): _thresholds[idx] = v; _refresh())
 
-	# ---- COULEURS HERBE ----
 	_add_separator(vbox, "🟩 Couleurs herbe")
 	var lg := ["Très clair","Clair","Moyen","Foncé","Terre"]
-	_add_color_row(vbox, _grass_colors, lg, func(i,c): _grass_colors[i]=c; _refresh())
+	_add_color_row(vbox, _grass_colors, lg, func(i: int, c: Color): _grass_colors[i] = c; _refresh())
 
-	# ---- NOISE ACCENT ----
 	_add_separator(vbox, "✨ Noise Accent")
-	_add_slider(vbox, "Seed",      0,     9999, _d_seed,    1,     func(v): _d_seed = int(v);    _refresh())
-	_add_slider(vbox, "Frequency", 0.001, 0.05, _d_freq,    0.001, func(v): _d_freq = v;         _refresh())
-	_add_slider(vbox, "Octaves",   1,     6,    _d_octaves, 1,     func(v): _d_octaves = int(v); _refresh())
-	_add_slider(vbox, "Seuil",    -1.0,   1.0,  _accent_thr,0.01,  func(v): _accent_thr = v;    _refresh())
+	_add_slider(vbox, "Seed",      0,     9999, _d_seed,    1,     func(v: float): _d_seed = int(v);    _refresh())
+	_add_slider(vbox, "Frequency", 0.001, 0.05, _d_freq,    0.001, func(v: float): _d_freq = v;         _refresh())
+	_add_slider(vbox, "Octaves",   1,     6,    _d_octaves, 1,     func(v: float): _d_octaves = int(v); _refresh())
+	_add_slider(vbox, "Seuil",    -1.0,   1.0,  _accent_thr,0.01,  func(v: float): _accent_thr = v;    _refresh())
 
-	# ---- COULEURS ACCENT ----
 	_add_separator(vbox, "🟧 Couleurs accent")
 	var la := ["Vert vif","Mousse","Bleu-vert"]
-	_add_color_row(vbox, _accent_colors, la, func(i,c): _accent_colors[i]=c; _refresh())
+	_add_color_row(vbox, _accent_colors, la, func(i: int, c: Color): _accent_colors[i] = c; _refresh())
 
-	# ---- BOUTONS ----
 	_add_separator(vbox, "")
 	var btn_repaint := Button.new()
 	btn_repaint.text = "🔄 Repaint tous les chunks"
 	btn_repaint.pressed.connect(_repaint_all_chunks)
 	vbox.add_child(btn_repaint)
-
 	var btn_copy := Button.new()
 	btn_copy.text = "📋 Copier valeurs → Output"
 	btn_copy.pressed.connect(_print_values)
 	vbox.add_child(btn_copy)
 
-# -------------------------------------------------------
-# REFRESH : preview + repaint chunks si live mode actif
-# -------------------------------------------------------
 func _refresh() -> void:
 	var noise   := _build_ground_noise()
 	var noise_d := _build_detail_noise()
-
-	# Preview
 	var img := Image.create(PREVIEW_SIZE, PREVIEW_SIZE, false, Image.FORMAT_RGB8)
 	for y in PREVIEW_SIZE:
 		for x in PREVIEW_SIZE:
 			img.set_pixel(x, y, _sample_color(noise, noise_d, x, y))
 	_tex_rect.texture = ImageTexture.create_from_image(img)
-
-	# Repaint live si activé
 	if _live_mode:
 		_repaint_all_chunks()
 
 func _repaint_all_chunks() -> void:
 	var noise   := _build_ground_noise()
 	var noise_d := _build_detail_noise()
-	# Trouve tous les ground_painter dans la scène
-	var painters := get_tree().get_nodes_in_group("ground_painter")
-	for painter in painters:
+	for painter in get_tree().get_nodes_in_group("ground_painter"):
 		if painter.has_method("repaint_with"):
 			painter.call("repaint_with", noise, noise_d, _thresholds, _grass_colors, _accent_colors, _accent_thr)
 
 func _build_ground_noise() -> FastNoiseLite:
 	var n := FastNoiseLite.new()
-	n.noise_type          = _g_type
-	n.seed                = _g_seed
-	n.frequency           = _g_freq
-	n.fractal_type        = _g_fbm
-	n.fractal_octaves     = _g_octaves
-	n.fractal_lacunarity  = _g_lacunarity
-	n.fractal_gain        = _g_gain
+	n.noise_type         = _g_type as FastNoiseLite.NoiseType
+	n.seed               = _g_seed
+	n.frequency          = _g_freq
+	n.fractal_type       = _g_fbm as FastNoiseLite.FractalType
+	n.fractal_octaves    = _g_octaves
+	n.fractal_lacunarity = _g_lacunarity
+	n.fractal_gain       = _g_gain
 	n.domain_warp_enabled = _g_warp_amp > 0.0
 	if _g_warp_amp > 0.0:
 		n.domain_warp_amplitude = _g_warp_amp
@@ -199,9 +181,6 @@ func _noise_to_color(v: float) -> Color:
 	elif v > _thresholds[3]: return _grass_colors[3]
 	else:                    return _grass_colors[4]
 
-# -------------------------------------------------------
-# UI helpers
-# -------------------------------------------------------
 func _add_title(p: VBoxContainer, t: String) -> void:
 	var l := Label.new(); l.text = t
 	l.add_theme_color_override("font_color", Color(0.4,0.9,0.3)); p.add_child(l)
@@ -227,7 +206,7 @@ func _add_slider(p: VBoxContainer, label: String, min_v: float, max_v: float, de
 	var s := HSlider.new(); s.min_value=min_v; s.max_value=max_v; s.value=default_v; s.step=step_v
 	s.size_flags_horizontal = Control.SIZE_EXPAND_FILL; row.add_child(s)
 	var vl := Label.new(); vl.text = str(snapped(default_v,step_v)); vl.custom_minimum_size.x=48; row.add_child(vl)
-	s.value_changed.connect(func(v:float): vl.text=str(snapped(v,step_v)); on_change.call(v))
+	s.value_changed.connect(func(v: float): vl.text=str(snapped(v,step_v)); on_change.call(v))
 
 func _add_color_row(p: VBoxContainer, colors: Array, labels: Array, on_change: Callable) -> void:
 	var row := HBoxContainer.new(); p.add_child(row)
@@ -237,7 +216,7 @@ func _add_color_row(p: VBoxContainer, colors: Array, labels: Array, on_change: C
 		lbl.add_theme_font_size_override("font_size", 9); col.add_child(lbl)
 		var cp := ColorPickerButton.new(); cp.color = colors[i]; cp.custom_minimum_size = Vector2(48,28)
 		var idx := i
-		cp.color_changed.connect(func(c:Color): on_change.call(idx,c)); col.add_child(cp)
+		cp.color_changed.connect(func(c: Color): on_change.call(idx, c)); col.add_child(cp)
 
 func _print_values() -> void:
 	print("\n=== Ground Painter — Valeurs ===")
