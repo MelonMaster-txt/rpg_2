@@ -1,4 +1,5 @@
-extends StaticBody2D
+# FarmTile — sans StaticBody ni CollisionShape, juste Area2D de detection joueur
+extends Node2D
 
 enum State { SOL, BECHE, PLANTE, PRET }
 
@@ -35,7 +36,6 @@ func _try_interact() -> void:
 	if not player:
 		return
 	var held: String = player.get_held_item() if player.has_method("get_held_item") else ""
-
 	match state:
 		State.SOL:
 			if held == "pioche":
@@ -44,22 +44,21 @@ func _try_interact() -> void:
 			if held == "graine_baie" and GameManager.get_item("graine_baie") > 0:
 				GameManager.remove_item("graine_baie", 1)
 				_set_state(State.PLANTE)
-				var has_arrosoir: bool = GameManager.get_item("arrosoir") > 0
-				grow_timer.wait_time = GROW_TIME_WATERED if has_arrosoir else GROW_TIME_BASE
+				var watered := GameManager.get_item("arrosoir") > 0
+				grow_timer.wait_time = GROW_TIME_WATERED if watered else GROW_TIME_BASE
 				grow_timer.start()
 		State.PLANTE:
-			if held == "arrosoir":
-				if grow_timer.time_left > GROW_TIME_WATERED:
-					grow_timer.wait_time = GROW_TIME_WATERED
-					grow_timer.start()
-					_show_popup("\U0001f4a7 Arrose !")
+			if held == "arrosoir" and grow_timer.time_left > GROW_TIME_WATERED:
+				grow_timer.wait_time = GROW_TIME_WATERED
+				grow_timer.start()
+				_show_popup("\U0001f4a7 Arrose!")
 		State.PRET:
 			GameManager.add_item("baies", 3)
-			_show_popup("+3 \U0001f347 Baies")
+			_show_popup("+3 \U0001f347")
 			_set_state(State.SOL)
 
-func _set_state(new_state: State) -> void:
-	state = new_state
+func _set_state(s: State) -> void:
+	state = s
 	_update_visual()
 	if _player_nearby:
 		_update_hint_for_player()
@@ -67,36 +66,32 @@ func _set_state(new_state: State) -> void:
 		_update_hint("")
 
 func _update_visual() -> void:
-	var target_color: Color
+	var c: Color
 	match state:
-		State.SOL:    target_color = COLOR_SOL
-		State.BECHE:  target_color = COLOR_BECHE
-		State.PLANTE: target_color = COLOR_PLANTE
-		State.PRET:   target_color = COLOR_PRET
-	var tw := create_tween()
-	tw.tween_property(visual, "color", target_color, 0.4)
+		State.SOL:    c = COLOR_SOL
+		State.BECHE:  c = COLOR_BECHE
+		State.PLANTE: c = COLOR_PLANTE
+		State.PRET:   c = COLOR_PRET
+	create_tween().tween_property(visual, "color", c, 0.4)
 
 func _update_hint(msg: String) -> void:
-	if hint_label == null:
-		return
-	hint_label.text = msg
-	hint_label.visible = msg != ""
+	if hint_label:
+		hint_label.text = msg
+		hint_label.visible = msg != ""
 
 func _update_hint_for_player() -> void:
 	match state:
-		State.SOL:    _update_hint("[E] Becher (pioche)")
-		State.BECHE:  _update_hint("[E] Planter (graine baie)")
-		State.PLANTE:
-			var secs: int = int(grow_timer.time_left)
-			_update_hint("Pousse dans %ds  [E] arroser" % secs)
-		State.PRET:   _update_hint("[E] Recolter les baies !")
+		State.SOL:    _update_hint("[E] Becher")
+		State.BECHE:  _update_hint("[E] Planter")
+		State.PLANTE: _update_hint("Pousse %ds [E] arroser" % int(grow_timer.time_left))
+		State.PRET:   _update_hint("[E] Recolter!")
 
 func _show_popup(msg: String) -> void:
 	var lbl := Label.new()
 	lbl.text = msg
 	lbl.add_theme_font_size_override("font_size", 13)
-	lbl.add_theme_color_override("font_color", Color(1.0, 1.0, 0.4))
-	lbl.position = Vector2(-30, -40)
+	lbl.add_theme_color_override("font_color", Color(1, 1, 0.4))
+	lbl.position = Vector2(-24, -40)
 	add_child(lbl)
 	var tw := create_tween()
 	tw.tween_property(lbl, "position", lbl.position + Vector2(0, -28), 0.9)
