@@ -1,7 +1,6 @@
 # farm_placer.gd
 # Gere le placement/interaction des FarmTiles
-# - Clic droit -> place une tile
-# - Appel externe place_or_interact(world_pos) pour le joueur avec pioche
+# - Appel externe interact_at(world_pos) pour le joueur avec pioche
 extends Node2D
 
 const FARM_TILE_SCENE := preload("res://game/world/farm_tile.tscn")
@@ -29,12 +28,16 @@ func interact_at(world_pos: Vector2) -> bool:
 				child._try_interact()
 			return true
 	# Pas de tile : on en cree une nouvelle en etat SOL et on beche directement
-	var tile : Node2D = FARM_TILE_SCENE.instantiate()
+	var tile: Node2D = FARM_TILE_SCENE.instantiate()
 	tile.global_position = grid_pos
 	_container.add_child(tile)
-	# On beche au prochain frame (tile pas encore ready)
 	tile.call_deferred("_try_interact")
 	return true
 
+# Snap au CENTRE de la cellule de grille
 func _snap(pos: Vector2) -> Vector2:
-	return Vector2(floor(pos.x / GRID) * GRID, floor(pos.y / GRID) * GRID)
+	var half := GRID / 2.0
+	return Vector2(
+		floor(pos.x / GRID) * GRID + half,
+		floor(pos.y / GRID) * GRID + half
+	)
