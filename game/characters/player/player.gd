@@ -13,7 +13,6 @@ signal held_item_changed(item_id: String)
 const QUICK_SELECT: Array[String] = ["pioche", "arrosoir", "graine_baie"]
 var _quick_index: int = -1
 
-# Animation
 var _anim_timer: float = 0.0
 const ANIM_STEP: float = 0.12
 var _walk_frame: int = 0
@@ -59,21 +58,26 @@ func _unhandled_input(event: InputEvent) -> void:
 		camera.zoom *= zoom_out_factor
 	elif event.is_action_pressed("ui_cancel"):
 		set_held_item("")
-	elif event.is_action_pressed("interact"):
-		_on_interact()
-		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("interact") and not event.is_echo():
+		# Seulement avec la pioche ET seulement si pas dans la maison
+		# On NE marque PAS l'event comme handled ici :
+		# si farm_placer a traite l'action, il le marque lui-meme
+		if _held_item == "pioche":
+			_try_farm_interact()
 	elif event is InputEventKey:
 		var key_event := event as InputEventKey
 		if key_event.pressed and key_event.keycode == KEY_TAB:
 			_cycle_held_item()
 
-## Appuie sur E
-func _on_interact() -> void:
-	if _held_item == "pioche":
-		# Becher / interagir avec la farm tile sous le joueur
-		var placer = get_tree().get_first_node_in_group("farm_placer")
-		if placer and placer.has_method("interact_at"):
-			placer.interact_at(global_position)
+## Tente de becher/interagir avec le sol.
+## NE consomme l'event QUE si le farm_placer a vraiment agi.
+func _try_farm_interact() -> void:
+	var placer = get_tree().get_first_node_in_group("farm_placer")
+	if placer == null or not placer.has_method("interact_at"):
+		return
+	var handled: bool = placer.interact_at(global_position)
+	if handled:
+		get_viewport().set_input_as_handled()
 
 func get_inventory() -> Dictionary:
 	return GameManager.inventory
