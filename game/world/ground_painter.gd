@@ -1,14 +1,8 @@
 @tool
-# ground_painter.gd
-# @tool = tourne dans l'editeur Godot.
-# Regle les @export dans l'Inspector -> le sol se redessine en temps reel
-# et les valeurs sont sauvegardees automatiquement dans la scene.
 extends Node2D
 
-# --- Tile ---
 @export var tile_size: int = 32
 
-# --- Noise Ground ---
 @export_group("Noise Ground")
 @export var g_noise_type   : FastNoiseLite.NoiseType   = FastNoiseLite.TYPE_PERLIN
 @export var g_fractal_type : FastNoiseLite.FractalType = FastNoiseLite.FRACTAL_FBM
@@ -19,14 +13,12 @@ extends Node2D
 @export var g_gain         : float = 0.5
 @export var g_warp_amp     : float = 0.0
 
-# --- Seuils palette (haut -> bas) ---
 @export_group("Palette Seuils")
 @export var threshold_1: float =  0.3
 @export var threshold_2: float =  0.1
 @export var threshold_3: float = -0.1
 @export var threshold_4: float = -0.3
 
-# --- Couleurs herbe ---
 @export_group("Couleurs Herbe")
 @export var color_grass_0: Color = Color(0.27, 0.58, 0.18)
 @export var color_grass_1: Color = Color(0.24, 0.55, 0.16)
@@ -34,7 +26,6 @@ extends Node2D
 @export var color_grass_3: Color = Color(0.18, 0.44, 0.12)
 @export var color_grass_4: Color = Color(0.55, 0.38, 0.18)
 
-# --- Noise Accent ---
 @export_group("Noise Accent")
 @export var d_seed           : int   = 99
 @export var d_frequency      : float = 0.06
@@ -106,8 +97,9 @@ func _do_paint(
 	thresholds: Array, grass_colors: Array,
 	accent_colors: Array, thr: float
 ) -> void:
-	var cols: int = int(chunk_size / tile_size)
-	var rows: int = int(chunk_size / tile_size)
+	# Division explicitement entiere via variables typees
+	var cols: int = chunk_size / tile_size if tile_size > 0 else 1
+	var rows: int = chunk_size / tile_size if tile_size > 0 else 1
 	for row in rows:
 		for col in cols:
 			var wx: int = chunk_coords.x * cols + col
