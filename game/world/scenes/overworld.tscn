@@ -1,9 +1,10 @@
 [gd_scene format=3 uid="uid://cxtqwdbbje1b8"]
 
 [ext_resource type="Script" path="res://game/world/overworld.gd" id="1_ow"]
-[ext_resource type="Script" path="res://game/ui/hud.gd" id="2_hud"]
-[ext_resource type="PackedScene" path="res://game/ui/inventory_screen.tscn" id="3_inv"]
-[ext_resource type="PackedScene" path="res://game/ui/hotbar.tscn" id="4_hotbar"]
+[ext_resource type="Script" path="res://game/world/chunk_manager.gd" id="2_cm"]
+[ext_resource type="Script" path="res://game/ui/hud.gd" id="3_hud"]
+[ext_resource type="PackedScene" path="res://game/ui/inventory_screen.tscn" id="4_inv"]
+[ext_resource type="PackedScene" path="res://game/ui/hotbar.tscn" id="5_hotbar"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud"]
 bg_color = Color(0.05, 0.05, 0.08, 0.82)
@@ -32,10 +33,11 @@ position = Vector2(256, 256)
 [node name="FarmContainer" type="Node2D" parent="."]
 
 [node name="ChunkManager" type="Node2D" parent="."]
+script = ExtResource("2_cm")
 
 [node name="HUD" type="CanvasLayer" parent="."]
 layer = 10
-script = ExtResource("2_hud")
+script = ExtResource("3_hud")
 
 [node name="HUDPanel" type="PanelContainer" parent="HUD"]
 anchors_preset = 0
@@ -58,6 +60,6 @@ text = "[J] Jour 1"
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.8, 0.9, 1.0, 1)
 
-[node name="InventoryScreen" parent="HUD" instance=ExtResource("3_inv")]
+[node name="InventoryScreen" parent="HUD" instance=ExtResource("4_inv")]
 
-[node name="Hotbar" parent="HUD" instance=ExtResource("4_hotbar")]
+[node name="Hotbar" parent="HUD" instance=ExtResource("5_hotbar")]
