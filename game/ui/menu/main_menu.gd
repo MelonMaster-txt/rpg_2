@@ -20,7 +20,7 @@ func _on_btn_continue_pressed() -> void:
 				return
 
 func _on_btn_load_game_pressed() -> void:
-	get_tree().change_scene_to_file("res://game/core/save_menu.gd")
+	get_tree().change_scene_to_file("res://game/core/save_menu.tscn")
 
 func _on_btn_quit_pressed() -> void:
 	get_tree().quit()

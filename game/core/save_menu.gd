@@ -1,6 +1,6 @@
 extends Control
 
-@onready var slots := [$VBoxContainer/Slot0, $VBoxContainer/Slot1, $VBoxContainer/Slot2]
+@onready var slots := [$GridContainer/Slot1, $GridContainer/Slot2, $GridContainer/Slot3, $GridContainer/Slot4, $GridContainer/Slot5, $GridContainer/Slot6, $GridContainer/Slot7, $GridContainer/Slot8]
 
 func _ready() -> void:
 	_refresh_slots()
@@ -53,4 +53,4 @@ func _on_slot_8_pressed() -> void:
 	_load_slot(8)
 	
 func _on_back_pressed() -> void:
-	get_tree().change_scene_to_file("res://game/ui/main_menu/main_menu.tscn")
+	get_tree().change_scene_to_file("res://game/ui/menu/main_menu.tscn")
