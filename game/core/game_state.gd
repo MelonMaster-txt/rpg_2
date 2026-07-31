@@ -1,3 +1,5 @@
+# GameState — Autoload singleton
+# Contient toutes les données persistantes du joueur
 extends Node
 
 var player_name: String = "Barbare"
@@ -13,6 +15,17 @@ var workers: Array = []
 var deity: String = ""
 var faith_points: int = 0
 
+# Inventaire (miroir de GameManager.inventory)
+var inventory: Dictionary = {}
+
+# Temps en jeu (miroir de GameManager)
+var current_time: float = 0.0
+var current_day_gm: int = 1
+
+# Farm tiles persistantes
+var farm_tiles_data: Array = []
+
+
 func to_dict() -> Dictionary:
 	return {
 		"player_name": player_name,
@@ -27,7 +40,12 @@ func to_dict() -> Dictionary:
 		"workers": workers,
 		"deity": deity,
 		"faith_points": faith_points,
+		"inventory": inventory,
+		"current_time": current_time,
+		"current_day_gm": current_day_gm,
+		"farm_tiles_data": farm_tiles_data,
 	}
+
 
 func from_dict(data: Dictionary) -> void:
 	player_name = data.get("player_name", "Barbare")
@@ -43,6 +61,30 @@ func from_dict(data: Dictionary) -> void:
 	workers = data.get("workers", [])
 	deity = data.get("deity", "")
 	faith_points = data.get("faith_points", 0)
+	inventory = data.get("inventory", {})
+	current_time = data.get("current_time", 0.0)
+	current_day_gm = data.get("current_day_gm", 1)
+	farm_tiles_data = data.get("farm_tiles_data", [])
+
 
 func reset() -> void:
 	from_dict({})
+
+
+# Appelé par GameManager avant de sauvegarder pour synchroniser ses données
+func sync_from_game_manager() -> void:
+	inventory = GameManager.inventory.duplicate()
+	current_time = GameManager.current_time
+	current_day_gm = GameManager.current_day
+	farm_tiles_data.clear()
+	for tile in GameManager.farm_tiles_data:
+		farm_tiles_data.append(tile)
+
+
+# Appelé après un load pour repousser les données dans GameManager
+func apply_to_game_manager() -> void:
+	for key in inventory:
+		GameManager.inventory[key] = inventory[key]
+	GameManager.current_time = current_time
+	GameManager.current_day = current_day_gm
+	GameManager.farm_tiles_data = farm_tiles_data.duplicate()

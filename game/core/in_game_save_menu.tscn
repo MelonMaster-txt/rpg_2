@@ -1,0 +1,79 @@
+[gd_scene format=3 uid="uid://in_game_save_001"]
+
+[ext_resource type="Script" path="res://game/core/in_game_save_menu.gd" id="1_igsm"]
+[ext_resource type="PackedScene" uid="uid://dro00e8j3nbfr" path="res://game/core/save_menu.tscn" id="2_igsm"]
+
+[node name="InGameSaveMenu" type="CanvasLayer" unique_id=300000001]
+script = ExtResource("1_igsm")
+layer = 10
+
+[node name="Panel" type="Control" parent="." unique_id=300000002]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+process_mode = 3
+
+[node name="Overlay" type="ColorRect" parent="Panel" unique_id=300000003]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="CenterBox" type="VBoxContainer" parent="Panel" unique_id=300000004]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -320.0
+offset_right = 300.0
+offset_bottom = 320.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="ModeButtons" type="HBoxContainer" parent="Panel/CenterBox" unique_id=300000005]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="BtnSaveMode" type="Button" parent="Panel/CenterBox/ModeButtons" unique_id=300000006]
+custom_minimum_size = Vector2(140, 44)
+layout_mode = 2
+text = "Sauvegarder"
+
+[node name="BtnLoadMode" type="Button" parent="Panel/CenterBox/ModeButtons" unique_id=300000007]
+custom_minimum_size = Vector2(140, 44)
+layout_mode = 2
+text = "Charger"
+
+[node name="SaveMenu" type="Control" parent="Panel/CenterBox" unique_id=300000008]
+instance = ExtResource("2_igsm")
+
+[node name="BottomButtons" type="HBoxContainer" parent="Panel/CenterBox" unique_id=300000009]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="BtnResume" type="Button" parent="Panel/CenterBox/BottomButtons" unique_id=300000010]
+custom_minimum_size = Vector2(140, 44)
+layout_mode = 2
+text = "Reprendre"
+
+[node name="BtnQuitToMenu" type="Button" parent="Panel/CenterBox/BottomButtons" unique_id=300000011]
+custom_minimum_size = Vector2(140, 44)
+layout_mode = 2
+text = "Quitter vers menu"
+
+[connection signal="pressed" from="Panel/CenterBox/ModeButtons/BtnSaveMode" to="." method="_on_btn_save_mode_pressed"]
+[connection signal="pressed" from="Panel/CenterBox/ModeButtons/BtnLoadMode" to="." method="_on_btn_load_mode_pressed"]
+[connection signal="pressed" from="Panel/CenterBox/BottomButtons/BtnResume" to="." method="_on_btn_resume_pressed"]
+[connection signal="pressed" from="Panel/CenterBox/BottomButtons/BtnQuitToMenu" to="." method="_on_btn_quit_to_menu_pressed"]
