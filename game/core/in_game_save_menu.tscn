@@ -4,8 +4,9 @@
 [ext_resource type="PackedScene" uid="uid://dro00e8j3nbfr" path="res://game/core/save_menu.tscn" id="2_igsm"]
 
 [node name="InGameSaveMenu" type="CanvasLayer" unique_id=300000001]
-script = ExtResource("1_igsm")
+process_mode = 3
 layer = 10
+script = ExtResource("1_igsm")
 
 [node name="Panel" type="Control" parent="." unique_id=300000002]
 layout_mode = 3
