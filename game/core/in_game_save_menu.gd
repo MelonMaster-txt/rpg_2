@@ -1,8 +1,8 @@
-# InGameSaveMenu — overlay Echap en jeu
+# InGameSaveMenu — overlay Échap en jeu (CanvasLayer)
 extends CanvasLayer
 
-@onready var panel: Control = $Panel
-@onready var save_menu = $Panel/CenterBox/SaveMenu
+@onready var panel:     Control = $Panel
+@onready var save_menu          = $Panel/CenterBox/SaveMenu
 
 var _open: bool = false
 
@@ -10,13 +10,13 @@ var _open: bool = false
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	panel.hide()
-	call_deferred("_init_save_menu")
+	# Attendre que le SaveMenu enfant soit prêt avant de l'initialiser
+	call_deferred("_init")
 
 
-func _init_save_menu() -> void:
-	if save_menu and save_menu.has_method("setup"):
-		# mode SAVE=1, embedded=true (cache titre et bouton Back)
-		save_menu.setup(1, true)
+func _init() -> void:
+	if is_instance_valid(save_menu) and save_menu.has_method("setup"):
+		save_menu.setup(SaveMenu.Mode.SAVE, true)
 
 
 func _input(event: InputEvent) -> void:
@@ -38,13 +38,13 @@ func hide_menu() -> void:
 
 
 func _on_btn_save_mode_pressed() -> void:
-	if save_menu and save_menu.has_method("setup"):
-		save_menu.setup(1, true)  # SAVE embedded
+	if is_instance_valid(save_menu):
+		save_menu.setup(SaveMenu.Mode.SAVE, true)
 
 
 func _on_btn_load_mode_pressed() -> void:
-	if save_menu and save_menu.has_method("setup"):
-		save_menu.setup(0, true)  # LOAD embedded
+	if is_instance_valid(save_menu):
+		save_menu.setup(SaveMenu.Mode.LOAD, true)
 
 
 func _on_btn_resume_pressed() -> void:

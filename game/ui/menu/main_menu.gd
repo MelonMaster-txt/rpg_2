@@ -15,11 +15,10 @@ func _ready() -> void:
 
 func _on_btn_new_game_pressed() -> void:
 	GameState.reset()
-	get_tree().change_scene_to_file("res://game/world/scenes/overworld.tscn")
+	get_tree().change_scene_to_file(GameState.OVERWORLD)
 
 
 func _on_btn_continue_pressed() -> void:
-	# Charge le slot le plus recent
 	for slot in range(SaveSystem.MAX_SLOTS):
 		if SaveSystem.slot_exists(slot):
 			if SaveSystem.load_game(slot):
