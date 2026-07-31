@@ -15,14 +15,11 @@ var _is_open: bool = false
 var _dirty: bool = false
 
 @onready var grid:      GridContainer = $BG/Panel/VBox/Grid
-@onready var close_btn: Button        = $BG/Panel/VBox/CloseBtn
 
 func _ready() -> void:
 	add_to_group("inventory_screen")
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	visible = false
-	close_btn.process_mode = Node.PROCESS_MODE_ALWAYS
-	close_btn.pressed.connect(toggle)
 	GameManager.inventory_changed.connect(_on_inventory_changed)
 
 func toggle() -> void:

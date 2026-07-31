@@ -30,6 +30,15 @@ func remove_item(item: String, amount: int = 1) -> bool:
 func get_item(item: String) -> int:
 	return inventory.get(item, 0)
 
+#──── GAME STATS ───────────────────────────────────────────────────────────────
+var life: int = 0
+var force: int = 0
+var stamina: int = 0
+var luck: int = 0
+var intelligence: int = 0
+var charisma: int = 0
+
+var speed: int = 0
 # ─── SPAWN POSITION ───────────────────────────────────────────────────────────
 var saved_spawn_position: Vector2 = Vector2.ZERO
 var has_saved_position: bool = false
