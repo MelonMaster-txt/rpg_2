@@ -1,4 +1,5 @@
 # InGameSaveMenu — overlay Échap en jeu (CanvasLayer)
+# Mode SAVE = 1, Mode LOAD = 0  (enum SaveMenu.Mode)
 extends CanvasLayer
 
 @onready var panel:     Control = $Panel
@@ -10,13 +11,12 @@ var _open: bool = false
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	panel.hide()
-	# Attendre que le SaveMenu enfant soit prêt avant de l'initialiser
 	call_deferred("_init")
 
 
 func _init() -> void:
 	if is_instance_valid(save_menu) and save_menu.has_method("setup"):
-		save_menu.setup(SaveMenu.Mode.SAVE, true)
+		save_menu.setup(1, true)  # 1 = SAVE, embedded
 
 
 func _input(event: InputEvent) -> void:
@@ -39,12 +39,12 @@ func hide_menu() -> void:
 
 func _on_btn_save_mode_pressed() -> void:
 	if is_instance_valid(save_menu):
-		save_menu.setup(SaveMenu.Mode.SAVE, true)
+		save_menu.setup(1, true)  # SAVE
 
 
 func _on_btn_load_mode_pressed() -> void:
 	if is_instance_valid(save_menu):
-		save_menu.setup(SaveMenu.Mode.LOAD, true)
+		save_menu.setup(0, true)  # LOAD
 
 
 func _on_btn_resume_pressed() -> void:
