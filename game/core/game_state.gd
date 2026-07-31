@@ -1,5 +1,4 @@
 # GameState — Autoload singleton
-# Contient toutes les données persistantes du joueur
 extends Node
 
 var player_name: String = "Barbare"
@@ -7,7 +6,7 @@ var player_health: int = 100
 var player_position: Vector2 = Vector2.ZERO
 var player_gold: int = 0
 var player_level: int = 1
-var current_scene: String = "res://game/world/world.tscn"
+var current_scene: String = "res://game/world/scenes/overworld.tscn"
 var play_time: float = 0.0
 var day_count: int = 1
 var companions: Array = []
@@ -15,14 +14,9 @@ var workers: Array = []
 var deity: String = ""
 var faith_points: int = 0
 
-# Inventaire (miroir de GameManager.inventory)
 var inventory: Dictionary = {}
-
-# Temps en jeu (miroir de GameManager)
 var current_time: float = 0.0
 var current_day_gm: int = 1
-
-# Farm tiles persistantes
 var farm_tiles_data: Array = []
 
 
@@ -54,7 +48,7 @@ func from_dict(data: Dictionary) -> void:
 	player_position = Vector2(float(pos.get("x", 0)), float(pos.get("y", 0)))
 	player_gold = data.get("player_gold", 0)
 	player_level = data.get("player_level", 1)
-	current_scene = data.get("current_scene", "res://game/world/world.tscn")
+	current_scene = data.get("current_scene", "res://game/world/scenes/overworld.tscn")
 	play_time = data.get("play_time", 0.0)
 	day_count = data.get("day_count", 1)
 	companions = data.get("companions", [])
@@ -71,7 +65,6 @@ func reset() -> void:
 	from_dict({})
 
 
-# Appelé par GameManager avant de sauvegarder pour synchroniser ses données
 func sync_from_game_manager() -> void:
 	inventory = GameManager.inventory.duplicate()
 	current_time = GameManager.current_time
@@ -81,7 +74,6 @@ func sync_from_game_manager() -> void:
 		farm_tiles_data.append(tile)
 
 
-# Appelé après un load pour repousser les données dans GameManager
 func apply_to_game_manager() -> void:
 	for key in inventory:
 		GameManager.inventory[key] = inventory[key]

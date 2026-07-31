@@ -1,8 +1,10 @@
-# SaveMenu — menu save/load (8 slots, disposition GridContainer originale)
+# SaveMenu — menu save/load (8 slots)
 extends Control
 
 enum Mode { LOAD, SAVE }
 var mode: Mode = Mode.SAVE
+# En mode embedded (dans InGameSaveMenu), on cache le titre et le bouton Back
+var embedded: bool = false
 
 @onready var slots: Array = [
 	$GridContainer/Slot1,
@@ -16,6 +18,8 @@ var mode: Mode = Mode.SAVE
 ]
 @onready var confirm_panel: Panel = $ConfirmPanel
 @onready var confirm_label: Label = $ConfirmPanel/VBox/ConfirmLabel
+@onready var title_label: Label = $TitleLabel
+@onready var back_btn: Button = $GridContainer/Back
 
 var _pending_slot: int = -1
 
@@ -25,13 +29,15 @@ func _ready() -> void:
 	_refresh_slots()
 
 
-func setup(p_mode: int) -> void:
+func setup(p_mode: int, p_embedded: bool = false) -> void:
 	mode = p_mode as Mode
+	embedded = p_embedded
+	title_label.visible = not embedded
+	back_btn.visible = not embedded
 	_refresh_slots()
 
 
 func _format_time(seconds: int) -> String:
-	# Evite toute division ambigue en construisant heure/minute manuellement
 	var h := 0
 	var remaining := seconds
 	while remaining >= 3600:
@@ -82,6 +88,7 @@ func _execute_action(slot: int) -> void:
 		_refresh_slots()
 	else:
 		if SaveSystem.load_game(slot):
+			get_tree().paused = false
 			get_tree().change_scene_to_file(GameState.current_scene)
 
 

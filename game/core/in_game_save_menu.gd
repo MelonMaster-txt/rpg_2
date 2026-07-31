@@ -10,13 +10,13 @@ var _open: bool = false
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	panel.hide()
-	# Deferred pour s'assurer que le SaveMenu enfant est bien pret
 	call_deferred("_init_save_menu")
 
 
 func _init_save_menu() -> void:
 	if save_menu and save_menu.has_method("setup"):
-		save_menu.setup(1)  # 1 = SAVE par defaut
+		# mode SAVE=1, embedded=true (cache titre et bouton Back)
+		save_menu.setup(1, true)
 
 
 func _input(event: InputEvent) -> void:
@@ -39,12 +39,12 @@ func hide_menu() -> void:
 
 func _on_btn_save_mode_pressed() -> void:
 	if save_menu and save_menu.has_method("setup"):
-		save_menu.setup(1)  # SAVE
+		save_menu.setup(1, true)  # SAVE embedded
 
 
 func _on_btn_load_mode_pressed() -> void:
 	if save_menu and save_menu.has_method("setup"):
-		save_menu.setup(0)  # LOAD
+		save_menu.setup(0, true)  # LOAD embedded
 
 
 func _on_btn_resume_pressed() -> void:
