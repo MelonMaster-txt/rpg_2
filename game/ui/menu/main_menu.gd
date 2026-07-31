@@ -32,7 +32,7 @@ func _on_btn_continue_pressed() -> void:
 
 func _on_btn_load_game_pressed() -> void:
 	var menu = load("res://game/core/save_menu.tscn").instantiate()
-	menu.mode = SaveMenu.Mode.LOAD
+	menu.mode = 0
 	get_tree().root.add_child(menu)
 	get_tree().current_scene.queue_free()
 	get_tree().current_scene = menu
