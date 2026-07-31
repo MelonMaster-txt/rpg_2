@@ -1,5 +1,4 @@
 # InGameSaveMenu — overlay accessible via Escape en jeu
-# Permet de sauvegarder / charger / quitter sans quitter le jeu
 extends CanvasLayer
 
 @onready var panel: Control = $Panel
@@ -9,14 +8,16 @@ var _visible: bool = false
 
 
 func _ready() -> void:
+	# ALWAYS pour recevoir les inputs même quand le jeu est pausé
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	panel.hide()
-	# Démarre en mode SAVE
 	if save_menu.has_method("setup"):
 		save_menu.setup(0)  # 0 = Mode.SAVE
 
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
 		toggle()
 
 
