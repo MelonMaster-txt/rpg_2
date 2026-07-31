@@ -36,18 +36,18 @@ func _refresh_slots() -> void:
 		btn.disabled = false
 		if SaveSystem.slot_exists(i):
 			var info := SaveSystem.get_slot_info(i)
-			var pt := int(info.get("play_time", 0.0))
-			var h := pt / 3600
-			var m := (pt % 3600) / 60
-			btn.text = "Slot %d\n%s • Niv %d\nJour %d • %02dh%02d" % [
+			var pt: int = int(info.get("play_time", 0.0))
+			var h: int = pt / 3600
+			var m: int = (pt % 3600) / 60
+			btn.text = "Slot %d\n%s \u2022 Niv %d\nJour %d \u2022 %02dh%02d" % [
 				i + 1,
 				info.get("player_name", "?"),
-				info.get("player_level", 1),
-				info.get("day_count", 1),
+				int(info.get("player_level", 1)),
+				int(info.get("day_count", 1)),
 				h, m
 			]
 		else:
-			btn.text = "Slot %d\n— Vide —" % (i + 1)
+			btn.text = "Slot %d\n\u2014 Vide \u2014" % (i + 1)
 			if mode == Mode.LOAD:
 				btn.disabled = true
 
@@ -55,7 +55,7 @@ func _refresh_slots() -> void:
 func _on_slot_pressed(slot: int) -> void:
 	_pending_slot = slot
 	if mode == Mode.SAVE and SaveSystem.slot_exists(slot):
-		confirm_label.text = "Écraser le slot %d ?" % (slot + 1)
+		confirm_label.text = "\u00c9craser le slot %d ?" % (slot + 1)
 		confirm_panel.show()
 	elif mode == Mode.LOAD and SaveSystem.slot_exists(slot):
 		confirm_label.text = "Charger le slot %d ?" % (slot + 1)
