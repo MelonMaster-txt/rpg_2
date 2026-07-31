@@ -2,7 +2,7 @@
 extends CanvasLayer
 
 @onready var panel: Control = $Panel
-@onready var save_menu: Control = $Panel/CenterBox/SaveMenu
+@onready var save_menu = $Panel/CenterBox/SaveMenu
 
 var _open: bool = false
 
@@ -10,8 +10,13 @@ var _open: bool = false
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	panel.hide()
-	# Demarre en mode SAVE (1)
-	_set_mode_save()
+	# Deferred pour s'assurer que le SaveMenu enfant est bien pret
+	call_deferred("_init_save_menu")
+
+
+func _init_save_menu() -> void:
+	if save_menu and save_menu.has_method("setup"):
+		save_menu.setup(1)  # 1 = SAVE par defaut
 
 
 func _input(event: InputEvent) -> void:
@@ -32,24 +37,14 @@ func hide_menu() -> void:
 	get_tree().paused = false
 
 
-func _set_mode_save() -> void:
-	# Mode.SAVE = 1
-	if save_menu.has_method("setup"):
-		save_menu.setup(1)
-
-
-func _set_mode_load() -> void:
-	# Mode.LOAD = 0
-	if save_menu.has_method("setup"):
-		save_menu.setup(0)
-
-
 func _on_btn_save_mode_pressed() -> void:
-	_set_mode_save()
+	if save_menu and save_menu.has_method("setup"):
+		save_menu.setup(1)  # SAVE
 
 
 func _on_btn_load_mode_pressed() -> void:
-	_set_mode_load()
+	if save_menu and save_menu.has_method("setup"):
+		save_menu.setup(0)  # LOAD
 
 
 func _on_btn_resume_pressed() -> void:
