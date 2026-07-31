@@ -1,10 +1,10 @@
 # SaveSystem — Autoload singleton
-# Gère lecture / écriture des sauvegardes JSON (3 slots)
+# Gère lecture / écriture des sauvegardes JSON (8 slots)
 extends Node
 
 const SAVE_DIR := "user://saves/"
 const SAVE_EXTENSION := ".json"
-const MAX_SLOTS := 3
+const MAX_SLOTS := 8
 
 
 func _ready() -> void:
@@ -17,7 +17,6 @@ func get_save_path(slot: int) -> String:
 
 func save_game(slot: int) -> bool:
 	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
-	# Synchronise GameManager → GameState avant sérialisation
 	GameState.sync_from_game_manager()
 	var data := GameState.to_dict()
 	data["save_date"] = Time.get_datetime_string_from_system()
@@ -49,7 +48,6 @@ func load_game(slot: int) -> bool:
 	if typeof(data) != TYPE_DICTIONARY:
 		return false
 	GameState.from_dict(data)
-	# Repousse les données dans GameManager
 	GameState.apply_to_game_manager()
 	print("[SaveSystem] Slot %d chargé." % slot)
 	return true
