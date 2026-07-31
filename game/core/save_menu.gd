@@ -38,10 +38,10 @@ func _refresh_slots() -> void:
 			var info := SaveSystem.get_slot_info(i)
 			var pt: int = int(info.get("play_time", 0.0))
 			var h: int = pt / 3600
-			var m: int = (pt % 3600) / 60
+			var m: int = (pt - h * 3600) / 60
 			btn.text = "Slot %d\n%s \u2022 Niv %d\nJour %d \u2022 %02dh%02d" % [
 				i + 1,
-				info.get("player_name", "?"),
+				str(info.get("player_name", "?")),
 				int(info.get("player_level", 1)),
 				int(info.get("day_count", 1)),
 				h, m

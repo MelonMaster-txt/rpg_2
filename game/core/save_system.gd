@@ -1,5 +1,4 @@
 # SaveSystem — Autoload singleton
-# Gère lecture / écriture des sauvegardes JSON (8 slots)
 extends Node
 
 const SAVE_DIR := "user://saves/"
@@ -17,7 +16,9 @@ func get_save_path(slot: int) -> String:
 
 func save_game(slot: int) -> bool:
 	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
-	GameState.sync_from_game_manager()
+	# sync seulement si GameManager est disponible (pas depuis le menu principal)
+	if has_node("/root/GameManager"):
+		GameState.sync_from_game_manager()
 	var data := GameState.to_dict()
 	data["save_date"] = Time.get_datetime_string_from_system()
 	data["slot"] = slot
@@ -48,7 +49,9 @@ func load_game(slot: int) -> bool:
 	if typeof(data) != TYPE_DICTIONARY:
 		return false
 	GameState.from_dict(data)
-	GameState.apply_to_game_manager()
+	# apply seulement si GameManager est disponible
+	if has_node("/root/GameManager"):
+		GameState.apply_to_game_manager()
 	print("[SaveSystem] Slot %d chargé." % slot)
 	return true
 
@@ -72,13 +75,7 @@ func get_slot_info(slot: int) -> Dictionary:
 	return {
 		"save_date": data.get("save_date", ""),
 		"player_name": data.get("player_name", "?"),
-		"player_level": data.get("player_level", 1),
-		"play_time": data.get("play_time", 0.0),
-		"day_count": data.get("day_count", 1),
+		"player_level": int(data.get("player_level", 1)),
+		"play_time": int(data.get("play_time", 0.0)),
+		"day_count": int(data.get("day_count", 1)),
 	}
-
-
-func delete_save(slot: int) -> void:
-	if slot_exists(slot):
-		DirAccess.remove_absolute(get_save_path(slot))
-		print("[SaveSystem] Slot %d supprimé." % slot)
