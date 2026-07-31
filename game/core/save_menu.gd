@@ -2,7 +2,7 @@
 extends Control
 
 enum Mode { LOAD, SAVE }
-var mode: Mode = Mode.LOAD
+var mode: Mode = Mode.SAVE
 
 @onready var slots: Array = [
 	$GridContainer/Slot1,
@@ -25,9 +25,23 @@ func _ready() -> void:
 	_refresh_slots()
 
 
-func setup(p_mode: Mode) -> void:
-	mode = p_mode
+func setup(p_mode: int) -> void:
+	mode = p_mode as Mode
 	_refresh_slots()
+
+
+func _format_time(seconds: int) -> String:
+	# Evite toute division ambigue en construisant heure/minute manuellement
+	var h := 0
+	var remaining := seconds
+	while remaining >= 3600:
+		h += 1
+		remaining -= 3600
+	var m := 0
+	while remaining >= 60:
+		m += 1
+		remaining -= 60
+	return "%02dh%02d" % [h, m]
 
 
 func _refresh_slots() -> void:
@@ -36,15 +50,13 @@ func _refresh_slots() -> void:
 		btn.disabled = false
 		if SaveSystem.slot_exists(i):
 			var info := SaveSystem.get_slot_info(i)
-			var pt: int = int(info.get("play_time", 0.0))
-			var h: int = pt / 3600
-			var m: int = (pt - h * 3600) / 60
-			btn.text = "Slot %d\n%s \u2022 Niv %d\nJour %d \u2022 %02dh%02d" % [
+			var pt: int = int(info.get("play_time", 0))
+			btn.text = "Slot %d\n%s \u2022 Niv %d\nJour %d \u2022 %s" % [
 				i + 1,
 				str(info.get("player_name", "?")),
 				int(info.get("player_level", 1)),
 				int(info.get("day_count", 1)),
-				h, m
+				_format_time(pt)
 			]
 		else:
 			btn.text = "Slot %d\n\u2014 Vide \u2014" % (i + 1)
