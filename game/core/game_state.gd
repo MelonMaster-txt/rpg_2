@@ -66,6 +66,7 @@ func reset() -> void:
 	from_dict({})
 
 
+# Appelé juste avant save_game() pour capturer l'état live du monde
 func sync_from_game_manager() -> void:
 	inventory       = GameManager.inventory.duplicate()
 	current_time    = GameManager.current_time
@@ -73,6 +74,10 @@ func sync_from_game_manager() -> void:
 	farm_tiles_data = []
 	for tile in GameManager.farm_tiles_data:
 		farm_tiles_data.append(tile)
+	# Capture la position live du joueur
+	var players := get_tree().get_nodes_in_group("player")
+	if players.size() > 0:
+		player_position = (players[0] as Node2D).global_position
 
 
 func apply_to_game_manager() -> void:
@@ -81,3 +86,5 @@ func apply_to_game_manager() -> void:
 	GameManager.current_time = current_time
 	GameManager.current_day  = current_day_gm
 	GameManager.farm_tiles_data = farm_tiles_data.duplicate()
+	# Indique au GameManager de spawner le joueur à la position sauvegardée
+	GameManager.set_spawn_position(player_position)

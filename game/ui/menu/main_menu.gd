@@ -27,6 +27,8 @@ func _on_btn_continue_pressed() -> void:
 
 
 func _on_btn_load_game_pressed() -> void:
+	# Passe en mode LOAD via métadonnée lue par save_menu au _ready()
+	GameState.set_meta("open_save_menu_mode", 0)  # 0 = LOAD
 	get_tree().change_scene_to_file("res://game/core/save_menu.tscn")
 
 

@@ -3,6 +3,7 @@ extends Control
 
 enum Mode { LOAD = 0, SAVE = 1 }
 
+# Par défaut SAVE, mais peut être forcé en LOAD via métadonnée GameState
 var mode: Mode     = Mode.SAVE
 var embedded: bool = false   # true = cache TitleLabel + bouton Back
 
@@ -22,6 +23,10 @@ var _pending_slot: int = -1
 
 func _ready() -> void:
 	confirm_panel.hide()
+	# Récupère le mode demandé par le menu principal si présent
+	if GameState.has_meta("open_save_menu_mode"):
+		mode = GameState.get_meta("open_save_menu_mode") as Mode
+		GameState.remove_meta("open_save_menu_mode")
 	_apply_embedded()
 	_refresh_slots()
 
@@ -38,6 +43,10 @@ func setup(p_mode: int, p_embedded: bool = false) -> void:
 func _apply_embedded() -> void:
 	title_label.visible = not embedded
 	back_btn.visible    = not embedded
+	if embedded:
+		return
+	# Met à jour le titre selon le mode
+	title_label.text = "Charger" if mode == Mode.LOAD else "Sauvegarder"
 
 
 func _fmt_time(seconds: int) -> String:
