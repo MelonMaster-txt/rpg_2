@@ -86,5 +86,5 @@ func apply_to_game_manager() -> void:
 	GameManager.current_time = current_time
 	GameManager.current_day  = current_day_gm
 	GameManager.farm_tiles_data = farm_tiles_data.duplicate()
-	# Indique au GameManager de spawner le joueur à la position sauvegardée
-	GameManager.set_spawn_position(player_position)
+	# Spawne le joueur à la position sauvegardée au prochain chargement de scène
+	GameManager.save_spawn_position(player_position)
