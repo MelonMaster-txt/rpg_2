@@ -3,7 +3,7 @@
 extends CanvasLayer
 
 @onready var panel:     Control = $Panel
-@onready var save_menu          = $Panel/CenterBox/SaveMenu
+@onready var save_menu          = $Panel/SaveMenu
 
 var _open: bool = false
 
