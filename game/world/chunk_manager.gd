@@ -39,6 +39,7 @@ var _thread_running: bool       = false
 var _player:            Node2D   = null
 var _last_player_chunk: Vector2i = Vector2i(999999, 999999)
 var _find_player_cd:    int      = 0
+# spawn_center est FIXE à (0,0) : c'est l'origine du monde, pas la position du joueur
 var _spawn_center:      Vector2i = Vector2i(0, 0)
 
 
@@ -51,15 +52,17 @@ func _ready() -> void:
 
 func _deferred_init() -> void:
 	_player = _find_player()
+	# _spawn_center reste (0,0) — on charge d'abord les chunks autour de l'origine
+	# puis autour du joueur s'il est ailleurs (après un load de save)
+	_load_chunks_around(_spawn_center, spawn_chunk_radius)
 	if _player != null:
-		_spawn_center = _world_to_chunk(_player.global_position)
-		_load_chunks_around(_spawn_center, load_radius + 1)
-		_update_chunks()
+		var player_chunk := _world_to_chunk(_player.global_position)
+		if player_chunk != _spawn_center:
+			_load_chunks_around(player_chunk, load_radius + 1)
+	_update_chunks()
 
 
 func _process(_delta: float) -> void:
-	# On applique AU MAXIMUM max_chunks_per_frame chunks par frame
-	# pour éviter les saccades quand plusieurs chunks arrivent ensemble
 	_flush_ready_queue()
 	if _player == null or not is_instance_valid(_player):
 		_find_player_cd -= 1
@@ -110,7 +113,6 @@ func _compute_chunk_data(coords: Vector2i) -> Dictionary:
 # MAIN THREAD — application des données + gestion du pool
 # ---------------------------------------------------------------------------
 func _flush_ready_queue() -> void:
-	# On extrait seulement max_chunks_per_frame éléments du ready_queue
 	_thread_mutex.lock()
 	var available: int = _ready_queue.size()
 	_thread_mutex.unlock()
@@ -196,7 +198,7 @@ func _update_chunks() -> void:
 	var active_set: Dictionary = {}
 	var lazy_set:   Dictionary = {}
 
-	# Spawn chunks — toujours ACTIVE
+	# Spawn chunks — TOUJOURS autour de (0,0), jamais déchargés
 	for x: int in range(_spawn_center.x - spawn_chunk_radius, _spawn_center.x + spawn_chunk_radius + 1):
 		for y: int in range(_spawn_center.y - spawn_chunk_radius, _spawn_center.y + spawn_chunk_radius + 1):
 			active_set[Vector2i(x, y)] = true
@@ -255,7 +257,7 @@ func _set_ticket(coords: Vector2i, level: TicketLevel) -> void:
 
 
 func _unload_chunk(coords: Vector2i) -> void:
-	# Spawn chunks protégés
+	# Spawn chunks protégés autour de (0,0) uniquement
 	var dx: int = absi(coords.x - _spawn_center.x)
 	var dy: int = absi(coords.y - _spawn_center.y)
 	if dx <= spawn_chunk_radius and dy <= spawn_chunk_radius:
