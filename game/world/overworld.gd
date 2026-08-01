@@ -1,10 +1,11 @@
 extends Node2D
 
-const PLAYER_SCENE       := preload("res://game/characters/player/player.tscn")
-const FARM_PLACER_SCR    := preload("res://game/world/farm_placer.gd")
-const NOISE_DEBUG_SCN    := preload("res://game/world/noise_debug.tscn")
-const DEBUG_MENU_SCR     := preload("res://game/ui/debug_menu.gd")
-const NOISE_KEY_LISTENER := preload("res://game/world/noise_key_listener.gd")
+const PLAYER_SCENE           := preload("res://game/characters/player/player.tscn")
+const FARM_PLACER_SCR        := preload("res://game/world/farm_placer.gd")
+const NOISE_DEBUG_SCN        := preload("res://game/world/noise_debug.tscn")
+const DEBUG_MENU_SCR         := preload("res://game/ui/debug_menu.gd")
+const NOISE_KEY_LISTENER     := preload("res://game/world/noise_key_listener.gd")
+const IN_GAME_SAVE_MENU_SCN  := preload("res://game/core/in_game_save_menu.tscn")
 
 @onready var _player_container : Node2D   = $PlayerContainer
 @onready var _player_spawn     : Marker2D = $PlayerSpawn
@@ -27,9 +28,8 @@ func _ready() -> void:
 	add_child(debug_menu)
 
 	# Noise debug F2 - la scene contient un CanvasLayer root
-	# On instantie et on cache le CanvasLayer root directement
 	var nd_scene := NOISE_DEBUG_SCN.instantiate()
-	nd_scene.visible = false  # CanvasLayer root cache au depart
+	nd_scene.visible = false
 	add_child(nd_scene)
 
 	# Listener F2
@@ -37,6 +37,11 @@ func _ready() -> void:
 	listener.set_script(NOISE_KEY_LISTENER)
 	listener.name = "NoiseKeyListener"
 	add_child(listener)
+
+	# Menu sauvegarde en jeu (Échap)
+	var save_overlay := IN_GAME_SAVE_MENU_SCN.instantiate()
+	save_overlay.name = "InGameSaveMenu"
+	add_child(save_overlay)
 
 	_spawn_player()
 
