@@ -30,6 +30,28 @@ func remove_item(item: String, amount: int = 1) -> bool:
 func get_item(item: String) -> int:
 	return inventory.get(item, 0)
 
+# ─── NIVEAU / XP ──────────────────────────────────────────────────────────────
+var player_level: int = 1
+var player_xp: int = 0
+
+const XP_PER_LEVEL: int = 100  # XP requis pour passer au niveau suivant
+
+signal level_changed(new_level: int)
+signal xp_changed(current_xp: int, required_xp: int)
+
+func add_xp(amount: int) -> void:
+	player_xp += amount
+	while player_xp >= get_xp_required():
+		player_xp -= get_xp_required()
+		player_level += 1
+		emit_signal("level_changed", player_level)
+		print("[GameManager] Level up! Niveau %d" % player_level)
+	emit_signal("xp_changed", player_xp, get_xp_required())
+
+func get_xp_required() -> int:
+	# Formule : 100 * niveau (monte progressivement)
+	return XP_PER_LEVEL * player_level
+
 # ─── SPAWN POSITION ───────────────────────────────────────────────────────────
 var saved_spawn_position: Vector2 = Vector2.ZERO
 var has_saved_position: bool = false
