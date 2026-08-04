@@ -53,25 +53,11 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Slot 1"
 
-[node name="Del1" type="Button" parent="GridContainer"]
-custom_minimum_size = Vector2(40, 40)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "X"
-tooltip_text = "Supprimer"
-
 [node name="Slot2" type="Button" parent="GridContainer"]
 custom_minimum_size = Vector2(160, 120)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Slot 2"
-
-[node name="Del2" type="Button" parent="GridContainer"]
-custom_minimum_size = Vector2(40, 40)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "X"
-tooltip_text = "Supprimer"
 
 [node name="Slot3" type="Button" parent="GridContainer"]
 custom_minimum_size = Vector2(160, 120)
@@ -79,25 +65,11 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Slot 3"
 
-[node name="Del3" type="Button" parent="GridContainer"]
-custom_minimum_size = Vector2(40, 40)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "X"
-tooltip_text = "Supprimer"
-
 [node name="Slot4" type="Button" parent="GridContainer"]
 custom_minimum_size = Vector2(160, 120)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Slot 4"
-
-[node name="Del4" type="Button" parent="GridContainer"]
-custom_minimum_size = Vector2(40, 40)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "X"
-tooltip_text = "Supprimer"
 
 [node name="Slot5" type="Button" parent="GridContainer"]
 custom_minimum_size = Vector2(160, 120)
@@ -105,25 +77,11 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Slot 5"
 
-[node name="Del5" type="Button" parent="GridContainer"]
-custom_minimum_size = Vector2(40, 40)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "X"
-tooltip_text = "Supprimer"
-
 [node name="Slot6" type="Button" parent="GridContainer"]
 custom_minimum_size = Vector2(160, 120)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Slot 6"
-
-[node name="Del6" type="Button" parent="GridContainer"]
-custom_minimum_size = Vector2(40, 40)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "X"
-tooltip_text = "Supprimer"
 
 [node name="Slot7" type="Button" parent="GridContainer"]
 custom_minimum_size = Vector2(160, 120)
@@ -131,25 +89,11 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Slot 7"
 
-[node name="Del7" type="Button" parent="GridContainer"]
-custom_minimum_size = Vector2(40, 40)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "X"
-tooltip_text = "Supprimer"
-
 [node name="Slot8" type="Button" parent="GridContainer"]
 custom_minimum_size = Vector2(160, 120)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Slot 8"
-
-[node name="Del8" type="Button" parent="GridContainer"]
-custom_minimum_size = Vector2(40, 40)
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "X"
-tooltip_text = "Supprimer"
 
 [node name="Back" type="Button" parent="GridContainer"]
 custom_minimum_size = Vector2(80, 40)
@@ -207,21 +151,13 @@ layout_mode = 2
 text = "Non"
 
 [connection signal="pressed" from="GridContainer/Slot1" to="." method="_on_slot_1_pressed"]
-[connection signal="pressed" from="GridContainer/Del1"  to="." method="_on_del_1_pressed"]
 [connection signal="pressed" from="GridContainer/Slot2" to="." method="_on_slot_2_pressed"]
-[connection signal="pressed" from="GridContainer/Del2"  to="." method="_on_del_2_pressed"]
 [connection signal="pressed" from="GridContainer/Slot3" to="." method="_on_slot_3_pressed"]
-[connection signal="pressed" from="GridContainer/Del3"  to="." method="_on_del_3_pressed"]
 [connection signal="pressed" from="GridContainer/Slot4" to="." method="_on_slot_4_pressed"]
-[connection signal="pressed" from="GridContainer/Del4"  to="." method="_on_del_4_pressed"]
 [connection signal="pressed" from="GridContainer/Slot5" to="." method="_on_slot_5_pressed"]
-[connection signal="pressed" from="GridContainer/Del5"  to="." method="_on_del_5_pressed"]
 [connection signal="pressed" from="GridContainer/Slot6" to="." method="_on_slot_6_pressed"]
-[connection signal="pressed" from="GridContainer/Del6"  to="." method="_on_del_6_pressed"]
 [connection signal="pressed" from="GridContainer/Slot7" to="." method="_on_slot_7_pressed"]
-[connection signal="pressed" from="GridContainer/Del7"  to="." method="_on_del_7_pressed"]
 [connection signal="pressed" from="GridContainer/Slot8" to="." method="_on_slot_8_pressed"]
-[connection signal="pressed" from="GridContainer/Del8"  to="." method="_on_del_8_pressed"]
 [connection signal="pressed" from="GridContainer/Back"  to="." method="_on_back_pressed"]
 [connection signal="pressed" from="ConfirmPanel/VBox/Buttons/Yes" to="." method="_on_confirm_yes_pressed"]
 [connection signal="pressed" from="ConfirmPanel/VBox/Buttons/No"  to="." method="_on_confirm_no_pressed"]
