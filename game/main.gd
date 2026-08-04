@@ -37,8 +37,8 @@ func _on_chunk_manager_initial_load_completed() -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed:
-		# Touche F1 par exemple
-		if event.keycode == Key.F1:
+		# Touche F9 pour debug NPC
+		if event.keycode == Key.F9:
 			_spawn_debug_npc()
 
 func _spawn_debug_npc() -> void:
