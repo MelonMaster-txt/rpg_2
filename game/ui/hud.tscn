@@ -79,9 +79,19 @@ text = "Intelligence"
 layout_mode = 2
 text = "Charisma"
 
+[node name="SpawnNpcButton" type="Button" parent="HUDPanel/HUDContainer" unique_id=2000000000]
+layout_mode = 2
+text = "Debug: Spawn NPC"
+
 [node name="InventoryScreen" parent="." unique_id=42975483 instance=ExtResource("2_inv")]
 visible = false
 grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Hotbar" parent="." unique_id=1177853686 instance=ExtResource("3_hotbar")]
+
+[connection]
+signal="pressed"
+from="HUDPanel/HUDContainer/SpawnNpcButton"
+to="HUD"
+method="_on_spawn_npc_button_pressed"
