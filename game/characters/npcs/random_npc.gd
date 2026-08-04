@@ -14,7 +14,7 @@ var max_hp:     int    = 30
 var current_hp: int    = 30
 var is_hostile: bool   = false
 var speed:      float  = 60.0
-var state:      int    = 0  # 0=LIBRE 1=COMPAGNON 2=ESCLAVE
+var state:      int    = 0
 
 @onready var _appearance:       Node      = $CharacterAppearance
 @onready var _name_label:       Label     = $NameLabel
@@ -37,10 +37,9 @@ const DETECT_RANGE    := 120.0
 const ATTACK_RANGE    := 32.0
 const ATTACK_COOLDOWN := 1.5
 var _attack_timer: float = 0.0
+
 var _pending_randomize: bool = false
 var _pending_seed:      int  = -1
-
-# ─── Cycle de vie ─────────────────────────────────────────────────────────────
 
 func _ready() -> void:
 	current_hp = max_hp
@@ -93,11 +92,10 @@ func _update_color_rect() -> void:
 		"monster": _color_rect.color = COLOR_MONSTER
 		_:         _color_rect.color = COLOR_MALE
 
-# ─── Physique & IA ────────────────────────────────────────────────────────────
 
 func _physics_process(delta: float) -> void:
 	if _ai == AiState.DEAD: return
-	if _ai == AiState.WORKING: return  # WorkerAI appelle move_and_slide lui-même
+	if _ai == AiState.WORKING: return
 	_attack_timer = max(0.0, _attack_timer - delta)
 	_update_ai(delta)
 
@@ -110,9 +108,11 @@ func _update_ai(delta: float) -> void:
 
 	if is_hostile and _target != null:
 		if dist < DETECT_RANGE and _ai not in [AiState.CHASE, AiState.FLEE]:
-			_ai = AiState.CHASE; _update_color_rect()
+			_ai = AiState.CHASE
+			_update_color_rect()
 		elif dist > DETECT_RANGE * 1.5:
-			_ai = AiState.WANDER; _update_color_rect()
+			_ai = AiState.WANDER
+			_update_color_rect()
 	else:
 		if dist < DETECT_RANGE * 0.6 and _ai != AiState.FLEE: _ai = AiState.FLEE
 		elif dist > DETECT_RANGE and _ai == AiState.FLEE:      _ai = AiState.WANDER
@@ -125,19 +125,23 @@ func _update_ai(delta: float) -> void:
 		AiState.WANDER:
 			_wander_timer -= delta
 			velocity = _wander_dir * speed
-			_update_facing(); move_and_slide()
+			_update_facing()
+			move_and_slide()
 			if _wander_timer <= 0.0:
-				_ai = AiState.IDLE; velocity = Vector2.ZERO
+				_ai = AiState.IDLE
+				velocity = Vector2.ZERO
 		AiState.FLEE:
 			if _target != null:
 				var dir: Vector2 = (global_position - _target.global_position).normalized()
 				velocity = dir * speed * 1.3
-				_update_facing(); move_and_slide()
+				_update_facing()
+				move_and_slide()
 		AiState.CHASE:
 			if _target != null:
 				var dir: Vector2 = (_target.global_position - global_position).normalized()
 				velocity = dir * speed * 1.1
-				_update_facing(); move_and_slide()
+				_update_facing()
+				move_and_slide()
 				if dist < ATTACK_RANGE and _attack_timer <= 0.0: _melee_attack()
 
 
@@ -146,39 +150,32 @@ func _melee_attack() -> void:
 	var dmg: int = max(1, int(float(strength) / 3.0))
 	if _target != null and _target.has_method("take_damage"): _target.take_damage(dmg)
 
-# ─── Interaction joueur ───────────────────────────────────────────────────────
 
 var _player_near: bool = false
 
 func _unhandled_input(event: InputEvent) -> void:
-	# On vérifie _player_near ET que l'area est active (monitoring)
-	if not _player_near: return
-	if _ai == AiState.DEAD: return
-	if not event.is_action_pressed("interact"): return
-	get_viewport().set_input_as_handled()
-	interaction_requested.emit(self)
-	_open_interaction_menu()
+	if _player_near and _ai != AiState.DEAD and event.is_action_pressed("interact"):
+		get_viewport().set_input_as_handled()
+		interaction_requested.emit(self)
+		_open_interaction_menu()
 
 
 func _open_interaction_menu() -> void:
-	# Vérifier qu'il n'y a pas déjà un menu ouvert
-	if get_tree().current_scene.get_node_or_null("NpcInteractionMenu") != null: return
 	var menu_scene: PackedScene = load("res://game/systems/npc_interaction_menu.tscn")
 	if menu_scene == null:
 		push_error("RandomNpc: npc_interaction_menu.tscn introuvable")
 		return
 	var menu: Node = menu_scene.instantiate()
-	menu.name = "NpcInteractionMenu"
 	get_tree().current_scene.add_child(menu)
 	menu.open(self)
 
-# ─── Combat ───────────────────────────────────────────────────────────────────
 
 func take_damage(amount: int) -> void:
 	if _ai == AiState.DEAD: return
 	current_hp -= amount
 	if current_hp <= 0:
-		current_hp = 0; die()
+		current_hp = 0
+		die()
 
 
 func die() -> void:
@@ -190,12 +187,12 @@ func die() -> void:
 	await get_tree().create_timer(3.0).timeout
 	queue_free()
 
-# ─── Recrutement / Capture ────────────────────────────────────────────────────
 
 func recruit() -> void:
 	state = 1
 	is_hostile = false
-	CompanionManager.add_companion(_build_kingdom_entry("companion"))
+	var entry: Dictionary = _build_kingdom_entry("companion")
+	CompanionManager.add_companion(entry)
 	npc_recruited.emit(self)
 	_start_working("woodcutter")
 	_add_relation_component()
@@ -204,16 +201,20 @@ func recruit() -> void:
 func capture() -> void:
 	state = 2
 	is_hostile = false
-	CompanionManager.add_slave(_build_kingdom_entry("slave"))
+	var entry: Dictionary = _build_kingdom_entry("slave")
+	CompanionManager.add_slave(entry)
 	npc_captured.emit(self)
 	_start_working("woodcutter")
 	_add_relation_component()
 
 
 func _add_relation_component() -> void:
-	if get_node_or_null("RelationComponent"): return
+	var existing = get_node_or_null("RelationComponent")
+	if existing: return
 	var rel_script: Script = load("res://game/characters/npcs/npc_relation.gd")
-	if rel_script == null: push_error("random_npc: npc_relation.gd introuvable"); return
+	if rel_script == null:
+		push_error("random_npc: npc_relation.gd introuvable")
+		return
 	var rel: Node = Node.new()
 	rel.set_script(rel_script)
 	rel.name = "RelationComponent"
@@ -223,10 +224,12 @@ func _add_relation_component() -> void:
 
 func _start_working(initial_job: String) -> void:
 	_ai = AiState.WORKING
-	# NE PAS désactiver monitoring — on veut garder l'interaction possible
+	# L'InteractionArea reste active pour permettre l'interaction joueur
 	_update_color_rect()
 	var worker_script: Script = load("res://game/characters/npcs/worker_ai.gd")
-	if worker_script == null: push_error("RandomNpc: worker_ai.gd introuvable"); return
+	if worker_script == null:
+		push_error("RandomNpc: worker_ai.gd introuvable")
+		return
 	var old = get_node_or_null("WorkerAI")
 	if old: old.queue_free()
 	var worker: Node = Node.new()
@@ -234,6 +237,7 @@ func _start_working(initial_job: String) -> void:
 	worker.name = "WorkerAI"
 	worker.job  = initial_job
 	add_child(worker)
+	print("[RandomNpc] WorkerAI créé pour ", npc_name, " avec job=", initial_job)
 
 
 func get_worker_ai() -> Node:
@@ -263,7 +267,6 @@ func _build_kingdom_entry(role: String) -> Dictionary:
 		}
 	return entry
 
-# ─── Helpers ──────────────────────────────────────────────────────────────────
 
 func set_appearance(adat: Dictionary) -> void:
 	if _appearance: _appearance.apply_appearance_data(adat)

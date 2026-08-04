@@ -26,8 +26,6 @@ extends CanvasLayer
 var _npc: Node = null
 var _pending_assign_name: String = ""
 
-# ─── Helpers lecture NPC ──────────────────────────────────────────────────────
-
 func _npc_name() -> String:
 	if _npc.get("data") != null: return _npc.data.npc_name
 	return str(_npc.get("npc_name") if _npc.get("npc_name") != null else "Inconnu")
@@ -74,8 +72,6 @@ func _get_relation() -> Node:
 	if _npc == null: return null
 	return _npc.get_node_or_null("RelationComponent")
 
-# ─── Cycle de vie ─────────────────────────────────────────────────────────────
-
 func _ready() -> void:
 	btn_talk.pressed.connect(_on_btn_talk_pressed)
 	btn_recruit.pressed.connect(_on_btn_recruit_pressed)
@@ -110,13 +106,14 @@ func _refresh() -> void:
 	result_label.text    = ""
 	var taken := _npc_already_taken()
 	if taken:
+		var rel = _get_relation()
 		var worker = _npc.get_node_or_null("WorkerAI")
 		var current_job: String = worker.job if worker != null else "(aucun)"
 		dialogue_label.text = "🟡 Allié — Métier : %s" % current_job
 		btn_recruit.visible = false
 		btn_fight.visible   = false
 		btn_talk.visible    = false
-		_show_relation_panel(_get_relation())
+		_show_relation_panel(rel)
 	else:
 		dialogue_label.text  = _npc_dialogue()
 		btn_recruit.visible  = true
@@ -134,11 +131,11 @@ func _populate_job_option() -> void:
 	for job in CompanionManager.JOBS:
 		job_option.add_item(job if job != "" else "(aucun)")
 
-# ─── Panneau Relation ─────────────────────────────────────────────────────────
 
 func _show_relation_panel(rel: Node) -> void:
 	if relation_panel == null: return
-	relation_label.text = rel.summary() if rel != null else "Pas encore de lien particulier."
+	if rel != null: relation_label.text = rel.summary()
+	else:           relation_label.text = "Pas encore de lien particulier."
 	relation_panel.visible = true
 	if job_panel != null: job_panel.visible = false
 
@@ -148,9 +145,10 @@ func _on_rel_talk() -> void:
 	if rel == null:
 		result_label.text = "(Pas de composant relation)"
 		return
-	# Correction INTEGER_DIVISION : float division
+	# FIX: float division
 	var day: int = int(float(Time.get_ticks_msec()) / 86400000.0)
-	result_label.text   = rel.talk(day)
+	var msg: String = rel.talk(day)
+	result_label.text = msg
 	relation_label.text = rel.summary()
 
 
@@ -161,14 +159,15 @@ func _on_rel_gift() -> void:
 		result_label.text = "Pas assez d'or (5 nécessaires)."
 		return
 	if GameManager.get("gold") != null: GameManager.gold -= 5
-	result_label.text   = rel.give_gift(5)
+	var msg: String = rel.give_gift(5)
+	result_label.text = msg
 	relation_label.text = rel.summary()
 
 
 func _on_rel_insult() -> void:
 	var rel = _get_relation()
 	if rel == null: return
-	result_label.text   = rel.insult()
+	result_label.text = rel.insult()
 	relation_label.text = rel.summary()
 
 
@@ -177,7 +176,6 @@ func _on_rel_change_job() -> void:
 	if relation_panel != null: relation_panel.visible = false
 	_show_job_panel("Changer le métier de %s :" % _pending_assign_name)
 
-# ─── Boutons inconnu ──────────────────────────────────────────────────────────
 
 func _on_btn_talk_pressed() -> void:
 	if _npc.get("data") != null:
@@ -190,7 +188,7 @@ func _on_btn_talk_pressed() -> void:
 func _on_btn_recruit_pressed() -> void:
 	if _can_recruit():
 		if _npc.has_method("recruit"): _npc.recruit()
-		result_label.text    = _npc_name() + " rejoint votre groupe !"
+		result_label.text = _npc_name() + " rejoint votre groupe !"
 		btn_recruit.disabled = true
 		btn_fight.disabled   = true
 		_pending_assign_name = _npc_name()
@@ -199,8 +197,8 @@ func _on_btn_recruit_pressed() -> void:
 		if _npc.get("data") != null:
 			var d = _npc.data
 			var msg := "Refus — "
-			if GameManager.charisma     < d.recruit_min_charisma: msg += "Charisme %d/%d " % [GameManager.charisma, d.recruit_min_charisma]
-			if GameManager.force        < d.recruit_min_force:    msg += "Force %d/%d "    % [GameManager.force, d.recruit_min_force]
+			if GameManager.charisma     < d.recruit_min_charisma: msg += "Charisme %d/%d " % [GameManager.charisma,     d.recruit_min_charisma]
+			if GameManager.force        < d.recruit_min_force:    msg += "Force %d/%d "    % [GameManager.force,        d.recruit_min_force]
 			if GameManager.intelligence < d.recruit_min_intel:    msg += "Intel %d/%d "    % [GameManager.intelligence, d.recruit_min_intel]
 			result_label.text = msg
 		else:
@@ -217,7 +215,7 @@ func _on_btn_fight_pressed() -> void:
 	if player_wins:
 		_show_victory_choice()
 	else:
-		# Correction INTEGER_DIVISION : cast float avant division
+		# FIX: float division
 		var dmg: int = max(1, int(float(npc_power) / 4.0))
 		GameManager.life = max(0, GameManager.life - dmg)
 		result_label.text = "Vous perdez ! -%d PV." % dmg
@@ -252,7 +250,6 @@ func _on_btn_capture_pressed() -> void:
 	_pending_assign_name = _npc_name()
 	_show_job_panel("Assigner un métier à %s :" % _pending_assign_name)
 
-# ─── Panneau Job ──────────────────────────────────────────────────────────────
 
 func _show_job_panel(title: String = "Assigner un métier :") -> void:
 	if job_panel == null: return
@@ -264,16 +261,12 @@ func _on_btn_assign_pressed() -> void:
 	if job_option == null: return
 	var idx: int = job_option.selected
 	var chosen_job: String = CompanionManager.JOBS[idx] if idx >= 0 else ""
-	if _pending_assign_name != "":
-		CompanionManager.assign_job(_pending_assign_name, chosen_job)
-	if _npc != null and _npc.has_method("change_job"):
-		_npc.change_job(chosen_job)
-	var label: String = chosen_job if chosen_job != "" else "(aucun)"
-	result_label.text = "%s → %s" % [_pending_assign_name, label]
+	if _pending_assign_name != "": CompanionManager.assign_job(_pending_assign_name, chosen_job)
+	if _npc != null and _npc.has_method("change_job"): _npc.change_job(chosen_job)
+	result_label.text = "%s → %s" % [_pending_assign_name, chosen_job if chosen_job != "" else "(aucun)"]
 	job_panel.visible = false
 	if _npc_already_taken(): _show_relation_panel(_get_relation())
 
-# ─── Fermeture ────────────────────────────────────────────────────────────────
 
 func _on_btn_close_pressed() -> void:
 	_close()

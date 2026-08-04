@@ -1,19 +1,16 @@
 # npc_relation.gd
-# Composant de relation joueur<->NPC : amitié, confiance, humeur.
-# S'attache au NPC comme enfant (Node) : $RelationComponent
 extends Node
 
 const FRIENDSHIP_MAX := 100
 const FRIENDSHIP_MIN := -100
 
-# Niveaux d'amitié
 enum Level { HOSTILE = -2, NEUTRAL = 0, ACQUAINTANCE = 1, FRIEND = 2, TRUSTED = 3, SOULMATE = 4 }
 
-var friendship:  int = 0   # -100..100
-var trust:       int = 0   # 0..100 (monte + lentement)
-var mood:        int = 50  # 0..100 (humeur du jour, varie)
-var talk_count:  int = 0
-var gift_count:  int = 0
+var friendship:    int = 0
+var trust:         int = 0
+var mood:          int = 50
+var talk_count:    int = 0
+var gift_count:    int = 0
 var last_talk_day: int = -1
 
 signal relation_changed(new_level: int)
@@ -44,7 +41,7 @@ func level_icon() -> String:
 		Level.HOSTILE:      return "😠"
 		_:                  return "😐"
 
-# ─── Modificateurs ───────────────────────────────────────────────────────────
+# ─── Modificateurs ───────────────────────────────────────────────────────────────
 
 func talk(day: int = -1) -> String:
 	var already_today := (day >= 0 and day == last_talk_day)
@@ -52,7 +49,8 @@ func talk(day: int = -1) -> String:
 		return _mood_line("Tu m'as déjà parlé aujourd'hui.", -1)
 	last_talk_day = day
 	talk_count += 1
-	var gain: int = randi_range(2, 6) + int(mood / 20)
+	# FIX: float division pour éviter INTEGER_DIVISION warning
+	var gain: int = randi_range(2, 6) + int(float(mood) / 20.0)
 	_add_friendship(gain)
 	return _mood_line("Tu gagnes +%d amitié." % gain, gain)
 
@@ -60,8 +58,10 @@ func give_gift(value: int = 5) -> String:
 	gift_count += 1
 	var gain: int = value + randi_range(0, 3)
 	_add_friendship(gain)
-	trust = min(100, trust + int(gain / 2))
-	return _mood_line("Don apprécié ! +%d amitié, +%d confiance." % [gain, int(gain/2)], gain)
+	# FIX: float division
+	var trust_gain: int = int(float(gain) / 2.0)
+	trust = min(100, trust + trust_gain)
+	return _mood_line("Don apprécié ! +%d amitié, +%d confiance." % [gain, trust_gain], gain)
 
 func insult() -> String:
 	var loss: int = randi_range(5, 15)
@@ -69,12 +69,13 @@ func insult() -> String:
 	return _mood_line("Tu perds -%d amitié." % loss, -loss)
 
 func do_favor(amount: int = 10) -> String:
-	"""Appelé quand le NPC rend service (dépose ressources, aide combat…)"""
 	_add_friendship(amount)
-	trust = min(100, trust + int(amount / 3))
+	# FIX: float division
+	var trust_gain: int = int(float(amount) / 3.0)
+	trust = min(100, trust + trust_gain)
 	return "+%d amitié pour service rendu." % amount
 
-# ─── Interne ─────────────────────────────────────────────────────────────────
+# ─── Interne ────────────────────────────────────────────────────────────────────────
 
 func _add_friendship(delta: int) -> void:
 	var old_lvl := get_level()
