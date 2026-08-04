@@ -45,7 +45,7 @@ func _on_day_night_changed(is_day: bool) -> void:
 	else:
 		time_label.add_theme_color_override("font_color", Color(0.6, 0.7, 1.0, 1))
 
-# ── Debug button: spawn NPC ────────────────────────────────────────
+# ── Debug buttons: spawn / clear NPC ───────────────────────────────
 
 func _on_spawn_npc_button_pressed() -> void:
 	var players := get_tree().get_nodes_in_group("player")
@@ -54,3 +54,14 @@ func _on_spawn_npc_button_pressed() -> void:
 	var player := players[0] as Node2D
 	var origin := player.global_position
 	NpcSpawner.spawn_random_around(origin, 200.0, 1)
+
+func _on_spawn_npc5_button_pressed() -> void:
+	var players := get_tree().get_nodes_in_group("player")
+	if players.is_empty():
+		return
+	var player := players[0] as Node2D
+	var origin := player.global_position
+	NpcSpawner.spawn_random_around(origin, 200.0, 5)
+
+func _on_clear_npc_button_pressed() -> void:
+	NpcSpawner.despawn_all()
