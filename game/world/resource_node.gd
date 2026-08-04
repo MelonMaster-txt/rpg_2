@@ -14,9 +14,9 @@ enum ResourceType { BOIS, BAIES, PIERRE }
 @export var amount_max: int = 3
 @export var respawn_time: float = 30.0
 
-@onready var sprite: Node               = $Sprite2D
-@onready var interact_hint: Label       = $InteractHint
-@onready var respawn_timer: Timer       = $RespawnTimer
+@onready var sprite: Node                = $Sprite2D
+@onready var interact_hint: Label        = $InteractHint
+@onready var respawn_timer: Timer        = $RespawnTimer
 @onready var collision: CollisionShape2D = $CollisionShape2D
 
 var is_depleted: bool   = false
@@ -29,14 +29,19 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 	interact_hint.visible = false
+	# Groupes pour le WorkerAI
 	match resource_type:
-		ResourceType.BOIS:   interact_hint.text = "[E] Couper le bois"
-		ResourceType.BAIES:  interact_hint.text = "[E] Cueillir des baies"
-		ResourceType.PIERRE: interact_hint.text = "[E] Ramasser de la pierre"
+		ResourceType.BOIS:
+			interact_hint.text = "[E] Couper le bois"
+			add_to_group("tree")
+		ResourceType.BAIES:
+			interact_hint.text = "[E] Cueillir des baies"
+			add_to_group("tree")  # les bûcherons récoltent aussi les baies
+		ResourceType.PIERRE:
+			interact_hint.text = "[E] Ramasser de la pierre"
+			add_to_group("rock")
 
 func _unhandled_input(event: InputEvent) -> void:
-	# On utilise _unhandled_input pour ne pas entrer en conflit
-	# avec d'autres handlers (workbench, etc.)
 	if player_nearby and not is_depleted and event.is_action_pressed("interact"):
 		get_viewport().set_input_as_handled()
 		harvest()
@@ -52,8 +57,13 @@ func _on_body_exited(body: Node2D) -> void:
 		player_nearby = false
 		interact_hint.visible = false
 
-func harvest() -> void:
+# harvest() peut être appelé sans argument (joueur) ou avec amount (WorkerAI)
+# Retourne la quantité réellement récoltée.
+func harvest(requested: int = -1) -> int:
+	if is_depleted: return 0
 	var amount: int = randi_range(amount_min, amount_max)
+	if requested > 0:
+		amount = min(amount, requested)
 	var item_key: String = ""
 	var label_text: String = ""
 	match resource_type:
@@ -66,10 +76,12 @@ func harvest() -> void:
 		ResourceType.PIERRE:
 			item_key   = "pierre"
 			label_text = "+%d Pierre" % amount
-	if item_key != "":
+	if item_key != "" and requested < 0:
+		# Appel joueur : va dans l'inventaire global
 		GameManager.add_item(item_key, amount)
 		_show_pickup_text(label_text)
 	_deplete()
+	return amount
 
 func can_gather() -> bool:
 	return not is_depleted

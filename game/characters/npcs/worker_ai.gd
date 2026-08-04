@@ -1,5 +1,6 @@
 # worker_ai.gd
-# IA travailleur : va d'arbre en arbre, remplit son inventaire, rentre au chunk (0,0) déposer.
+# IA travailleur : va de ressource en ressource, remplit son inventaire,
+# rentre au coffre (groupe "chest") pour déposer.
 extends Node
 
 var job:           String = ""
@@ -7,12 +8,12 @@ var travel_speed:  float  = 55.0
 var inventory_max: int    = 8
 
 const JOB_RESOURCE: Dictionary = {
-	"woodcutter": "wood",
-	"farmer":     "food",
-	"miner":      "stone",
+	"woodcutter": "bois",
+	"farmer":     "baies",
+	"miner":      "pierre",
 	"guard":      "",
-	"trader":     "gold",
-	"builder":    "build_points",
+	"trader":     "or",
+	"builder":    "bois",
 }
 const JOB_HARVEST_TIME: Dictionary = {
 	"woodcutter": 4.0,
@@ -33,11 +34,11 @@ const JOB_ICON: Dictionary = {
 }
 const JOB_TARGET_GROUP: Dictionary = {
 	"woodcutter": "tree",
-	"farmer":     "farm_tile",
+	"farmer":     "tree",
 	"miner":      "rock",
 	"guard":      "",
 	"trader":     "",
-	"builder":    "",
+	"builder":    "tree",
 }
 
 enum State { IDLE, SEEK_TARGET, HARVEST, RETURN_HOME, DEPOSIT }
@@ -48,7 +49,7 @@ var _harvest_timer: float   = 0.0
 var _inventory:     int     = 0
 var _owner_npc:     CharacterBody2D = null
 var _job_label:     Label   = null
-var _start_timer:   float   = 1.0
+var _start_timer:   float   = 1.5
 
 func _ready() -> void:
 	_owner_npc = get_parent() as CharacterBody2D
@@ -57,6 +58,7 @@ func _ready() -> void:
 		return
 	_create_job_label()
 	_state = State.IDLE
+	print("[WorkerAI] Démarré pour %s avec job=%s" % [_owner_npc.get("npc_name"), job])
 
 
 func _create_job_label() -> void:
@@ -75,10 +77,11 @@ func _update_label() -> void:
 	var icon: String = JOB_ICON.get(job, "?")
 	_job_label.text = "%s %d/%d" % [icon, _inventory, inventory_max]
 
-# ─── Boucle ────────────────────────────────────────────────────────────────────
+
+# ─── Boucle principale ────────────────────────────────────────────────────────
 
 func _physics_process(delta: float) -> void:
-	if _owner_npc == null: return
+	if _owner_npc == null or not is_instance_valid(_owner_npc): return
 	if _start_timer > 0.0:
 		_start_timer -= delta
 		return
@@ -91,7 +94,8 @@ func _physics_process(delta: float) -> void:
 		State.RETURN_HOME: _on_return_home(delta)
 		State.DEPOSIT:     _on_deposit()
 
-# ─── États ───────────────────────────────────────────────────────────────────────
+
+# ─── États ──────────────────────────────────────────────────────────────────────
 
 func _on_idle() -> void:
 	if job == "" or job == "guard":
@@ -103,6 +107,10 @@ func _on_idle() -> void:
 		_target_node = _find_nearest_target()
 		if _target_node != null:
 			_state = State.SEEK_TARGET
+			print("[WorkerAI] %s → cible %s" % [_owner_npc.get("npc_name"), _target_node.name])
+		else:
+			# Attendre un peu avant de re-chercher
+			_start_timer = 2.0
 
 
 func _on_seek_target(delta: float) -> void:
@@ -110,8 +118,12 @@ func _on_seek_target(delta: float) -> void:
 		_target_node = null
 		_state = State.IDLE
 		return
+	if _target_node.get("is_depleted") == true:
+		_target_node = _find_nearest_target(_target_node)
+		if _target_node == null: _state = State.IDLE
+		return
 	var dist: float = _owner_npc.global_position.distance_to(_target_node.global_position)
-	if dist < 24.0:
+	if dist < 32.0:
 		_owner_npc.velocity = Vector2.ZERO
 		_harvest_timer = JOB_HARVEST_TIME.get(job, 4.0)
 		_state = State.HARVEST
@@ -121,7 +133,8 @@ func _on_seek_target(delta: float) -> void:
 
 func _on_harvest(delta: float) -> void:
 	_owner_npc.velocity = Vector2.ZERO
-	var t := Time.get_ticks_msec() * 0.005
+	# Petit bounce visuel
+	var t: float = float(Time.get_ticks_msec()) * 0.005
 	_owner_npc.position.y += sin(t * 10.0) * 0.25
 	_harvest_timer -= delta
 	if _harvest_timer > 0.0: return
@@ -134,21 +147,25 @@ func _on_harvest(delta: float) -> void:
 	if _inventory >= inventory_max:
 		_state = State.RETURN_HOME
 	else:
-		var next = _find_nearest_target(_target_node)
+		var next: Node2D = _find_nearest_target(_target_node)
 		_target_node = next
-		_state = State.SEEK_TARGET if _target_node != null else State.IDLE
+		if _target_node != null:
+			_state = State.SEEK_TARGET
+		else:
+			_state = State.IDLE
 
 
 func _on_return_home(delta: float) -> void:
 	if _chest_node == null or not is_instance_valid(_chest_node):
 		_find_chest()
 	if _chest_node == null:
+		# Pas de coffre : on dépose quand même (perte)
 		_inventory = 0
 		_update_label()
 		_state = State.IDLE
 		return
 	var dist: float = _owner_npc.global_position.distance_to(_chest_node.global_position)
-	if dist < 30.0:
+	if dist < 40.0:
 		_owner_npc.velocity = Vector2.ZERO
 		_state = State.DEPOSIT
 		return
@@ -164,7 +181,8 @@ func _on_deposit() -> void:
 	_update_label()
 	_state = State.IDLE
 
-# ─── Helpers ───────────────────────────────────────────────────────────────────
+
+# ─── Helpers ─────────────────────────────────────────────────────────────────────
 
 func _move_toward(target: Vector2, _delta: float) -> void:
 	var dir: Vector2 = (target - _owner_npc.global_position).normalized()
@@ -176,14 +194,17 @@ func _find_chest() -> void:
 	var chests: Array = get_tree().get_nodes_in_group("chest")
 	if chests.size() > 0:
 		_chest_node = chests[0] as Node2D
-		return
-	_chest_node = null
+	else:
+		_chest_node = null
 
 
 func _find_nearest_target(exclude: Node2D = null) -> Node2D:
 	var group: String = JOB_TARGET_GROUP.get(job, "")
 	if group == "": return null
 	var nodes: Array = get_tree().get_nodes_in_group(group)
+	if nodes.is_empty():
+		print("[WorkerAI] Aucun noeud dans le groupe '", group, "' — vérifie que les ResourceNodes ont bien add_to_group()")
+		return null
 	var best: Node2D = null
 	var best_dist: float = INF
 	for n in nodes:
@@ -198,7 +219,7 @@ func _find_nearest_target(exclude: Node2D = null) -> Node2D:
 
 
 func _notify_favor() -> void:
-	var rel = _owner_npc.get_node_or_null("RelationComponent")
+	var rel: Node = _owner_npc.get_node_or_null("RelationComponent")
 	if rel != null and rel.has_method("do_favor"):
 		rel.do_favor(1)
 
