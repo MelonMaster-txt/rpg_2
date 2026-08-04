@@ -11,6 +11,8 @@ signal npc_captured(npc)
 @export var strength:    int    = 5
 @export var speed:       float  = 60.0
 @export var is_hostile:  bool   = false
+# "male", "female", "monster"
+@export var npc_gender:  String = "male"
 
 var current_hp:   int
 var _appearance:  Node
@@ -19,11 +21,15 @@ var _color_rect:  ColorRect
 var _player_near: bool   = false
 var _state:       String = "idle"
 
-const NAMES_MALE   := ["Bjorn","Ulf","Ragnar","Gunnar","Leif","Sigurd","Erik","Ivar"]
-const NAMES_FEMALE := ["Astrid","Freya","Sigrid","Hilde","Runa","Ylva","Ingrid","Solveig"]
+const NAMES_MALE    := ["Bjorn","Ulf","Ragnar","Gunnar","Leif","Sigurd","Erik","Ivar"]
+const NAMES_FEMALE  := ["Astrid","Freya","Sigrid","Hilde","Runa","Ylva","Ingrid","Solveig"]
+const NAMES_MONSTER := ["Grak","Urgh","Morgh","Skral","Vroth","Drak","Krull","Zogg"]
 
-const COLOR_HOSTILE  := Color(0.90, 0.15, 0.15)  # rouge  = hostile
-const COLOR_FRIENDLY := Color(0.15, 0.75, 0.25)  # vert   = neutre/ami
+# Couleur selon genre
+const COLOR_MALE    := Color(0.25, 0.50, 1.00)  # bleu   = homme
+const COLOR_FEMALE  := Color(1.00, 0.45, 0.70)  # rose   = femme
+const COLOR_MONSTER := Color(0.10, 0.75, 0.20)  # vert   = monstre
+const COLOR_DEAD    := Color(0.30, 0.30, 0.30)  # gris   = mort
 
 var _wander_timer: float   = 2.0
 var _wander_dir:   Vector2 = Vector2.ZERO
@@ -56,9 +62,15 @@ func _do_randomize(seed_val: int) -> void:
 	if seed_val >= 0:
 		seed(seed_val)
 	_appearance.randomize_appearance()
-	var gender: String = _appearance.get_appearance_data().get("gender", "male")
+	# Recuperer le genre depuis l'apparence
+	var appearance_data: Dictionary = _appearance.get_appearance_data()
+	var gender: String = appearance_data.get("gender", "male")
+	npc_gender = gender
 	if npc_name == "":
-		npc_name = NAMES_MALE.pick_random() if gender == "male" else NAMES_FEMALE.pick_random()
+		match npc_gender:
+			"female":  npc_name = NAMES_FEMALE.pick_random()
+			"monster": npc_name = NAMES_MONSTER.pick_random()
+			_:         npc_name = NAMES_MALE.pick_random()
 	if _name_label:
 		_name_label.text = npc_name
 	max_hp     = randi_range(20, 60)
@@ -72,7 +84,10 @@ func _do_randomize(seed_val: int) -> void:
 func _update_color_rect() -> void:
 	if _color_rect == null:
 		return
-	_color_rect.color = COLOR_HOSTILE if is_hostile else COLOR_FRIENDLY
+	match npc_gender:
+		"female":  _color_rect.color = COLOR_FEMALE
+		"monster": _color_rect.color = COLOR_MONSTER
+		_:         _color_rect.color = COLOR_MALE
 
 
 func set_appearance(data: Dictionary) -> void:
@@ -81,6 +96,9 @@ func set_appearance(data: Dictionary) -> void:
 	if data.has("name") and _name_label:
 		npc_name = data["name"]
 		_name_label.text = npc_name
+	if data.has("gender"):
+		npc_gender = data["gender"]
+		_update_color_rect()
 
 
 func _physics_process(delta: float) -> void:
@@ -103,6 +121,24 @@ func _physics_process(delta: float) -> void:
 			velocity = Vector2.ZERO
 
 
+# Interaction uniquement sur pression de E quand le joueur est proche
+func _unhandled_input(event: InputEvent) -> void:
+	if _player_near and _state != "dead" and event.is_action_pressed("interact"):
+		get_viewport().set_input_as_handled()
+		interaction_requested.emit(self)
+		_open_interaction_menu()
+
+
+func _open_interaction_menu() -> void:
+	var menu_scene := load("res://game/systems/npc_interaction_menu.tscn")
+	if menu_scene == null:
+		push_error("RandomNpc: npc_interaction_menu.tscn introuvable")
+		return
+	var menu: Node = menu_scene.instantiate()
+	get_tree().current_scene.add_child(menu)
+	menu.open(self)
+
+
 func take_damage(amount: int) -> void:
 	if _state == "dead": return
 	current_hp -= amount
@@ -116,7 +152,7 @@ func _die() -> void:
 	if _appearance:
 		_appearance.set_eye_style("closed")
 	if _color_rect:
-		_color_rect.color = Color(0.3, 0.3, 0.3)  # gris = mort
+		_color_rect.color = COLOR_DEAD
 	npc_defeated.emit(self)
 
 
@@ -125,13 +161,9 @@ func capture() -> Dictionary:
 	data["name"]     = npc_name
 	data["strength"] = strength
 	data["max_hp"]   = max_hp
+	data["gender"]   = npc_gender
 	npc_captured.emit(self)
 	return data
-
-
-func _unhandled_input(event: InputEvent) -> void:
-	if _player_near and event.is_action_pressed("interact") and _state != "dead":
-		interaction_requested.emit(self)
 
 
 func _on_player_enter(body: Node) -> void:
