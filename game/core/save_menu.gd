@@ -3,9 +3,8 @@ extends Control
 
 enum Mode { LOAD = 0, SAVE = 1 }
 
-# Par défaut SAVE, mais peut être forcé en LOAD via métadonnée GameState
 var mode: Mode     = Mode.SAVE
-var embedded: bool = false   # true = cache TitleLabel + bouton Back
+var embedded: bool = false
 
 @onready var title_label:   Label  = $TitleLabel
 @onready var back_btn:      Button = $GridContainer/Back
@@ -31,7 +30,7 @@ func _ready() -> void:
 	_refresh_slots()
 
 
-# ── API publique ──────────────────────────────────────────────────────────────
+# ── API publique ─────────────────────────────────────────────────────────────
 func setup(p_mode: int, p_embedded: bool = false) -> void:
 	mode     = p_mode as Mode
 	embedded = p_embedded
@@ -43,18 +42,13 @@ func setup(p_mode: int, p_embedded: bool = false) -> void:
 func _apply_embedded() -> void:
 	title_label.visible = not embedded
 	back_btn.visible    = not embedded
-	if embedded:
-		return
-	# Met à jour le titre selon le mode
-	title_label.text = "Charger" if mode == Mode.LOAD else "Sauvegarder"
+	if not embedded:
+		title_label.text = "Charger" if mode == Mode.LOAD else "Sauvegarder"
 
 
 func _fmt_time(seconds: int) -> String:
-	var s := seconds
-	var h := 0
-	var m := 0
-	while s >= 3600: h += 1; s -= 3600
-	while s >= 60:   m += 1; s -= 60
+	var h := seconds / 3600
+	var m := (seconds % 3600) / 60
 	return "%02dh%02d" % [h, m]
 
 
@@ -66,10 +60,10 @@ func _refresh_slots() -> void:
 			var info := SaveSystem.get_slot_info(i)
 			btn.text = "Slot %d\n%s • Niv %d\nJour %d • %s" % [
 				i + 1,
-				str(info.get("player_name", "?")),
+				str(info.get("player_name",  "?")),
 				int(info.get("player_level", 1)),
 				int(info.get("day_count",    1)),
-				_fmt_time(int(info.get("play_time", 0)))
+				_fmt_time(int(info.get("play_time",  0)))
 			]
 		else:
 			btn.text = "Slot %d\n— Vide —" % (i + 1)
@@ -78,12 +72,13 @@ func _refresh_slots() -> void:
 
 
 func _slot_pressed(slot: int) -> void:
+	# Guard : slot vide en mode LOAD → on ignore
+	if mode == Mode.LOAD and not SaveSystem.slot_exists(slot):
+		return
 	_pending_slot = slot
-	if mode == Mode.SAVE and SaveSystem.slot_exists(slot):
-		confirm_label.text = "Écraser le slot %d ?" % (slot + 1)
-		confirm_panel.show()
-	elif mode == Mode.LOAD and SaveSystem.slot_exists(slot):
-		confirm_label.text = "Charger le slot %d ?" % (slot + 1)
+	if SaveSystem.slot_exists(slot):
+		var action := "Écraser" if mode == Mode.SAVE else "Charger"
+		confirm_label.text = "%s le slot %d ?" % [action, slot + 1]
 		confirm_panel.show()
 	else:
 		_execute(slot)
@@ -95,8 +90,15 @@ func _execute(slot: int) -> void:
 		_refresh_slots()
 	else:
 		if SaveSystem.load_game(slot):
-			get_tree().paused = false
+			# Si on est embarqué dans le jeu, ferme le menu avant de recharger
+			var parent = get_parent()
+			if parent != null and parent.has_method("hide_menu"):
+				parent.hide_menu()
+			else:
+				get_tree().paused = false
 			get_tree().change_scene_to_file(GameState.current_scene)
+		else:
+			push_error("[SaveMenu] Échec chargement slot %d" % slot)
 
 
 # Handlers slots

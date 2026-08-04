@@ -11,10 +11,11 @@ var _open: bool = false
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	panel.hide()
-	call_deferred("_init")
+	# _init est réservé en Godot 4 (constructeur) — on utilise _setup à la place
+	call_deferred("_setup")
 
 
-func _init() -> void:
+func _setup() -> void:
 	if is_instance_valid(save_menu) and save_menu.has_method("setup"):
 		save_menu.setup(1, true)  # 1 = SAVE, embedded
 
