@@ -37,7 +37,7 @@ enum AiState { IDLE, WANDER, FLEE, CHASE, DEAD }
 var _ai: AiState = AiState.IDLE
 var _wander_timer: float   = 2.0
 var _wander_dir:   Vector2 = Vector2.ZERO
-var _target:       Node2D  = null   # Node2D pour avoir .global_position typé
+var _target:       Node2D  = null
 const DETECT_RANGE    := 120.0
 const ATTACK_RANGE    := 32.0
 const ATTACK_COOLDOWN := 1.5
@@ -167,7 +167,8 @@ func _update_ai(delta: float) -> void:
 
 func _melee_attack() -> void:
 	_attack_timer = ATTACK_COOLDOWN
-	var dmg: int = max(1, strength / 3)
+	# int() évite le warning INTEGER_DIVISION
+	var dmg: int = max(1, int(strength / 3.0))
 	if _target != null and _target.has_method("take_damage"):
 		_target.take_damage(dmg)
 
