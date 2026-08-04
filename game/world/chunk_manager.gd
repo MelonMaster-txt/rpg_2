@@ -38,6 +38,8 @@ var _last_player_chunk: Vector2i = Vector2i(999999, 999999)
 var _find_player_cd:    int      = 0
 var _spawn_center:      Vector2i = Vector2i(0, 0)
 var _initial_load_done: bool     = false
+# Nombre de chunks appliqués depuis le démarrage — doit être > 0 avant d'émettre
+var _chunks_applied:    int      = 0
 
 
 func _ready() -> void:
@@ -59,9 +61,20 @@ func _deferred_init() -> void:
 
 func _process(_delta: float) -> void:
 	_flush_ready_queue()
-	if not _initial_load_done and _ready_queue.is_empty():
-		_initial_load_done = true
-		initial_load_completed.emit()
+
+	# N'émet le signal que si :
+	# 1) pas encore émis
+	# 2) au moins un chunk a été appliqué (évite le faux positif au 1er frame)
+	# 3) les deux queues sont vides (thread fini + main thread fini)
+	if not _initial_load_done and _chunks_applied > 0:
+		var gen_empty: bool = false
+		_thread_mutex.lock()
+		gen_empty = _gen_queue.is_empty() and _ready_queue.is_empty()
+		_thread_mutex.unlock()
+		if gen_empty:
+			_initial_load_done = true
+			initial_load_completed.emit()
+
 	if _player == null or not is_instance_valid(_player):
 		_find_player_cd -= 1
 		if _find_player_cd <= 0:
@@ -123,6 +136,7 @@ func _flush_ready_queue() -> void:
 		if is_instance_valid(chunk):
 			chunk.setup(coords, chunk_size, data["type"])
 			_apply_ticket(coords)
+			_chunks_applied += 1
 
 
 func _apply_ticket(coords: Vector2i) -> void:
