@@ -16,6 +16,7 @@ var embedded: bool = false
 	$GridContainer/Slot5, $GridContainer/Slot6,
 	$GridContainer/Slot7, $GridContainer/Slot8,
 ]
+@onready var delete_button: Button = $DeleteButton
 
 var _pending_slot: int  = -1
 var _pending_action: String = ""
@@ -41,6 +42,7 @@ func setup(p_mode: int, p_embedded: bool = false) -> void:
 func _apply_embedded() -> void:
 	title_label.visible = not embedded
 	back_btn.visible    = not embedded
+	delete_button.visible = not embedded
 	if not embedded:
 		match mode:
 			Mode.LOAD: title_label.text = "Charger"
@@ -94,6 +96,17 @@ func _execute(slot: int) -> void:
 			push_error("[SaveMenu] Échec chargement slot %d" % slot)
 
 
+func _on_delete_button_pressed() -> void:
+	# Bouton global Supprimer : supprime le slot sélectionné dans le menu principal
+	if _pending_slot < 0:
+		return
+	if not SaveSystem.slot_exists(_pending_slot):
+		return
+	confirm_label.text = "Supprimer le slot %d ?" % (_pending_slot + 1)
+	_pending_action = "Supprimer"
+	confirm_panel.show()
+
+
 # Handlers slots
 func _on_slot_1_pressed() -> void: _slot_pressed(0)
 func _on_slot_2_pressed() -> void: _slot_pressed(1)
@@ -107,13 +120,20 @@ func _on_slot_8_pressed() -> void: _slot_pressed(7)
 # Handlers confirm
 func _on_confirm_yes_pressed() -> void:
 	confirm_panel.hide()
-	if _pending_slot >= 0:
-		_execute(_pending_slot)
+	if _pending_slot < 0:
+		return
+	if _pending_action == "Supprimer":
+		SaveSystem.delete_slot(_pending_slot)
+		_pending_slot = -1
+		_refresh_slots()
+		return
+	_execute(_pending_slot)
 	_pending_slot = -1
 
 func _on_confirm_no_pressed() -> void:
 	confirm_panel.hide()
 	_pending_slot = -1
+	_pending_action = ""
 
 # Back (visible seulement en mode standalone)
 func _on_back_pressed() -> void:
