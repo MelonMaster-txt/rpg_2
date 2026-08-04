@@ -26,14 +26,15 @@ var state:      int    = 0  # 0=LIBRE 1=COMPAGNON 2=ESCLAVE
 @onready var _color_rect:       ColorRect = $ColorRect
 @onready var _interaction_area: Area2D    = $InteractionArea
 
-const COLOR_MALE    := Color(0.25, 0.50, 1.00)
-const COLOR_FEMALE  := Color(1.00, 0.45, 0.70)
-const COLOR_MONSTER := Color(0.10, 0.75, 0.20)
-const COLOR_DEAD    := Color(0.30, 0.30, 0.30)
-const COLOR_HOSTILE := Color(0.90, 0.15, 0.10)
+const COLOR_MALE     := Color(0.25, 0.50, 1.00)
+const COLOR_FEMALE   := Color(1.00, 0.45, 0.70)
+const COLOR_MONSTER  := Color(0.10, 0.75, 0.20)
+const COLOR_DEAD     := Color(0.30, 0.30, 0.30)
+const COLOR_HOSTILE  := Color(0.90, 0.15, 0.10)
+const COLOR_WORKER   := Color(0.90, 0.75, 0.20)   # jaune = travailleur
 
 # ─── Etats IA ────────────────────────────────────────────────────────────────
-enum AiState { IDLE, WANDER, FLEE, CHASE, DEAD }
+enum AiState { IDLE, WANDER, FLEE, CHASE, DEAD, WORKING }
 var _ai: AiState = AiState.IDLE
 var _wander_timer: float   = 2.0
 var _wander_dir:   Vector2 = Vector2.ZERO
@@ -99,6 +100,9 @@ func _update_color_rect() -> void:
 	if _ai == AiState.CHASE:
 		_color_rect.color = COLOR_HOSTILE
 		return
+	if _ai == AiState.WORKING:
+		_color_rect.color = COLOR_WORKER
+		return
 	match npc_gender:
 		"female":  _color_rect.color = COLOR_FEMALE
 		"monster": _color_rect.color = COLOR_MONSTER
@@ -107,8 +111,8 @@ func _update_color_rect() -> void:
 # ─── Physique & IA ────────────────────────────────────────────────────────────
 
 func _physics_process(delta: float) -> void:
-	if _ai == AiState.DEAD:
-		velocity = Vector2.ZERO
+	# Quand en mode WORKING, le WorkerAI gère lui-même le mouvement
+	if _ai == AiState.DEAD or _ai == AiState.WORKING:
 		return
 	_attack_timer = max(0.0, _attack_timer - delta)
 	_update_ai(delta)
@@ -167,7 +171,6 @@ func _update_ai(delta: float) -> void:
 
 func _melee_attack() -> void:
 	_attack_timer = ATTACK_COOLDOWN
-	# int() évite le warning INTEGER_DIVISION
 	var dmg: int = max(1, int(strength / 3.0))
 	if _target != null and _target.has_method("take_damage"):
 		_target.take_damage(dmg)
@@ -220,24 +223,40 @@ func die() -> void:
 func recruit() -> void:
 	state = 1
 	is_hostile = false
-	_ai = AiState.IDLE
-	_update_color_rect()
 	var entry: Dictionary = _build_kingdom_entry("companion")
 	CompanionManager.add_companion(entry)
 	npc_recruited.emit(self)
-	queue_free()
+	# NPC reste sur la map en mode travailleur
+	_start_working(entry.get("job", "farmer"))
 
 
 func capture() -> void:
 	state = 2
 	is_hostile = false
-	_ai = AiState.DEAD
-	if _color_rect:
-		_color_rect.color = COLOR_DEAD
 	var entry: Dictionary = _build_kingdom_entry("slave")
 	CompanionManager.add_slave(entry)
 	npc_captured.emit(self)
-	queue_free()
+	# NPC reste sur la map en mode travailleur
+	_start_working(entry.get("job", "woodcutter"))
+
+
+func _start_working(assigned_job: String) -> void:
+	_ai = AiState.WORKING
+	_update_color_rect()
+	# Désactiver l'interaction (ne peut plus être attaqué ou parlé)
+	if _interaction_area:
+		_interaction_area.set_deferred("monitoring", false)
+	# Attacher le composant WorkerAI
+	var worker_script: Script = load("res://game/characters/npcs/worker_ai.gd")
+	if worker_script == null:
+		push_error("RandomNpc: worker_ai.gd introuvable")
+		return
+	var worker: Node = Node.new()
+	worker.set_script(worker_script)
+	worker.name      = "WorkerAI"
+	worker.job       = assigned_job if assigned_job != "" else "woodcutter"
+	add_child(worker)
+	print("[RandomNpc] %s passe en mode travailleur (%s)" % [npc_name, assigned_job])
 
 
 func _build_kingdom_entry(role: String) -> Dictionary:
