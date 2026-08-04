@@ -1,15 +1,19 @@
-[gd_scene load_steps=5 format=3 uid="uid://dlkfxxooxugt0"]
+[gd_scene load_steps=8 format=3 uid="uid://dlkfxxooxugt0"]
 
 [ext_resource type="Script" uid="uid://dwxh8sy4xhcpb" path="res://game/world/hut.gd" id="1_734ri"]
 [ext_resource type="Script" uid="uid://g4wxvpoyb0lo" path="res://game/world/hut_exit.gd" id="2_kblvs"]
 [ext_resource type="Script" path="res://game/systems/workbench.gd" id="3_wb"]
 [ext_resource type="Script" path="res://game/systems/workbench_ui.gd" id="4_wbui"]
+[ext_resource type="Script" path="res://game/world/chest.gd" id="5_chest"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_exit"]
 size = Vector2(64, 32)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wb"]
 size = Vector2(48, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_chest"]
+size = Vector2(24, 20)
 
 [node name="Hut" type="Node2D" unique_id=634328892]
 script = ExtResource("1_734ri")
@@ -106,6 +110,44 @@ theme_override_constants/separation = 6
 
 [node name="CloseButton" type="Button" parent="Furniture/Workbench/WorkbenchUILayer/WorkbenchUI/VBoxContainer" unique_id=555000012]
 text = "Fermer"
+
+[node name="Chest" type="Node2D" parent="Furniture" unique_id=666000001]
+position = Vector2(80, -60)
+script = ExtResource("5_chest")
+
+[node name="ColorRect" type="ColorRect" parent="Furniture/Chest" unique_id=666000002]
+offset_left = -12.0
+offset_top = -10.0
+offset_right = 12.0
+offset_bottom = 10.0
+color = Color(0.55, 0.35, 0.1, 1.0)
+
+[node name="LidRect" type="ColorRect" parent="Furniture/Chest" unique_id=666000003]
+offset_left = -12.0
+offset_top = -14.0
+offset_right = 12.0
+offset_bottom = -8.0
+color = Color(0.45, 0.27, 0.07, 1.0)
+
+[node name="LockRect" type="ColorRect" parent="Furniture/Chest" unique_id=666000004]
+offset_left = -3.0
+offset_top = -5.0
+offset_right = 3.0
+offset_bottom = 2.0
+color = Color(0.85, 0.72, 0.1, 1.0)
+
+[node name="Label" type="Label" parent="Furniture/Chest" unique_id=666000005]
+offset_left = -50.0
+offset_top = -70.0
+offset_right = 80.0
+offset_bottom = -16.0
+theme_override_font_sizes/font_size = 10
+text = "📦 Coffre"
+
+[node name="StaticBody2D" type="StaticBody2D" parent="Furniture/Chest" unique_id=666000006]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Furniture/Chest/StaticBody2D" unique_id=666000007]
+shape = SubResource("RectangleShape2D_chest")
 
 [node name="Family" type="Node2D" parent="." unique_id=977361465]
 

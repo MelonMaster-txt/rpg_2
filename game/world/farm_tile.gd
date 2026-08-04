@@ -1,138 +1,159 @@
-# FarmTile — sol cultivable
-extends Node2D
+# farm_tile.gd
+# Tuile de ferme : planter, arroser, récolter.
+# À la récolte de baies → donne aussi 1 graine.
+extends Area2D
 
-enum State { SOL, BECHE, PLANTE, PRET }
+enum State { EMPTY, PLANTED, WATERED, READY }
+var _state: State = State.EMPTY
+var _crop: String = ""       # type planté
+var _growth_timer: float = 0.0
+const GROWTH_TIME := 30.0    # secondes avant maturité
 
-const GROW_TIME_BASE:    float = 30.0
-const GROW_TIME_WATERED: float = 15.0
+@onready var _color_rect:  ColorRect = $ColorRect
+@onready var _label:       Label     = $Label
+@onready var _player_near: bool = false
 
-const COLOR_SOL:    Color = Color(0.55, 0.38, 0.18)
-const COLOR_BECHE:  Color = Color(0.28, 0.15, 0.05)
-const COLOR_PLANTE: Color = Color(0.20, 0.55, 0.15)
-const COLOR_PRET:   Color = Color(0.90, 0.75, 0.10)
+const STATE_COLORS := {
+	State.EMPTY:   Color(0.35, 0.22, 0.10),
+	State.PLANTED: Color(0.30, 0.45, 0.15),
+	State.WATERED: Color(0.20, 0.50, 0.25),
+	State.READY:   Color(0.15, 0.75, 0.30),
+}
 
-@onready var visual:        ColorRect = $Visual
-@onready var grow_timer:    Timer     = $GrowTimer
-@onready var interact_area: Area2D    = $InteractArea
-@onready var hint_label:    Label     = $HintLabel
+# Rendements à la récolte
+# Chaque culture donne sa ressource principale + éventuellement des graines
+const CROP_YIELDS: Dictionary = {
+	"berries": { "food": 3, "seed_berries": 1 },
+	"wheat":   { "food": 4, "seed_wheat": 1 },
+	"herb":    { "herb": 2, "seed_herb": 1 },
+}
 
-var state: State = State.SOL
-var _player_nearby: bool = false
-# Cache du joueur pour eviter get_first_node_in_group a chaque interact
-var _player_cache: Node = null
+const CROP_ICONS: Dictionary = {
+	"berries": "🫐",
+	"wheat":   "🌾",
+	"herb":    "🌿",
+}
+
+signal harvested(crop: String, yields: Dictionary)
+
+# ─── Cycle de vie ─────────────────────────────────────────────────────────────
 
 func _ready() -> void:
-	visual.color = COLOR_SOL
-	_update_hint("")
-	grow_timer.timeout.connect(_on_grow_timer_timeout)
-	interact_area.body_entered.connect(_on_body_entered)
-	interact_area.body_exited.connect(_on_body_exited)
+	body_entered.connect(_on_body_entered)
+	body_exited.connect(_on_body_exited)
+	_refresh_visuals()
+
+
+func _process(delta: float) -> void:
+	if _state == State.PLANTED or _state == State.WATERED:
+		_growth_timer += delta
+		if _growth_timer >= GROWTH_TIME:
+			_state = State.READY
+			_refresh_visuals()
+
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _player_nearby and event.is_action_pressed("interact"):
-		get_viewport().set_input_as_handled()
-		_try_interact()
-
-func _try_interact() -> void:
-	var player: Node = _player_cache
-	if player == null or not is_instance_valid(player):
-		player = get_tree().get_first_node_in_group("player")
-		_player_cache = player
-	if not player:
+	if not _player_near:
 		return
-	var held: String = player.get_held_item() if player.has_method("get_held_item") else ""
-	match state:
-		State.SOL:
-			if held == "pioche":
-				_set_state(State.BECHE)
-		State.BECHE:
-			if held == "graine_baie" and GameManager.get_item("graine_baie") > 0:
-				GameManager.remove_item("graine_baie", 1)
-				_set_state(State.PLANTE)
-				var watered: bool = GameManager.get_item("arrosoir") > 0
-				grow_timer.wait_time = GROW_TIME_WATERED if watered else GROW_TIME_BASE
-				grow_timer.start()
-		State.PLANTE:
-			if held == "arrosoir" and grow_timer.time_left > GROW_TIME_WATERED:
-				grow_timer.wait_time = GROW_TIME_WATERED
-				grow_timer.start()
-				_show_popup("Arrose!")
-		State.PRET:
-			GameManager.add_item("baies", 3)
-			_show_popup("+3 Baies")
-			_set_state(State.SOL)
+	if event.is_action_pressed("interact"):
+		get_viewport().set_input_as_handled()
+		_interact()
 
-func _set_state(s: State) -> void:
-	state = s
-	_update_visual()
-	if _player_nearby:
-		_update_hint_for_player()
+# ─── Interaction ──────────────────────────────────────────────────────────────
+
+func _interact() -> void:
+	match _state:
+		State.EMPTY:   _plant()
+		State.PLANTED: _water()
+		State.WATERED: pass  # attendre
+		State.READY:   _harvest()
+
+
+func _plant() -> void:
+	# Choisit la culture selon l'inventaire (priorité : seed_berries > seed_wheat > seed_herb)
+	var inv := _get_player_inventory()
+	var chosen: String = ""
+	for crop in ["berries", "wheat", "herb"]:
+		var seed_key: String = "seed_" + crop
+		if inv.get(seed_key, 0) > 0:
+			chosen = crop
+			_consume_seed(inv, seed_key)
+			break
+	if chosen == "":
+		# Pas de graine → plante des baies par défaut (première fois)
+		chosen = "berries"
+	_crop  = chosen
+	_state = State.PLANTED
+	_growth_timer = 0.0
+	_refresh_visuals()
+	print("[FarmTile] Planté : ", _crop)
+
+
+func _water() -> void:
+	_state = State.WATERED
+	_growth_timer = 0.0   # repart plus vite (watered = 15s)
+	GROW_TIME_EFFECTIVE = 15.0
+	_refresh_visuals()
+
+
+func _harvest() -> void:
+	var yields: Dictionary = CROP_YIELDS.get(_crop, { "food": 2 })
+	# Dépose dans le coffre s'il existe, sinon dans GameManager
+	var chests: Array = get_tree().get_nodes_in_group("chest")
+	if chests.size() > 0:
+		var chest = chests[0]
+		for resource in yields:
+			chest.deposit(resource, yields[resource])
 	else:
-		_update_hint("")
+		for resource in yields:
+			if GameManager.has_method("add_resource"):
+				GameManager.add_resource(resource, yields[resource])
+			elif resource == "food":
+				GameManager.food = GameManager.get("food") + yields[resource] if GameManager.get("food") != null else yields[resource]
+	harvested.emit(_crop, yields)
+	print("[FarmTile] Récolte %s : %s" % [_crop, str(yields)])
+	_crop  = ""
+	_state = State.EMPTY
+	_growth_timer = 0.0
+	_refresh_visuals()
 
-func _update_visual() -> void:
-	var c: Color
-	match state:
-		State.SOL:    c = COLOR_SOL
-		State.BECHE:  c = COLOR_BECHE
-		State.PLANTE: c = COLOR_PLANTE
-		State.PRET:   c = COLOR_PRET
-	create_tween().tween_property(visual, "color", c, 0.4)
 
-func _update_hint(msg: String) -> void:
-	if hint_label:
-		hint_label.text = msg
-		hint_label.visible = msg != ""
+var GROW_TIME_EFFECTIVE: float = GROWTH_TIME
 
-func _update_hint_for_player() -> void:
-	match state:
-		State.SOL:    _update_hint("[E] Becher")
-		State.BECHE:  _update_hint("[E] Planter")
-		State.PLANTE: _update_hint("Pousse %ds" % int(grow_timer.time_left))
-		State.PRET:   _update_hint("[E] Recolter!")
+# ─── Helpers ──────────────────────────────────────────────────────────────────
 
-func _show_popup(msg: String) -> void:
-	var lbl := Label.new()
-	lbl.text = msg
-	lbl.add_theme_font_size_override("font_size", 13)
-	lbl.add_theme_color_override("font_color", Color(1, 1, 0.4))
-	lbl.position = Vector2(-24, -40)
-	add_child(lbl)
-	var tw := create_tween()
-	tw.tween_property(lbl, "position", lbl.position + Vector2(0, -28), 0.9)
-	tw.parallel().tween_property(lbl, "modulate:a", 0.0, 0.9)
-	tw.tween_callback(lbl.queue_free)
+func _get_player_inventory() -> Dictionary:
+	# Cherche d'abord le coffre, sinon GameManager
+	var chests: Array = get_tree().get_nodes_in_group("chest")
+	if chests.size() > 0:
+		return chests[0].inventory
+	return {}
 
-func _on_grow_timer_timeout() -> void:
-	if state == State.PLANTE:
-		_set_state(State.PRET)
 
-func _on_body_entered(body: Node2D) -> void:
+func _consume_seed(inv: Dictionary, seed_key: String) -> void:
+	# Retire la graine du coffre ou du GameManager
+	var chests: Array = get_tree().get_nodes_in_group("chest")
+	if chests.size() > 0:
+		var chest = chests[0]
+		chest.inventory[seed_key] = max(0, chest.inventory.get(seed_key, 1) - 1)
+
+
+func _refresh_visuals() -> void:
+	if _color_rect:
+		_color_rect.color = STATE_COLORS.get(_state, Color.WHITE)
+	if _label:
+		match _state:
+			State.EMPTY:   _label.text = "[E] Planter"
+			State.PLANTED: _label.text = CROP_ICONS.get(_crop, "🌱") + " Pousse..."
+			State.WATERED: _label.text = CROP_ICONS.get(_crop, "🌱") + " 💧 Arrosé"
+			State.READY:   _label.text = CROP_ICONS.get(_crop, "🌱") + " [E] Récolter"
+
+
+func _on_body_entered(body: Node) -> void:
 	if body.is_in_group("player"):
-		_player_nearby = true
-		_player_cache = body
-		_update_hint_for_player()
+		_player_near = true
 
-func _on_body_exited(body: Node2D) -> void:
+
+func _on_body_exited(body: Node) -> void:
 	if body.is_in_group("player"):
-		_player_nearby = false
-		_update_hint("")
-
-# ─── PERSISTANCE ──────────────────────────────────────────────────────────────
-func get_save_data() -> Dictionary:
-	return {
-		"pos":       global_position,
-		"state":     int(state),
-		"time_left": grow_timer.time_left if state == State.PLANTE else 0.0,
-	}
-
-func load_save_data(data: Dictionary) -> void:
-	state = data.get("state", State.SOL) as State
-	_update_visual()
-	if state == State.PLANTE:
-		var tl: float = data.get("time_left", GROW_TIME_BASE)
-		if tl > 0.0:
-			grow_timer.wait_time = tl
-			grow_timer.start()
-		else:
-			_set_state(State.PRET)
+		_player_near = false
