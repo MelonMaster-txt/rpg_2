@@ -77,8 +77,8 @@ func get_slot_info(slot: int) -> Dictionary:
 		return {}
 	file.close()
 	var d = json.get_data()
-	var raw_play := d.get("play_time", 0.0)
-	var play_sec := int(raw_play)
+	var raw_play: float = d.get("play_time", 0.0)
+	var play_sec: int = int(raw_play)
 	return {
 		"save_date":   str(d.get("save_date",   "")),
 		"player_name": str(d.get("player_name", "?")),
