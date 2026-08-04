@@ -1,9 +1,9 @@
-[gd_scene load_steps=2 format=3 uid="uid://npc_menu"]
+[gd_scene load_steps=2 format=3 uid="uid://npc_interaction_menu"]
 
-[ext_resource type="Script" path="res://game/systems/npc_interaction_menu.gd" id="1_menu"]
+[ext_resource type="Script" path="res://game/systems/npc_interaction_menu.gd" id="1_script"]
 
 [node name="NpcInteractionMenu" type="CanvasLayer"]
-script = ExtResource("1_menu")
+script = ExtResource("1_script")
 
 [node name="Panel" type="PanelContainer" parent="."]
 anchors_preset = 8
@@ -11,65 +11,87 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -160.0
-offset_top = -240.0
-offset_right = 160.0
-offset_bottom = 240.0
+offset_left = -150.0
+offset_top = -200.0
+offset_right = 150.0
+offset_bottom = 200.0
 
 [node name="VBox" type="VBoxContainer" parent="Panel"]
 layout_mode = 2
-theme_override_constants/separation = 8
 
 [node name="NpcNameLabel" type="Label" parent="Panel/VBox"]
-text = "Nom NPC"
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 18
+layout_mode = 2
+text = "NPC"
 
 [node name="ArchetypeLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
 text = "Archetype"
-horizontal_alignment = 1
 
 [node name="DialogueLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
 text = "..."
 autowrap_mode = 3
-auto_translate_mode = 0
-
-[node name="ResultLabel" type="Label" parent="Panel/VBox"]
-text = ""
-modulate = Color(1, 0.9, 0.3, 1)
-autowrap_mode = 3
-auto_translate_mode = 0
 
 [node name="Buttons" type="HBoxContainer" parent="Panel/VBox"]
-alignment = 1
+layout_mode = 2
 
 [node name="BtnTalk" type="Button" parent="Panel/VBox/Buttons"]
-size_flags_horizontal = 3
+layout_mode = 2
 text = "Parler"
 
 [node name="BtnRecruit" type="Button" parent="Panel/VBox/Buttons"]
-size_flags_horizontal = 3
+layout_mode = 2
 text = "Recruter"
 
 [node name="BtnFight" type="Button" parent="Panel/VBox/Buttons"]
-size_flags_horizontal = 3
+layout_mode = 2
 text = "Combattre"
 
-[node name="JobPanel" type="VBoxContainer" parent="Panel/VBox"]
-visible = false
-theme_override_constants/separation = 6
-
-[node name="JobLabel" type="Label" parent="Panel/VBox/JobPanel"]
-text = "Assigner un m\u00e9tier :"
+[node name="ResultLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+text = ""
 autowrap_mode = 3
 
+[node name="JobPanel" type="VBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+visible = false
+
+[node name="JobLabel" type="Label" parent="Panel/VBox/JobPanel"]
+layout_mode = 2
+text = "Assigner un m\u00e9tier :"
+
 [node name="JobOption" type="OptionButton" parent="Panel/VBox/JobPanel"]
-size_flags_horizontal = 3
+layout_mode = 2
 
 [node name="BtnAssign" type="Button" parent="Panel/VBox/JobPanel"]
+layout_mode = 2
 text = "Confirmer"
-size_flags_horizontal = 3
+
+[node name="RelationPanel" type="VBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+visible = false
+
+[node name="RelationLabel" type="Label" parent="Panel/VBox/RelationPanel"]
+layout_mode = 2
+text = "Relation..."
+autowrap_mode = 3
+
+[node name="BtnRelTalk" type="Button" parent="Panel/VBox/RelationPanel"]
+layout_mode = 2
+text = "\U0001f4ac Parler"
+
+[node name="BtnRelGift" type="Button" parent="Panel/VBox/RelationPanel"]
+layout_mode = 2
+text = "\U0001f381 Offrir un cadeau (5 or)"
+
+[node name="BtnRelInsult" type="Button" parent="Panel/VBox/RelationPanel"]
+layout_mode = 2
+text = "\U0001f4a2 Insulter"
+
+[node name="BtnChangeJob" type="Button" parent="Panel/VBox/RelationPanel"]
+layout_mode = 2
+text = "\U0001f6e0\ufe0f Changer m\u00e9tier"
 
 [node name="BtnClose" type="Button" parent="Panel/VBox"]
+layout_mode = 2
 text = "Fermer"
-horizontal_alignment = 1
