@@ -3,22 +3,23 @@ extends Node
 
 const OVERWORLD := "res://game/world/scenes/overworld.tscn"
 
-var player_name: String     = "Barbare"
-var player_health: int      = 100
+var player_name: String      = "Barbare"
+var player_health: int       = 100
 var player_position: Vector2 = Vector2.ZERO
-var player_gold: int        = 0
-var player_level: int       = 1
-var current_scene: String   = OVERWORLD
-var play_time: float        = 0.0
-var day_count: int          = 1
-var companions: Array       = []
-var workers: Array          = []
-var deity: String           = ""
-var faith_points: int       = 0
-var inventory: Dictionary   = {}
-var current_time: float     = 0.0
-var current_day_gm: int     = 1
-var farm_tiles_data: Array  = []
+var player_gold: int         = 0
+var player_level: int        = 1
+var current_scene: String    = OVERWORLD
+var play_time: float         = 0.0
+var day_count: int           = 1
+var companions: Array        = []
+var workers: Array           = []
+var deity: String            = ""
+var faith_points: int        = 0
+var inventory: Dictionary    = {}
+var current_time: float      = 0.0
+var current_day_gm: int      = 1
+var farm_tiles_data: Array   = []
+var time_string: String      = "06:00"  # heure affichée en jeu au moment de la save
 
 
 func to_dict() -> Dictionary:
@@ -39,6 +40,7 @@ func to_dict() -> Dictionary:
 		"current_time":    current_time,
 		"current_day_gm":  current_day_gm,
 		"farm_tiles_data": farm_tiles_data,
+		"time_string":     time_string,
 	}
 
 
@@ -60,11 +62,13 @@ func from_dict(data: Dictionary) -> void:
 	current_time    = float(data.get("current_time", 0.0))
 	current_day_gm  = int(float(str(data.get("current_day_gm", 1))))
 	farm_tiles_data = data.get("farm_tiles_data",   [])
+	time_string     = str(data.get("time_string",   "06:00"))
 
 
 func reset() -> void:
 	from_dict({})
 	play_time = 0.0
+	time_string = "06:00"
 
 
 # --- Appelé juste avant save_game() ---
@@ -73,7 +77,7 @@ func sync_from_game_manager() -> void:
 	current_time    = GameManager.current_time
 	current_day_gm  = GameManager.current_day
 	day_count       = GameManager.current_day
-	play_time       = GameManager.play_time   # source unique : GameManager
+	play_time       = GameManager.play_time   # durée de jeu totale
 	player_health   = GameManager.life
 	player_level    = GameManager.force
 	farm_tiles_data = []
@@ -82,6 +86,8 @@ func sync_from_game_manager() -> void:
 	var players := get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
 		player_position = (players[0] as Node2D).global_position
+	# heure affichée en HUD au moment de la save
+	time_string = GameManager.get_time_string()
 
 
 # --- Appelé juste après load_game() ---
@@ -90,7 +96,7 @@ func apply_to_game_manager() -> void:
 		GameManager.inventory[key] = inventory[key]
 	GameManager.current_time    = current_time
 	GameManager.current_day     = current_day_gm
-	GameManager.play_time       = play_time   # restaure le compteur
+	GameManager.play_time       = play_time
 	GameManager.life            = player_health
 	GameManager.force           = player_level
 	GameManager.farm_tiles_data = farm_tiles_data.duplicate()
