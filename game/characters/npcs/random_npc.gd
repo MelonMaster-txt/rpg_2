@@ -1,5 +1,4 @@
 # random_npc.gd
-# NPC générique rencontrable dans la forêt.
 extends CharacterBody2D
 
 signal interaction_requested(npc)
@@ -8,7 +7,6 @@ signal npc_captured(npc)
 signal npc_recruited(npc)
 
 var data: NpcData = null
-
 var npc_name:   String = ""
 var npc_gender: String = "male"
 var strength:   int    = 5
@@ -43,7 +41,7 @@ var _attack_timer: float = 0.0
 var _pending_randomize: bool = false
 var _pending_seed:      int  = -1
 
-# ─── Cycle de vie ───────────────────────────────────────────────────────────
+# ─── Cycle de vie ─────────────────────────────────────────────────────────────
 
 func _ready() -> void:
 	current_hp = max_hp
@@ -64,8 +62,7 @@ func randomize_full(seed_val: int = -1) -> void:
 
 func _do_randomize(seed_val: int) -> void:
 	_pending_randomize = false
-	if seed_val >= 0:
-		seed(seed_val)
+	if seed_val >= 0: seed(seed_val)
 	data       = NpcData.generate_random()
 	npc_name   = data.npc_name
 	npc_gender = _gender_from_archetype(data.archetype)
@@ -78,47 +75,37 @@ func _do_randomize(seed_val: int) -> void:
 		_appearance.randomize_appearance()
 		var adat: Dictionary = _appearance.get_appearance_data()
 		npc_gender = adat.get("gender", npc_gender)
-	if _name_label:
-		_name_label.text = npc_name
+	if _name_label: _name_label.text = npc_name
 	_update_color_rect()
 
 
 func _gender_from_archetype(arch: int) -> String:
-	if arch == NpcData.Archetype.BANDIT and randf() < 0.3:
-		return "monster"
+	if arch == NpcData.Archetype.BANDIT and randf() < 0.3: return "monster"
 	return ["male", "female"].pick_random()
 
 
 func _update_color_rect() -> void:
-	if _color_rect == null:
-		return
-	if _ai == AiState.CHASE:
-		_color_rect.color = COLOR_HOSTILE
-		return
-	if _ai == AiState.WORKING:
-		_color_rect.color = COLOR_WORKER
-		return
+	if _color_rect == null: return
+	if _ai == AiState.CHASE:   _color_rect.color = COLOR_HOSTILE; return
+	if _ai == AiState.WORKING: _color_rect.color = COLOR_WORKER;  return
 	match npc_gender:
 		"female":  _color_rect.color = COLOR_FEMALE
 		"monster": _color_rect.color = COLOR_MONSTER
 		_:         _color_rect.color = COLOR_MALE
 
-# ─── Physique & IA ──────────────────────────────────────────────────────────
+# ─── Physique & IA ────────────────────────────────────────────────────────────
 
 func _physics_process(delta: float) -> void:
-	if _ai == AiState.DEAD or _ai == AiState.WORKING:
-		return
+	if _ai == AiState.DEAD or _ai == AiState.WORKING: return
 	_attack_timer = max(0.0, _attack_timer - delta)
 	_update_ai(delta)
 
 
 func _update_ai(delta: float) -> void:
 	var players: Array = get_tree().get_nodes_in_group("player")
-	if players.size() > 0:
-		_target = players[0] as Node2D
+	if players.size() > 0: _target = players[0] as Node2D
 	var dist: float = INF
-	if _target != null:
-		dist = global_position.distance_to(_target.global_position)
+	if _target != null: dist = global_position.distance_to(_target.global_position)
 
 	if is_hostile and _target != null:
 		if dist < DETECT_RANGE and _ai not in [AiState.CHASE, AiState.FLEE]:
@@ -128,17 +115,14 @@ func _update_ai(delta: float) -> void:
 			_ai = AiState.WANDER
 			_update_color_rect()
 	else:
-		if dist < DETECT_RANGE * 0.6 and _ai != AiState.FLEE:
-			_ai = AiState.FLEE
-		elif dist > DETECT_RANGE and _ai == AiState.FLEE:
-			_ai = AiState.WANDER
+		if dist < DETECT_RANGE * 0.6 and _ai != AiState.FLEE: _ai = AiState.FLEE
+		elif dist > DETECT_RANGE and _ai == AiState.FLEE:      _ai = AiState.WANDER
 
 	match _ai:
 		AiState.IDLE:
 			velocity = Vector2.ZERO
 			_wander_timer -= delta
-			if _wander_timer <= 0.0:
-				_pick_wander_dir()
+			if _wander_timer <= 0.0: _pick_wander_dir()
 		AiState.WANDER:
 			_wander_timer -= delta
 			velocity = _wander_dir * speed
@@ -159,17 +143,15 @@ func _update_ai(delta: float) -> void:
 				velocity = dir * speed * 1.1
 				_update_facing()
 				move_and_slide()
-				if dist < ATTACK_RANGE and _attack_timer <= 0.0:
-					_melee_attack()
+				if dist < ATTACK_RANGE and _attack_timer <= 0.0: _melee_attack()
 
 
 func _melee_attack() -> void:
 	_attack_timer = ATTACK_COOLDOWN
 	var dmg: int = max(1, int(strength / 3.0))
-	if _target != null and _target.has_method("take_damage"):
-		_target.take_damage(dmg)
+	if _target != null and _target.has_method("take_damage"): _target.take_damage(dmg)
 
-# ─── Interaction joueur ──────────────────────────────────────────────────────
+# ─── Interaction joueur ───────────────────────────────────────────────────────
 
 var _player_near: bool = false
 
@@ -189,11 +171,10 @@ func _open_interaction_menu() -> void:
 	get_tree().current_scene.add_child(menu)
 	menu.open(self)
 
-# ─── Combat ─────────────────────────────────────────────────────────────────────
+# ─── Combat ───────────────────────────────────────────────────────────────────
 
 func take_damage(amount: int) -> void:
-	if _ai == AiState.DEAD:
-		return
+	if _ai == AiState.DEAD: return
 	current_hp -= amount
 	if current_hp <= 0:
 		current_hp = 0
@@ -203,10 +184,8 @@ func take_damage(amount: int) -> void:
 func die() -> void:
 	_ai = AiState.DEAD
 	velocity = Vector2.ZERO
-	if _appearance:
-		_appearance.set_eye_style("closed")
-	if _color_rect:
-		_color_rect.color = COLOR_DEAD
+	if _appearance: _appearance.set_eye_style("closed")
+	if _color_rect: _color_rect.color = COLOR_DEAD
 	npc_defeated.emit(self)
 	await get_tree().create_timer(3.0).timeout
 	queue_free()
@@ -216,12 +195,11 @@ func die() -> void:
 func recruit() -> void:
 	state = 1
 	is_hostile = false
-	# Job vide au recrutement : sera assigné juste après via le menu
 	var entry: Dictionary = _build_kingdom_entry("companion")
 	CompanionManager.add_companion(entry)
 	npc_recruited.emit(self)
-	# Démarre le WorkerAI avec un job temporaire vide (écrasé par change_job())
 	_start_working("")
+	_add_relation_component()
 
 
 func capture() -> void:
@@ -231,6 +209,21 @@ func capture() -> void:
 	CompanionManager.add_slave(entry)
 	npc_captured.emit(self)
 	_start_working("")
+	_add_relation_component()
+
+
+func _add_relation_component() -> void:
+	var existing = get_node_or_null("RelationComponent")
+	if existing: return  # déjà là
+	var rel_script: Script = load("res://game/characters/npcs/npc_relation.gd")
+	if rel_script == null:
+		push_error("random_npc: npc_relation.gd introuvable")
+		return
+	var rel: Node = Node.new()
+	rel.set_script(rel_script)
+	rel.name = "RelationComponent"
+	add_child(rel)
+	rel.randomize_mood()
 
 
 func _start_working(initial_job: String) -> void:
@@ -240,14 +233,12 @@ func _start_working(initial_job: String) -> void:
 	if worker_script == null:
 		push_error("RandomNpc: worker_ai.gd introuvable")
 		return
-	# Supprime un ancien WorkerAI s'il existe déjà
 	var old = get_node_or_null("WorkerAI")
-	if old:
-		old.queue_free()
+	if old: old.queue_free()
 	var worker: Node = Node.new()
 	worker.set_script(worker_script)
 	worker.name = "WorkerAI"
-	worker.job  = initial_job  # sera mis à jour par change_job() depuis le menu
+	worker.job  = initial_job
 	add_child(worker)
 
 
@@ -256,24 +247,16 @@ func get_worker_ai() -> Node:
 
 
 func change_job(new_job: String) -> void:
-	# Appelé par le menu après que le joueur a choisi un métier
 	var w = get_worker_ai()
-	if w != null:
-		w.update_job(new_job)
+	if w != null: w.update_job(new_job)
 	print("[RandomNpc] %s → métier : %s" % [npc_name, new_job])
 
 
 func _build_kingdom_entry(role: String) -> Dictionary:
 	var entry: Dictionary = {
-		"name":      npc_name,
-		"gender":    npc_gender,
-		"role":      role,
-		"job":       "",
-		"strength":  strength,
-		"max_hp":    max_hp,
-		"archetype": "",
-		"skills":    {},
-		"happiness": 100,
+		"name": npc_name, "gender": npc_gender, "role": role,
+		"job": "", "strength": strength, "max_hp": max_hp,
+		"archetype": "", "skills": {}, "happiness": 100,
 	}
 	if data != null:
 		entry["archetype"] = NpcData.Archetype.keys()[data.archetype]
@@ -286,31 +269,26 @@ func _build_kingdom_entry(role: String) -> Dictionary:
 		}
 	return entry
 
-# ─── Helpers ───────────────────────────────────────────────────────────────────────
+# ─── Helpers ──────────────────────────────────────────────────────────────────
 
 func set_appearance(adat: Dictionary) -> void:
-	if _appearance:
-		_appearance.apply_appearance_data(adat)
+	if _appearance: _appearance.apply_appearance_data(adat)
 	if adat.has("name") and _name_label:
-		npc_name = adat["name"]
-		_name_label.text = npc_name
+		npc_name = adat["name"]; _name_label.text = npc_name
 	if adat.has("gender"):
-		npc_gender = adat["gender"]
-		_update_color_rect()
+		npc_gender = adat["gender"]; _update_color_rect()
 
 
 func _on_player_enter(body: Node) -> void:
 	if body.is_in_group("player"):
 		_player_near = true
-		if _name_label:
-			_name_label.visible = true
+		if _name_label: _name_label.visible = true
 
 
 func _on_player_exit(body: Node) -> void:
 	if body.is_in_group("player"):
 		_player_near = false
-		if _name_label:
-			_name_label.visible = false
+		if _name_label: _name_label.visible = false
 
 
 func _pick_wander_dir() -> void:
@@ -325,8 +303,7 @@ func _pick_wander_dir() -> void:
 
 
 func _update_facing() -> void:
-	if velocity.length() < 5.0:
-		return
+	if velocity.length() < 5.0: return
 	var dominant: String
 	if abs(velocity.x) > abs(velocity.y):
 		dominant = "right" if velocity.x > 0 else "left"
