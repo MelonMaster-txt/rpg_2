@@ -27,8 +27,8 @@ script = ExtResource("1_hud")
 [node name="HUDPanel" type="PanelContainer" parent="." unique_id=1250294939]
 offset_left = 12.0
 offset_top = 12.0
-offset_right = 200.0
-offset_bottom = 80.0
+offset_right = 220.0
+offset_bottom = 140.0
 theme_override_styles/panel = SubResource("StyleBoxFlat_hud")
 
 [node name="HUDContainer" type="VBoxContainer" parent="HUDPanel" unique_id=180422351]
@@ -79,9 +79,21 @@ text = "Intelligence"
 layout_mode = 2
 text = "Charisma"
 
+[node name="SeparatorDebugLabel" type="Label" parent="HUDPanel/HUDContainer" unique_id=2000000001]
+layout_mode = 2
+text = "── Debug NPC ──"
+
 [node name="SpawnNpcButton" type="Button" parent="HUDPanel/HUDContainer" unique_id=2000000000]
 layout_mode = 2
-text = "Debug: Spawn NPC"
+text = "Spawn x1"
+
+[node name="SpawnNpc5Button" type="Button" parent="HUDPanel/HUDContainer" unique_id=2000000002]
+layout_mode = 2
+text = "Spawn x5"
+
+[node name="ClearNpcButton" type="Button" parent="HUDPanel/HUDContainer" unique_id=2000000003]
+layout_mode = 2
+text = "Clear NPC"
 
 [node name="InventoryScreen" parent="." unique_id=42975483 instance=ExtResource("2_inv")]
 visible = false
@@ -95,3 +107,15 @@ signal="pressed"
 from="HUDPanel/HUDContainer/SpawnNpcButton"
 to="HUD"
 method="_on_spawn_npc_button_pressed"
+
+[connection]
+signal="pressed"
+from="HUDPanel/HUDContainer/SpawnNpc5Button"
+to="HUD"
+method="_on_spawn_npc5_button_pressed"
+
+[connection]
+signal="pressed"
+from="HUDPanel/HUDContainer/ClearNpcButton"
+to="HUD"
+method="_on_clear_npc_button_pressed"
