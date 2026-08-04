@@ -44,6 +44,8 @@ func _ready() -> void:
 	add_child(save_overlay)
 
 	_spawn_player()
+	_connect_loading_screen()
+
 
 func _spawn_player() -> void:
 	var player : Node2D = PLAYER_SCENE.instantiate() as Node2D
@@ -52,3 +54,16 @@ func _spawn_player() -> void:
 	else:
 		player.global_position = _player_spawn.global_position
 	_player_container.add_child(player)
+
+
+func _connect_loading_screen() -> void:
+	var chunk_manager := get_node_or_null("ChunkManager")
+	if chunk_manager == null:
+		return
+	var main := get_tree().root.get_node_or_null("Main")
+	if main == null:
+		return
+	if not chunk_manager.initial_load_completed.is_connected(
+			main._on_chunk_manager_initial_load_completed):
+		chunk_manager.initial_load_completed.connect(
+				main._on_chunk_manager_initial_load_completed)
