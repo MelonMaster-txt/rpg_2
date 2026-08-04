@@ -1,6 +1,5 @@
 # random_npc.gd
 # NPC générique rencontrable dans la forêt.
-# Utilise NpcData pour l'archetype, les stats et les dialogues.
 extends CharacterBody2D
 
 signal interaction_requested(npc)
@@ -8,10 +7,8 @@ signal npc_defeated(npc)
 signal npc_captured(npc)
 signal npc_recruited(npc)
 
-# ─── Données NpcData (archetype, stats, dialogues) ────────────────────────────
 var data: NpcData = null
 
-# Propriétés directes (rétro-compat npc_interaction_menu)
 var npc_name:   String = ""
 var npc_gender: String = "male"
 var strength:   int    = 5
@@ -31,9 +28,8 @@ const COLOR_FEMALE   := Color(1.00, 0.45, 0.70)
 const COLOR_MONSTER  := Color(0.10, 0.75, 0.20)
 const COLOR_DEAD     := Color(0.30, 0.30, 0.30)
 const COLOR_HOSTILE  := Color(0.90, 0.15, 0.10)
-const COLOR_WORKER   := Color(0.90, 0.75, 0.20)   # jaune = travailleur
+const COLOR_WORKER   := Color(0.90, 0.75, 0.20)
 
-# ─── Etats IA ────────────────────────────────────────────────────────────────
 enum AiState { IDLE, WANDER, FLEE, CHASE, DEAD, WORKING }
 var _ai: AiState = AiState.IDLE
 var _wander_timer: float   = 2.0
@@ -44,11 +40,10 @@ const ATTACK_RANGE    := 32.0
 const ATTACK_COOLDOWN := 1.5
 var _attack_timer: float = 0.0
 
-# Pending randomize (si appelé avant _ready)
 var _pending_randomize: bool = false
 var _pending_seed:      int  = -1
 
-# ─── Cycle de vie ────────────────────────────────────────────────────────────
+# ─── Cycle de vie ───────────────────────────────────────────────────────────
 
 func _ready() -> void:
 	current_hp = max_hp
@@ -108,10 +103,9 @@ func _update_color_rect() -> void:
 		"monster": _color_rect.color = COLOR_MONSTER
 		_:         _color_rect.color = COLOR_MALE
 
-# ─── Physique & IA ────────────────────────────────────────────────────────────
+# ─── Physique & IA ──────────────────────────────────────────────────────────
 
 func _physics_process(delta: float) -> void:
-	# Quand en mode WORKING, le WorkerAI gère lui-même le mouvement
 	if _ai == AiState.DEAD or _ai == AiState.WORKING:
 		return
 	_attack_timer = max(0.0, _attack_timer - delta)
@@ -175,7 +169,7 @@ func _melee_attack() -> void:
 	if _target != null and _target.has_method("take_damage"):
 		_target.take_damage(dmg)
 
-# ─── Interaction joueur ───────────────────────────────────────────────────────
+# ─── Interaction joueur ──────────────────────────────────────────────────────
 
 var _player_near: bool = false
 
@@ -195,7 +189,7 @@ func _open_interaction_menu() -> void:
 	get_tree().current_scene.add_child(menu)
 	menu.open(self)
 
-# ─── Combat (externe) ─────────────────────────────────────────────────────────
+# ─── Combat ─────────────────────────────────────────────────────────────────────
 
 func take_damage(amount: int) -> void:
 	if _ai == AiState.DEAD:
@@ -217,7 +211,6 @@ func die() -> void:
 	await get_tree().create_timer(3.0).timeout
 	queue_free()
 
-
 # ─── Recrutement / Capture ────────────────────────────────────────────────────
 
 func recruit() -> void:
@@ -226,7 +219,6 @@ func recruit() -> void:
 	var entry: Dictionary = _build_kingdom_entry("companion")
 	CompanionManager.add_companion(entry)
 	npc_recruited.emit(self)
-	# NPC reste sur la map en mode travailleur
 	_start_working(entry.get("job", "farmer"))
 
 
@@ -236,27 +228,35 @@ func capture() -> void:
 	var entry: Dictionary = _build_kingdom_entry("slave")
 	CompanionManager.add_slave(entry)
 	npc_captured.emit(self)
-	# NPC reste sur la map en mode travailleur
 	_start_working(entry.get("job", "woodcutter"))
 
 
 func _start_working(assigned_job: String) -> void:
 	_ai = AiState.WORKING
 	_update_color_rect()
-	# Désactiver l'interaction (ne peut plus être attaqué ou parlé)
-	if _interaction_area:
-		_interaction_area.set_deferred("monitoring", false)
-	# Attacher le composant WorkerAI
+	# L'InteractionArea reste ACTIVE : le joueur peut toujours parler à l'allié
+	# Le menu d'interaction détecte state != 0 et affiche un menu adapté (statut, changer job)
 	var worker_script: Script = load("res://game/characters/npcs/worker_ai.gd")
 	if worker_script == null:
 		push_error("RandomNpc: worker_ai.gd introuvable")
 		return
 	var worker: Node = Node.new()
 	worker.set_script(worker_script)
-	worker.name      = "WorkerAI"
-	worker.job       = assigned_job if assigned_job != "" else "woodcutter"
+	worker.name = "WorkerAI"
+	worker.job  = assigned_job if assigned_job != "" else "woodcutter"
 	add_child(worker)
-	print("[RandomNpc] %s passe en mode travailleur (%s)" % [npc_name, assigned_job])
+	print("[RandomNpc] %s → travailleur (%s)" % [npc_name, assigned_job])
+
+
+func get_worker_ai() -> Node:
+	return get_node_or_null("WorkerAI")
+
+
+func change_job(new_job: String) -> void:
+	var w = get_worker_ai()
+	if w != null:
+		w.update_job(new_job)
+	print("[RandomNpc] %s change de métier : %s" % [npc_name, new_job])
 
 
 func _build_kingdom_entry(role: String) -> Dictionary:
@@ -282,8 +282,7 @@ func _build_kingdom_entry(role: String) -> Dictionary:
 		}
 	return entry
 
-
-# ─── Helpers ─────────────────────────────────────────────────────────────────
+# ─── Helpers ───────────────────────────────────────────────────────────────────────
 
 func set_appearance(adat: Dictionary) -> void:
 	if _appearance:

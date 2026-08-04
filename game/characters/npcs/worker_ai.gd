@@ -1,17 +1,13 @@
 # worker_ai.gd
-# Composant IA "travailleur" à attacher à un RandomNpc après capture/recrutement.
-# Le NPC marche vers une position de travail, joue une animation, puis dépose
-# dans le coffre global à intervalle régulier.
+# Composant IA travailleur attaché au NPC après recrutement/capture.
+# Le point de travail est généré PRÈS du NPC lui-même, pas du coffre.
 extends Node
 
-# ─── Config ──────────────────────────────────────────────────────────────────
+@export var job:            String = "woodcutter"
+@export var work_radius:    float  = 60.0
+@export var work_duration:  float  = 5.0
+@export var travel_speed:   float  = 50.0
 
-@export var job:             String  = "woodcutter"
-@export var work_radius:    float   = 80.0   # rayon autour du point de travail
-@export var work_duration:  float   = 5.0    # secondes sur place avant dépôt
-@export var travel_speed:   float   = 50.0
-
-# Production par dépôt (par défaut = même que CompanionManager.JOB_PRODUCTION)
 const JOB_YIELDS: Dictionary = {
 	"farmer":     { "food": 2 },
 	"woodcutter": { "wood": 3 },
@@ -28,25 +24,26 @@ const JOB_ICON: Dictionary = {
 	"guard":      "🛡️",
 	"trader":     "💰",
 	"builder":    "🔨",
-	"":           "💤",
+	"":            "💤",
 }
 
-# ─── État interne ─────────────────────────────────────────────────────────────
+enum State { TRAVEL_TO_WORK, WORKING, TRAVEL_TO_CHEST, DEPOSIT }
+var _state: State = State.TRAVEL_TO_WORK
 
-enum State { IDLE, TRAVEL_TO_WORK, WORKING, TRAVEL_TO_CHEST, DEPOSIT }
-var _state: State = State.IDLE
-
-var _work_position:  Vector2 = Vector2.ZERO
-var _chest_node:     Node2D  = null
-var _work_timer:     float   = 0.0
-var _owner_npc:      CharacterBody2D = null
-
-@onready var _job_label: Label = null  # créé dynamiquement
-
-# ─── Init ─────────────────────────────────────────────────────────────────────
+var _work_position: Vector2 = Vector2.ZERO
+var _home_position: Vector2 = Vector2.ZERO  # position initiale du NPC = base de travail
+var _chest_node:    Node2D  = null
+var _work_timer:    float   = 0.0
+var _owner_npc:     CharacterBody2D = null
+var _job_label:     Label   = null
 
 func _ready() -> void:
 	_owner_npc = get_parent() as CharacterBody2D
+	if _owner_npc == null:
+		push_error("WorkerAI: parent n'est pas un CharacterBody2D")
+		return
+	# Mémorise la position courante comme base de travail
+	_home_position = _owner_npc.global_position
 	_create_job_label()
 	_find_chest()
 	_pick_work_position()
@@ -58,8 +55,7 @@ func _create_job_label() -> void:
 	_job_label.text = JOB_ICON.get(job, "?") + " " + job
 	_job_label.position = Vector2(-20, -48)
 	_job_label.add_theme_font_size_override("font_size", 11)
-	if _owner_npc:
-		_owner_npc.add_child(_job_label)
+	_owner_npc.add_child(_job_label)
 
 
 func _find_chest() -> void:
@@ -69,64 +65,71 @@ func _find_chest() -> void:
 
 
 func _pick_work_position() -> void:
-	if _chest_node == null:
-		_work_position = Vector2(randf_range(-120, 120), randf_range(-80, 80))
-		return
-	# Travaille dans un rayon autour du coffre, côté opposé selon le job
+	# Le point de travail est dans un rayon autour de la position de base du NPC
+	# => il ne sort jamais de sa zone, pas de déplacement inter-scène
 	var angle: float = randf() * TAU
-	_work_position = _chest_node.global_position + Vector2(cos(angle), sin(angle)) * work_radius
+	_work_position = _home_position + Vector2(cos(angle), sin(angle)) * randf_range(20.0, work_radius)
 
-# ─── Boucle ───────────────────────────────────────────────────────────────────
+# ─── Boucle ───────────────────────────────────────────────────────────────
 
 func _physics_process(delta: float) -> void:
 	if _owner_npc == null:
 		return
+	# Si le coffre est dans une autre scène, on dépose sur place
+	if _chest_node != null and not is_instance_valid(_chest_node):
+		_chest_node = null
+		_find_chest()
 	match _state:
-		State.TRAVEL_TO_WORK:   _do_travel_to_work(delta)
-		State.WORKING:          _do_working(delta)
-		State.TRAVEL_TO_CHEST:  _do_travel_to_chest(delta)
-		State.DEPOSIT:          _do_deposit()
+		State.TRAVEL_TO_WORK:  _do_travel(_work_position, 8.0, _on_reached_work)
+		State.WORKING:         _do_working(delta)
+		State.TRAVEL_TO_CHEST: _do_travel_chest(delta)
+		State.DEPOSIT:         _do_deposit()
 
 
-func _do_travel_to_work(delta: float) -> void:
-	var dist: float = _owner_npc.global_position.distance_to(_work_position)
-	if dist < 8.0:
+func _do_travel(target: Vector2, threshold: float, on_reach: Callable) -> void:
+	var dist: float = _owner_npc.global_position.distance_to(target)
+	if dist < threshold:
 		_owner_npc.velocity = Vector2.ZERO
-		_work_timer = work_duration
-		_state = State.WORKING
+		on_reach.call()
 		return
-	var dir: Vector2 = (_work_position - _owner_npc.global_position).normalized()
+	var dir: Vector2 = (target - _owner_npc.global_position).normalized()
 	_owner_npc.velocity = dir * travel_speed
 	_owner_npc.move_and_slide()
+
+
+func _on_reached_work() -> void:
+	_work_timer = work_duration
+	_state = State.WORKING
 
 
 func _do_working(delta: float) -> void:
 	_owner_npc.velocity = Vector2.ZERO
-	# Animation de travail : petit oscillement vertical
+	# Petit oscillement pour signifier le travail
 	var t: float = Time.get_ticks_msec() * 0.005
 	_owner_npc.position.y += sin(t * 8.0) * 0.3
 	_work_timer -= delta
-	if _work_timer <= 0.0:
-		if _chest_node != null:
-			_state = State.TRAVEL_TO_CHEST
-		else:
-			_deposit_resources()
-			_pick_work_position()
-			_state = State.TRAVEL_TO_WORK
+	if _work_timer > 0.0:
+		return
+	# Travail terminé : aller au coffre s'il est accessible, sinon déposer directement
+	if _chest_node != null and _chest_node.is_inside_tree():
+		_state = State.TRAVEL_TO_CHEST
+	else:
+		_deposit_resources()
+		_pick_work_position()
+		_state = State.TRAVEL_TO_WORK
 
 
-func _do_travel_to_chest(delta: float) -> void:
-	if _chest_node == null:
+func _do_travel_chest(delta: float) -> void:
+	if _chest_node == null or not _chest_node.is_inside_tree():
+		_deposit_resources()
+		_pick_work_position()
 		_state = State.TRAVEL_TO_WORK
 		return
-	var dist: float = _owner_npc.global_position.distance_to(_chest_node.global_position)
-	if dist < 12.0:
-		_owner_npc.velocity = Vector2.ZERO
-		_state = State.DEPOSIT
-		return
-	var dir: Vector2 = (_chest_node.global_position - _owner_npc.global_position).normalized()
-	_owner_npc.velocity = dir * travel_speed
-	_owner_npc.move_and_slide()
+	_do_travel(_chest_node.global_position, 12.0, _on_reached_chest)
+
+
+func _on_reached_chest() -> void:
+	_state = State.DEPOSIT
 
 
 func _do_deposit() -> void:
@@ -138,6 +141,29 @@ func _do_deposit() -> void:
 func _deposit_resources() -> void:
 	if _chest_node == null or not _chest_node.has_method("deposit"):
 		return
+	var inv_bonus: int = 0
+	# Lit les bonus d'inventaire si le NPC en a un
+	var npc_inv = _owner_npc.get("inventory")
+	if npc_inv != null and npc_inv.has_method("get_bonus"):
+		inv_bonus = npc_inv.get_bonus(job_skill_name())
 	var yields: Dictionary = JOB_YIELDS.get(job, {})
 	for resource in yields:
-		_chest_node.deposit(resource, yields[resource])
+		var amount: int = yields[resource] + inv_bonus
+		_chest_node.deposit(resource, amount)
+
+
+func job_skill_name() -> String:
+	match job:
+		"farmer":     return "farming"
+		"woodcutter": return "woodcutting"
+		"miner":      return "mining"
+		"trader":     return "trading"
+		_:            return ""
+
+
+func update_job(new_job: String) -> void:
+	job = new_job
+	if _job_label:
+		_job_label.text = JOB_ICON.get(job, "?") + " " + job
+	_pick_work_position()
+	_state = State.TRAVEL_TO_WORK
