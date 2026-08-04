@@ -14,6 +14,12 @@ extends CanvasLayer
 
 var _npc: NpcBase = null
 
+func _ready() -> void:
+	btn_talk.pressed.connect(_on_btn_talk_pressed)
+	btn_recruit.pressed.connect(_on_btn_recruit_pressed)
+	btn_fight.pressed.connect(_on_btn_fight_pressed)
+	btn_close.pressed.connect(_on_btn_close_pressed)
+
 func open(npc: NpcBase) -> void:
 	_npc = npc
 	_refresh()
@@ -27,7 +33,6 @@ func _refresh() -> void:
 	archetype_label.text = _npc.data.get_archetype_name()
 	dialogue_label.text  = _npc.data.get_dialogue_line()
 	result_label.text    = ""
-	# Griser le bouton recruter si NPC deja compagnon/esclave
 	var already_taken := _npc.state != NpcBase.State.LIBRE
 	btn_recruit.disabled = already_taken
 	btn_fight.disabled   = already_taken
@@ -56,11 +61,10 @@ func _on_btn_recruit_pressed() -> void:
 		result_label.text = msg
 
 func _on_btn_fight_pressed() -> void:
-	# Pour l'instant : combat rapide simplifie (a remplacer par le vrai systeme de combat)
 	var player_power := GameManager.force + GameManager.stamina
 	var npc_power    := _npc.data.stats.force + _npc.data.stats.defense
 	var player_wins  := player_power + randi_range(0, GameManager.luck) >= \
-					   npc_power    + randi_range(0, _npc.data.stats.luck)
+						npc_power    + randi_range(0, _npc.data.stats.luck)
 	if player_wins:
 		_show_victory_choice()
 	else:
@@ -72,12 +76,11 @@ func _on_btn_fight_pressed() -> void:
 func _show_victory_choice() -> void:
 	result_label.text = "Victoire ! Tuer ou capturer ?"
 	btn_talk.visible    = false
-	btn_recruit.visible = false
 	btn_fight.text      = "Tuer"
 	btn_fight.pressed.disconnect(_on_btn_fight_pressed)
 	btn_fight.pressed.connect(_on_btn_kill_pressed)
-	btn_recruit.visible = true
-	btn_recruit.text    = "Capturer (Esclave)"
+	btn_recruit.visible  = true
+	btn_recruit.text     = "Capturer (Esclave)"
 	btn_recruit.disabled = false
 	btn_recruit.pressed.disconnect(_on_btn_recruit_pressed)
 	btn_recruit.pressed.connect(_on_btn_capture_pressed)
