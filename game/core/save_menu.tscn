@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://b4s1yavdevcvy" path="res://game/core/save_menu.gd" id="1_m36nl"]
 
-[node name="SaveMenu" type="Control" unique_id=1884842111]
+[node name="SaveMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,16 +11,16 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_m36nl")
 
-[node name="Background" type="ColorRect" parent="." unique_id=1646629853]
+[node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.4117647, 0.5529412, 1, 0.22352941)
+color = Color(0.0, 0.0, 0.0, 0.65)
 
-[node name="TitleLabel" type="Label" parent="." unique_id=46332929]
+[node name="TitleLabel" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -28,80 +28,136 @@ offset_top = 32.0
 offset_bottom = 101.0
 grow_horizontal = 2
 theme_override_font_sizes/font_size = 50
-text = "Save"
+text = "Sauvegarder"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="GridContainer" type="GridContainer" parent="." unique_id=170859024]
+[node name="GridContainer" type="GridContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 186.0
-offset_top = 147.0
-offset_right = -186.0
-offset_bottom = -51.0
+offset_left = 80.0
+offset_top = 120.0
+offset_right = -80.0
+offset_bottom = -60.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/h_separation = 60
-theme_override_constants/v_separation = 50
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
 columns = 4
 
-[node name="Slot1" type="Button" parent="GridContainer" unique_id=1717256145]
-custom_minimum_size = Vector2(150, 150)
+[node name="Slot1" type="Button" parent="GridContainer"]
+custom_minimum_size = Vector2(160, 120)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Save Slot #"
+theme_override_font_sizes/font_size = 18
+text = "Slot 1"
 
-[node name="Slot2" type="Button" parent="GridContainer" unique_id=1157846945]
-custom_minimum_size = Vector2(150, 150)
+[node name="Del1" type="Button" parent="GridContainer"]
+custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Save Slot #"
+theme_override_font_sizes/font_size = 18
+text = "X"
+tooltip_text = "Supprimer"
 
-[node name="Slot3" type="Button" parent="GridContainer" unique_id=886062706]
-custom_minimum_size = Vector2(150, 150)
+[node name="Slot2" type="Button" parent="GridContainer"]
+custom_minimum_size = Vector2(160, 120)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Save Slot #"
+theme_override_font_sizes/font_size = 18
+text = "Slot 2"
 
-[node name="Slot4" type="Button" parent="GridContainer" unique_id=477980236]
-custom_minimum_size = Vector2(150, 150)
+[node name="Del2" type="Button" parent="GridContainer"]
+custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Save Slot #"
+theme_override_font_sizes/font_size = 18
+text = "X"
+tooltip_text = "Supprimer"
 
-[node name="Slot5" type="Button" parent="GridContainer" unique_id=10010078]
-custom_minimum_size = Vector2(150, 150)
+[node name="Slot3" type="Button" parent="GridContainer"]
+custom_minimum_size = Vector2(160, 120)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Save Slot #"
+theme_override_font_sizes/font_size = 18
+text = "Slot 3"
 
-[node name="Slot6" type="Button" parent="GridContainer" unique_id=1271353734]
-custom_minimum_size = Vector2(150, 150)
+[node name="Del3" type="Button" parent="GridContainer"]
+custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Save Slot #"
+theme_override_font_sizes/font_size = 18
+text = "X"
+tooltip_text = "Supprimer"
 
-[node name="Slot7" type="Button" parent="GridContainer" unique_id=1629860668]
-custom_minimum_size = Vector2(150, 150)
+[node name="Slot4" type="Button" parent="GridContainer"]
+custom_minimum_size = Vector2(160, 120)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Save Slot #"
+theme_override_font_sizes/font_size = 18
+text = "Slot 4"
 
-[node name="Slot8" type="Button" parent="GridContainer" unique_id=2032199372]
-custom_minimum_size = Vector2(150, 150)
+[node name="Del4" type="Button" parent="GridContainer"]
+custom_minimum_size = Vector2(40, 40)
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Save Slot #"
+theme_override_font_sizes/font_size = 18
+text = "X"
+tooltip_text = "Supprimer"
 
-[node name="Back" type="Button" parent="GridContainer" unique_id=2119430029]
-custom_minimum_size = Vector2(150, 50)
+[node name="Slot5" type="Button" parent="GridContainer"]
+custom_minimum_size = Vector2(160, 120)
 layout_mode = 2
-theme_override_font_sizes/font_size = 30
-text = "Back"
+theme_override_font_sizes/font_size = 18
+text = "Slot 5"
 
-[node name="ConfirmPanel" type="Panel" parent="." unique_id=400000001]
+[node name="Del5" type="Button" parent="GridContainer"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "X"
+tooltip_text = "Supprimer"
+
+[node name="Slot6" type="Button" parent="GridContainer"]
+custom_minimum_size = Vector2(160, 120)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Slot 6"
+
+[node name="Del6" type="Button" parent="GridContainer"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "X"
+tooltip_text = "Supprimer"
+
+[node name="Slot7" type="Button" parent="GridContainer"]
+custom_minimum_size = Vector2(160, 120)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Slot 7"
+
+[node name="Del7" type="Button" parent="GridContainer"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "X"
+tooltip_text = "Supprimer"
+
+[node name="Slot8" type="Button" parent="GridContainer"]
+custom_minimum_size = Vector2(160, 120)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "Slot 8"
+
+[node name="Del8" type="Button" parent="GridContainer"]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "X"
+tooltip_text = "Supprimer"
+
+[node name="Back" type="Button" parent="GridContainer"]
+custom_minimum_size = Vector2(80, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "Retour"
+
+[node name="ConfirmPanel" type="Panel" parent="."]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -116,7 +172,7 @@ grow_horizontal = 2
 grow_vertical = 2
 visible = false
 
-[node name="VBox" type="VBoxContainer" parent="ConfirmPanel" unique_id=400000002]
+[node name="VBox" type="VBoxContainer" parent="ConfirmPanel"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -129,35 +185,43 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 16
 
-[node name="ConfirmLabel" type="Label" parent="ConfirmPanel/VBox" unique_id=400000003]
+[node name="ConfirmLabel" type="Label" parent="ConfirmPanel/VBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "Confirmer ?"
 horizontal_alignment = 1
 
-[node name="Buttons" type="HBoxContainer" parent="ConfirmPanel/VBox" unique_id=400000004]
+[node name="Buttons" type="HBoxContainer" parent="ConfirmPanel/VBox"]
 layout_mode = 2
 theme_override_constants/separation = 24
 alignment = 1
 
-[node name="Yes" type="Button" parent="ConfirmPanel/VBox/Buttons" unique_id=400000005]
+[node name="Yes" type="Button" parent="ConfirmPanel/VBox/Buttons"]
 custom_minimum_size = Vector2(100, 40)
 layout_mode = 2
 text = "Oui"
 
-[node name="No" type="Button" parent="ConfirmPanel/VBox/Buttons" unique_id=400000006]
+[node name="No" type="Button" parent="ConfirmPanel/VBox/Buttons"]
 custom_minimum_size = Vector2(100, 40)
 layout_mode = 2
 text = "Non"
 
 [connection signal="pressed" from="GridContainer/Slot1" to="." method="_on_slot_1_pressed"]
+[connection signal="pressed" from="GridContainer/Del1"  to="." method="_on_del_1_pressed"]
 [connection signal="pressed" from="GridContainer/Slot2" to="." method="_on_slot_2_pressed"]
+[connection signal="pressed" from="GridContainer/Del2"  to="." method="_on_del_2_pressed"]
 [connection signal="pressed" from="GridContainer/Slot3" to="." method="_on_slot_3_pressed"]
+[connection signal="pressed" from="GridContainer/Del3"  to="." method="_on_del_3_pressed"]
 [connection signal="pressed" from="GridContainer/Slot4" to="." method="_on_slot_4_pressed"]
+[connection signal="pressed" from="GridContainer/Del4"  to="." method="_on_del_4_pressed"]
 [connection signal="pressed" from="GridContainer/Slot5" to="." method="_on_slot_5_pressed"]
+[connection signal="pressed" from="GridContainer/Del5"  to="." method="_on_del_5_pressed"]
 [connection signal="pressed" from="GridContainer/Slot6" to="." method="_on_slot_6_pressed"]
+[connection signal="pressed" from="GridContainer/Del6"  to="." method="_on_del_6_pressed"]
 [connection signal="pressed" from="GridContainer/Slot7" to="." method="_on_slot_7_pressed"]
+[connection signal="pressed" from="GridContainer/Del7"  to="." method="_on_del_7_pressed"]
 [connection signal="pressed" from="GridContainer/Slot8" to="." method="_on_slot_8_pressed"]
-[connection signal="pressed" from="GridContainer/Back" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="GridContainer/Del8"  to="." method="_on_del_8_pressed"]
+[connection signal="pressed" from="GridContainer/Back"  to="." method="_on_back_pressed"]
 [connection signal="pressed" from="ConfirmPanel/VBox/Buttons/Yes" to="." method="_on_confirm_yes_pressed"]
-[connection signal="pressed" from="ConfirmPanel/VBox/Buttons/No" to="." method="_on_confirm_no_pressed"]
+[connection signal="pressed" from="ConfirmPanel/VBox/Buttons/No"  to="." method="_on_confirm_no_pressed"]

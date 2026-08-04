@@ -1,7 +1,7 @@
 # SaveMenu — 8 slots, utilisable seul ou embarqué dans InGameSaveMenu
 extends Control
 
-enum Mode { LOAD = 0, SAVE = 1 }
+enum Mode { LOAD = 0, SAVE = 1, DELETE = 2 }
 
 var mode: Mode     = Mode.SAVE
 var embedded: bool = false
@@ -16,13 +16,19 @@ var embedded: bool = false
 	$GridContainer/Slot5, $GridContainer/Slot6,
 	$GridContainer/Slot7, $GridContainer/Slot8,
 ]
+@onready var delete_btns: Array[Button] = [
+	$GridContainer/Del1, $GridContainer/Del2,
+	$GridContainer/Del3, $GridContainer/Del4,
+	$GridContainer/Del5, $GridContainer/Del6,
+	$GridContainer/Del7, $GridContainer/Del8,
+]
 
-var _pending_slot: int = -1
+var _pending_slot: int    = -1
+var _pending_mode: Mode   = Mode.SAVE
 
 
 func _ready() -> void:
 	confirm_panel.hide()
-	# Récupère le mode demandé par le menu principal si présent
 	if GameState.has_meta("open_save_menu_mode"):
 		mode = GameState.get_meta("open_save_menu_mode") as Mode
 		GameState.remove_meta("open_save_menu_mode")
@@ -30,7 +36,7 @@ func _ready() -> void:
 	_refresh_slots()
 
 
-# ── API publique ─────────────────────────────────────────────────────────────
+# ── API publique
 func setup(p_mode: int, p_embedded: bool = false) -> void:
 	mode     = p_mode as Mode
 	embedded = p_embedded
@@ -38,12 +44,14 @@ func setup(p_mode: int, p_embedded: bool = false) -> void:
 	_refresh_slots()
 
 
-# ── Interne ───────────────────────────────────────────────────────────────────
 func _apply_embedded() -> void:
 	title_label.visible = not embedded
 	back_btn.visible    = not embedded
 	if not embedded:
-		title_label.text = "Charger" if mode == Mode.LOAD else "Sauvegarder"
+		match mode:
+			Mode.LOAD:   title_label.text = "Charger"
+			Mode.SAVE:   title_label.text = "Sauvegarder"
+			Mode.DELETE: title_label.text = "Supprimer"
 
 
 func _fmt_time(seconds: int) -> String:
@@ -54,7 +62,8 @@ func _fmt_time(seconds: int) -> String:
 
 func _refresh_slots() -> void:
 	for i in range(slots.size()):
-		var btn := slots[i]
+		var btn    := slots[i]
+		var delbtn := delete_btns[i]
 		btn.disabled = false
 		if SaveSystem.slot_exists(i):
 			var info := SaveSystem.get_slot_info(i)
@@ -63,42 +72,61 @@ func _refresh_slots() -> void:
 				str(info.get("player_name",  "?")),
 				int(info.get("player_level", 1)),
 				int(info.get("day_count",    1)),
-				_fmt_time(int(info.get("play_time",  0)))
+				_fmt_time(int(info.get("play_time", 0)))
 			]
+			delbtn.visible  = true
+			delbtn.disabled = false
 		else:
-			btn.text = "Slot %d\n— Vide —" % (i + 1)
-			if mode == Mode.LOAD:
+			btn.text        = "Slot %d\n— Vide —" % (i + 1)
+			delbtn.visible  = false
+			if mode == Mode.LOAD or mode == Mode.DELETE:
 				btn.disabled = true
 
 
 func _slot_pressed(slot: int) -> void:
-	# Guard : slot vide en mode LOAD → on ignore
-	if mode == Mode.LOAD and not SaveSystem.slot_exists(slot):
+	if (mode == Mode.LOAD or mode == Mode.DELETE) and not SaveSystem.slot_exists(slot):
 		return
 	_pending_slot = slot
+	_pending_mode = mode
 	if SaveSystem.slot_exists(slot):
-		var action := "Écraser" if mode == Mode.SAVE else "Charger"
+		var action: String
+		match mode:
+			Mode.SAVE:   action = "Écraser"
+			Mode.LOAD:   action = "Charger"
+			Mode.DELETE: action = "Supprimer"
 		confirm_label.text = "%s le slot %d ?" % [action, slot + 1]
 		confirm_panel.show()
 	else:
-		_execute(slot)
+		_execute(slot, mode)
 
 
-func _execute(slot: int) -> void:
-	if mode == Mode.SAVE:
-		SaveSystem.save_game(slot)
-		_refresh_slots()
-	else:
-		if SaveSystem.load_game(slot):
-			# Si on est embarqué dans le jeu, ferme le menu avant de recharger
-			var parent = get_parent()
-			if parent != null and parent.has_method("hide_menu"):
-				parent.hide_menu()
+func _delete_pressed(slot: int) -> void:
+	if not SaveSystem.slot_exists(slot):
+		return
+	_pending_slot = slot
+	_pending_mode = Mode.DELETE
+	confirm_label.text = "Supprimer le slot %d ?" % (slot + 1)
+	confirm_panel.show()
+
+
+func _execute(slot: int, exec_mode: Mode) -> void:
+	match exec_mode:
+		Mode.SAVE:
+			SaveSystem.save_game(slot)
+			_refresh_slots()
+		Mode.LOAD:
+			if SaveSystem.load_game(slot):
+				var parent = get_parent()
+				if parent != null and parent.has_method("hide_menu"):
+					parent.hide_menu()
+				else:
+					get_tree().paused = false
+				get_tree().change_scene_to_file(GameState.current_scene)
 			else:
-				get_tree().paused = false
-			get_tree().change_scene_to_file(GameState.current_scene)
-		else:
-			push_error("[SaveMenu] Échec chargement slot %d" % slot)
+				push_error("[SaveMenu] Échec chargement slot %d" % slot)
+		Mode.DELETE:
+			SaveSystem.delete_slot(slot)
+			_refresh_slots()
 
 
 # Handlers slots
@@ -111,10 +139,20 @@ func _on_slot_6_pressed() -> void: _slot_pressed(5)
 func _on_slot_7_pressed() -> void: _slot_pressed(6)
 func _on_slot_8_pressed() -> void: _slot_pressed(7)
 
+# Handlers delete
+func _on_del_1_pressed() -> void: _delete_pressed(0)
+func _on_del_2_pressed() -> void: _delete_pressed(1)
+func _on_del_3_pressed() -> void: _delete_pressed(2)
+func _on_del_4_pressed() -> void: _delete_pressed(3)
+func _on_del_5_pressed() -> void: _delete_pressed(4)
+func _on_del_6_pressed() -> void: _delete_pressed(5)
+func _on_del_7_pressed() -> void: _delete_pressed(6)
+func _on_del_8_pressed() -> void: _delete_pressed(7)
+
 # Handlers confirm
 func _on_confirm_yes_pressed() -> void:
 	confirm_panel.hide()
-	_execute(_pending_slot)
+	_execute(_pending_slot, _pending_mode)
 
 func _on_confirm_no_pressed() -> void:
 	confirm_panel.hide()

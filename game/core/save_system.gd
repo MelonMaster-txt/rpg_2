@@ -54,6 +54,13 @@ func load_game(slot: int) -> bool:
 	return true
 
 
+func delete_slot(slot: int) -> void:
+	var path := get_save_path(slot)
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(path)
+		print("[SaveSystem] Slot %d supprimé." % slot)
+
+
 func slot_exists(slot: int) -> bool:
 	return FileAccess.file_exists(get_save_path(slot))
 
@@ -70,11 +77,10 @@ func get_slot_info(slot: int) -> Dictionary:
 		return {}
 	file.close()
 	var d = json.get_data()
-	# float() avant int() : JSON parse les nombres en float, int() direct peut donner 0
 	return {
 		"save_date":    str(d.get("save_date",    "")),
 		"player_name":  str(d.get("player_name",  "?")),
 		"player_level": int(float(str(d.get("player_level", 1)))),
-		"play_time":    int(float(str(d.get("play_time",    0)))),
+		"play_time":    int(float(str(d.get("play_time",    0.0)))),
 		"day_count":    int(float(str(d.get("day_count",    1)))),
 	}
