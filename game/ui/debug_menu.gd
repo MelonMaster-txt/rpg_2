@@ -24,7 +24,7 @@ const STAT_DEFS: Array = [
 var _visible: bool = false
 var _panel: PanelContainer
 var _speed_label: Label
-var _stat_labels: Dictionary = {}   # stat_key -> Label
+var _stat_labels: Dictionary = {}
 
 func _ready() -> void:
 	layer = 100
@@ -200,7 +200,8 @@ func _style_btn(btn: Button, col: Color) -> void:
 	btn.add_theme_stylebox_override("hover",  hover)
 	btn.add_theme_stylebox_override("pressed", hover)
 
-func _unhandled_input(event: InputEvent) -> void:
+# _input au lieu de _unhandled_input : capte F1 MEME si un bouton du panel a le focus
+func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.is_echo():
 		if (event as InputEventKey).keycode == KEY_F1:
 			_toggle()
