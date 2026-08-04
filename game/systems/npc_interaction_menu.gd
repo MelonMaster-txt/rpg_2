@@ -1,6 +1,4 @@
 # npc_interaction_menu.gd
-# Menu d'interaction pour les NPC alliés ET inconnus.
-# Onglets : Relation / Métier  (alliés seulement)
 extends CanvasLayer
 
 @onready var panel:           PanelContainer = $Panel
@@ -13,13 +11,11 @@ extends CanvasLayer
 @onready var btn_close:       Button         = $Panel/VBox/BtnClose
 @onready var result_label:    Label          = $Panel/VBox/ResultLabel
 
-# ── Panneau job ──────────────────────────────────────────────────────────────
 @onready var job_panel:  VBoxContainer = $Panel/VBox/JobPanel
 @onready var job_label:  Label         = $Panel/VBox/JobPanel/JobLabel
 @onready var job_option: OptionButton  = $Panel/VBox/JobPanel/JobOption
 @onready var btn_assign: Button        = $Panel/VBox/JobPanel/BtnAssign
 
-# ── Panneau relation (allié) ─────────────────────────────────────────────────
 @onready var relation_panel:  VBoxContainer = $Panel/VBox/RelationPanel
 @onready var relation_label:  Label         = $Panel/VBox/RelationPanel/RelationLabel
 @onready var btn_rel_talk:    Button        = $Panel/VBox/RelationPanel/BtnRelTalk
@@ -88,8 +84,7 @@ func _ready() -> void:
 	if job_panel != null:
 		job_panel.visible = false
 		_populate_job_option()
-		if btn_assign != null:
-			btn_assign.pressed.connect(_on_btn_assign_pressed)
+		if btn_assign != null: btn_assign.pressed.connect(_on_btn_assign_pressed)
 	if relation_panel != null:
 		relation_panel.visible = false
 		if btn_rel_talk   != null: btn_rel_talk.pressed.connect(_on_rel_talk)
@@ -113,20 +108,16 @@ func _refresh() -> void:
 	npc_name_label.text  = _npc_name()
 	archetype_label.text = _npc_archetype()
 	result_label.text    = ""
-
 	var taken := _npc_already_taken()
 	if taken:
-		# ── Allié : afficher panneau relation ──
-		var rel = _get_relation()
 		var worker = _npc.get_node_or_null("WorkerAI")
 		var current_job: String = worker.job if worker != null else "(aucun)"
 		dialogue_label.text = "🟡 Allié — Métier : %s" % current_job
 		btn_recruit.visible = false
 		btn_fight.visible   = false
 		btn_talk.visible    = false
-		_show_relation_panel(rel)
+		_show_relation_panel(_get_relation())
 	else:
-		# ── Inconnu : menu standard ──
 		dialogue_label.text  = _npc_dialogue()
 		btn_recruit.visible  = true
 		btn_fight.visible    = true
@@ -143,14 +134,11 @@ func _populate_job_option() -> void:
 	for job in CompanionManager.JOBS:
 		job_option.add_item(job if job != "" else "(aucun)")
 
-# ─── Panneau Relation (allié) ─────────────────────────────────────────────────
+# ─── Panneau Relation ─────────────────────────────────────────────────────────
 
 func _show_relation_panel(rel: Node) -> void:
 	if relation_panel == null: return
-	if rel != null:
-		relation_label.text = rel.summary()
-	else:
-		relation_label.text = "Pas encore de lien particulier."
+	relation_label.text = rel.summary() if rel != null else "Pas encore de lien particulier."
 	relation_panel.visible = true
 	if job_panel != null: job_panel.visible = false
 
@@ -160,31 +148,27 @@ func _on_rel_talk() -> void:
 	if rel == null:
 		result_label.text = "(Pas de composant relation)"
 		return
-	var day: int = int(Time.get_ticks_msec() / 86400000)  # jour approximatif
-	var msg: String = rel.talk(day)
-	result_label.text = msg
+	# Correction INTEGER_DIVISION : float division
+	var day: int = int(float(Time.get_ticks_msec()) / 86400000.0)
+	result_label.text   = rel.talk(day)
 	relation_label.text = rel.summary()
 
 
 func _on_rel_gift() -> void:
 	var rel = _get_relation()
 	if rel == null: return
-	# Coût symbolique : 5 or
 	if GameManager.get("gold") != null and GameManager.gold < 5:
 		result_label.text = "Pas assez d'or (5 nécessaires)."
 		return
-	if GameManager.get("gold") != null:
-		GameManager.gold -= 5
-	var msg: String = rel.give_gift(5)
-	result_label.text = msg
+	if GameManager.get("gold") != null: GameManager.gold -= 5
+	result_label.text   = rel.give_gift(5)
 	relation_label.text = rel.summary()
 
 
 func _on_rel_insult() -> void:
 	var rel = _get_relation()
 	if rel == null: return
-	var msg: String = rel.insult()
-	result_label.text = msg
+	result_label.text   = rel.insult()
 	relation_label.text = rel.summary()
 
 
@@ -206,7 +190,7 @@ func _on_btn_talk_pressed() -> void:
 func _on_btn_recruit_pressed() -> void:
 	if _can_recruit():
 		if _npc.has_method("recruit"): _npc.recruit()
-		result_label.text = _npc_name() + " rejoint votre groupe !"
+		result_label.text    = _npc_name() + " rejoint votre groupe !"
 		btn_recruit.disabled = true
 		btn_fight.disabled   = true
 		_pending_assign_name = _npc_name()
@@ -215,8 +199,8 @@ func _on_btn_recruit_pressed() -> void:
 		if _npc.get("data") != null:
 			var d = _npc.data
 			var msg := "Refus — "
-			if GameManager.charisma     < d.recruit_min_charisma: msg += "Charisme %d/%d " % [GameManager.charisma,     d.recruit_min_charisma]
-			if GameManager.force        < d.recruit_min_force:    msg += "Force %d/%d "    % [GameManager.force,        d.recruit_min_force]
+			if GameManager.charisma     < d.recruit_min_charisma: msg += "Charisme %d/%d " % [GameManager.charisma, d.recruit_min_charisma]
+			if GameManager.force        < d.recruit_min_force:    msg += "Force %d/%d "    % [GameManager.force, d.recruit_min_force]
 			if GameManager.intelligence < d.recruit_min_intel:    msg += "Intel %d/%d "    % [GameManager.intelligence, d.recruit_min_intel]
 			result_label.text = msg
 		else:
@@ -233,7 +217,8 @@ func _on_btn_fight_pressed() -> void:
 	if player_wins:
 		_show_victory_choice()
 	else:
-		var dmg: int = max(1, npc_power / 4)
+		# Correction INTEGER_DIVISION : cast float avant division
+		var dmg: int = max(1, int(float(npc_power) / 4.0))
 		GameManager.life = max(0, GameManager.life - dmg)
 		result_label.text = "Vous perdez ! -%d PV." % dmg
 		btn_fight.disabled = true
@@ -281,15 +266,12 @@ func _on_btn_assign_pressed() -> void:
 	var chosen_job: String = CompanionManager.JOBS[idx] if idx >= 0 else ""
 	if _pending_assign_name != "":
 		CompanionManager.assign_job(_pending_assign_name, chosen_job)
-	# !! Appliquer au WorkerAI en scène !!
 	if _npc != null and _npc.has_method("change_job"):
 		_npc.change_job(chosen_job)
 	var label: String = chosen_job if chosen_job != "" else "(aucun)"
 	result_label.text = "%s → %s" % [_pending_assign_name, label]
 	job_panel.visible = false
-	# Si c'était un changement de job sur allié → revenir à la relation
-	if _npc_already_taken():
-		_show_relation_panel(_get_relation())
+	if _npc_already_taken(): _show_relation_panel(_get_relation())
 
 # ─── Fermeture ────────────────────────────────────────────────────────────────
 
