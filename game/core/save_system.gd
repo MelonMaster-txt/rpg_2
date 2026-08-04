@@ -85,4 +85,5 @@ func get_slot_info(slot: int) -> Dictionary:
 		"player_level": int(d.get("player_level", 1)),
 		"play_time":   play_sec,
 		"day_count":   int(d.get("day_count",   1)),
+		"time_string": str(d.get("time_string", "06:00")),
 	}
