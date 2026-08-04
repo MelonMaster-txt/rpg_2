@@ -41,18 +41,26 @@ func _process(delta: float) -> void:
 		_try_spawn()
 
 
-# ─── Spawn ────────────────────────────────────────────────────────────────────
+# ─── Spawn automatique ────────────────────────────────────────────────────────
 
 func _try_spawn() -> void:
 	if _active_npcs.size() >= MAX_NPCS:
 		return
-	var zone := _pick_weighted_zone()
-	var pos   := _random_pos_in_rect(zone["rect"])
+	var zone: Dictionary = _pick_weighted_zone()
+	var pos: Vector2 = _random_pos_in_rect(zone["rect"])
+	_spawn_at(pos)
+
+
+func _spawn_at(pos: Vector2) -> void:
+	if _npc_scene == null:
+		return
+	var root: Node = _world_root if _world_root != null else get_tree().current_scene
+	if root == null:
+		return
 	var npc: Node = _npc_scene.instantiate()
-	_world_root.add_child(npc)
-	npc.global_position = pos
+	root.add_child(npc)
+	(npc as Node2D).global_position = pos
 	npc.randomize_full(randi())
-	# Connecter les signaux
 	if npc.has_signal("npc_defeated"):
 		npc.npc_defeated.connect(_on_npc_defeated)
 	_active_npcs.append(npc)
@@ -60,11 +68,11 @@ func _try_spawn() -> void:
 
 func _pick_weighted_zone() -> Dictionary:
 	var total_weight: int = 0
-	for z in SPAWN_ZONES:
+	for z: Dictionary in SPAWN_ZONES:
 		total_weight += z["weight"]
-	var r := randi() % total_weight
-	var acc := 0
-	for z in SPAWN_ZONES:
+	var r: int = randi() % total_weight
+	var acc: int = 0
+	for z: Dictionary in SPAWN_ZONES:
 		acc += z["weight"]
 		if r < acc:
 			return z
@@ -77,24 +85,24 @@ func _random_pos_in_rect(rect: Rect2) -> Vector2:
 		randf_range(rect.position.y, rect.position.y + rect.size.y)
 	)
 
+
 # ─── Nettoyage ────────────────────────────────────────────────────────────────
 
 func _cleanup_dead() -> void:
 	var alive: Array[Node] = []
-	for npc in _active_npcs:
+	for npc: Node in _active_npcs:
 		if is_instance_valid(npc):
 			alive.append(npc)
 	_active_npcs = alive
-	# Despawn les NPCs trop loin du joueur
-	var players := get_tree().get_nodes_in_group("player")
+	var players: Array = get_tree().get_nodes_in_group("player")
 	if players.is_empty():
 		return
 	var player_pos: Vector2 = (players[0] as Node2D).global_position
 	var still_alive: Array[Node] = []
-	for npc in _active_npcs:
+	for npc: Node in _active_npcs:
 		if not is_instance_valid(npc):
 			continue
-		var d := (npc as Node2D).global_position.distance_to(player_pos)
+		var d: float = (npc as Node2D).global_position.distance_to(player_pos)
 		if d > DESPAWN_DISTANCE:
 			npc.queue_free()
 		else:
@@ -103,7 +111,6 @@ func _cleanup_dead() -> void:
 
 
 func _on_npc_defeated(npc: Node) -> void:
-	# Laisser die() gérer le queue_free — juste retirer de la liste
 	if npc in _active_npcs:
 		_active_npcs.erase(npc)
 
@@ -114,8 +121,25 @@ func get_active_count() -> int:
 	return _active_npcs.size()
 
 
+## Spawne [count] NPCs dans un rayon [radius] autour de [origin].
+## Utilisé par le HUD debug et les événements scénarisés.
+func spawn_random_around(origin: Vector2, radius: float, count: int = 1) -> void:
+	for i: int in range(count):
+		if _active_npcs.size() >= MAX_NPCS:
+			break
+		var angle: float = randf() * TAU
+		var dist: float  = randf_range(32.0, radius)
+		var pos: Vector2 = origin + Vector2(cos(angle), sin(angle)) * dist
+		_spawn_at(pos)
+
+
+## Supprime tous les NPCs actifs (alias de clear_all pour le debug).
+func despawn_all() -> void:
+	clear_all()
+
+
 func clear_all() -> void:
-	for npc in _active_npcs:
+	for npc: Node in _active_npcs:
 		if is_instance_valid(npc):
 			npc.queue_free()
 	_active_npcs.clear()
