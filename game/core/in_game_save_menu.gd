@@ -1,4 +1,5 @@
 # InGameSaveMenu — overlay Échap en jeu (CanvasLayer)
+# Mode SAVE = 1, Mode LOAD = 0  (enum SaveMenu.Mode)
 extends CanvasLayer
 
 @onready var panel:     Control = $Panel
@@ -10,6 +11,7 @@ var _open: bool = false
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	panel.hide()
+	# _init est réservé en Godot 4 (constructeur) — on utilise _setup à la place
 	call_deferred("_setup")
 
 

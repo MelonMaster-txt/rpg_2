@@ -1,7 +1,7 @@
 # GameManager.gd — Autoload singleton
 extends Node
 
-# ─── INVENTAIRE ───────────────────────────────────────────────────────────────
+# ─── INVENTAIRE ───────────────────────────────────────────────────────────────────
 var inventory: Dictionary = {
 	"bois":        0,
 	"baies":       0,
@@ -30,29 +30,16 @@ func remove_item(item: String, amount: int = 1) -> bool:
 func get_item(item: String) -> int:
 	return inventory.get(item, 0)
 
-# ─── NIVEAU / XP ──────────────────────────────────────────────────────────────
-var player_level: int = 1
-var player_xp: int = 0
+# ──── GAME STATS ──────────────────────────────────────────────────────────────────
+var life: int = 0
+var force: int = 0
+var stamina: int = 0
+var luck: int = 0
+var intelligence: int = 0
+var charisma: int = 0
+var speed: int = 0
 
-const XP_PER_LEVEL: int = 100  # XP requis pour passer au niveau suivant
-
-signal level_changed(new_level: int)
-signal xp_changed(current_xp: int, required_xp: int)
-
-func add_xp(amount: int) -> void:
-	player_xp += amount
-	while player_xp >= get_xp_required():
-		player_xp -= get_xp_required()
-		player_level += 1
-		emit_signal("level_changed", player_level)
-		print("[GameManager] Level up! Niveau %d" % player_level)
-	emit_signal("xp_changed", player_xp, get_xp_required())
-
-func get_xp_required() -> int:
-	# Formule : 100 * niveau (monte progressivement)
-	return XP_PER_LEVEL * player_level
-
-# ─── SPAWN POSITION ───────────────────────────────────────────────────────────
+# ─── SPAWN POSITION ───────────────────────────────────────────────────────────────
 var saved_spawn_position: Vector2 = Vector2.ZERO
 var has_saved_position: bool = false
 
@@ -64,8 +51,7 @@ func consume_spawn_position() -> Vector2:
 	has_saved_position = false
 	return saved_spawn_position
 
-# ─── FARM TILES PERSISTANCE ───────────────────────────────────────────────────
-# Chaque entree : { "pos": Vector2, "state": int, "time_left": float }
+# ─── FARM TILES PERSISTANCE ────────────────────────────────────────────────────────
 var farm_tiles_data: Array = []
 
 func save_farm_tiles(tile_map: Dictionary) -> void:
@@ -88,7 +74,7 @@ func restore_farm_tiles(container: Node, tile_map: Dictionary) -> void:
 func _pos_key(pos: Vector2) -> String:
 	return "%d_%d" % [int(pos.x), int(pos.y)]
 
-# ─── TEMPS ────────────────────────────────────────────────────────────────────
+# ─── TEMPS ──────────────────────────────────────────────────────────────────────────
 const DAY_DURATION: float = 240.0
 
 var current_time: float = 0.0
@@ -97,10 +83,17 @@ var hour: int = 6
 var minute: int = 0
 var is_day: bool = true
 
+# Temps total de jeu (incrémenté ici car GameManager tourne toujours, hors pause)
+var play_time: float = 0.0
+
 signal time_changed(hour: int, minute: int, day: int)
 signal day_night_changed(is_day: bool)
 
 func _process(delta: float) -> void:
+	# Temps de jeu réel (ne tourne pas si le jeu est en pause)
+	if not get_tree().paused:
+		play_time += delta
+
 	current_time += delta
 	if current_time >= DAY_DURATION:
 		current_time = 0.0

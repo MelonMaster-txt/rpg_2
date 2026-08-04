@@ -8,6 +8,8 @@ extends Node2D
 
 const CHUNK_NODE_SCENE: PackedScene = preload("res://game/world/chunk_node.tscn")
 
+signal initial_load_completed
+
 # --- Niveaux de ticket (inspiré Minecraft) ---
 enum TicketLevel {
 	ACTIVE = 0,   # Chunk visible, pleinement actif (rendu + process)
@@ -17,21 +19,16 @@ enum TicketLevel {
 
 @export var chunk_size:         int  = 512
 @export var load_radius:        int  = 1
-## Rayon supplémentaire chargé en LAZY (en mémoire mais inactif)
 @export var lazy_radius:        int  = 2
-## Spawn chunks : toujours en ACTIVE, jamais déchargés (comme Minecraft)
 @export var spawn_chunk_radius: int  = 1
 @export var debug_draw_chunks:  bool = false
-
-## Nombre maximum de chunks appliqués par frame (1 = zéro saccade, 2 = chargement plus rapide)
 @export var max_chunks_per_frame: int = 1
 
-# --- État interne ---
-var _loaded_chunks:  Dictionary = {}   # Vector2i → chunk node
-var _ticket_levels:  Dictionary = {}   # Vector2i → TicketLevel
-var _chunk_pool:     Array      = []   # nodes en attente de réutilisation
-var _gen_queue:      Array      = []   # Vector2i à générer (thread)
-var _ready_queue:    Array      = []   # {coords, data} prêts à appliquer (main thread)
+var _loaded_chunks:  Dictionary = {}
+var _ticket_levels:  Dictionary = {}
+var _chunk_pool:     Array      = []
+var _gen_queue:      Array      = []
+var _ready_queue:    Array      = []
 var _gen_thread:     Thread     = null
 var _thread_mutex:   Mutex      = Mutex.new()
 var _thread_running: bool       = false
@@ -40,6 +37,9 @@ var _player:            Node2D   = null
 var _last_player_chunk: Vector2i = Vector2i(999999, 999999)
 var _find_player_cd:    int      = 0
 var _spawn_center:      Vector2i = Vector2i(0, 0)
+var _initial_load_done: bool     = false
+# Nombre de chunks appliqués depuis le démarrage — doit être > 0 avant d'émettre
+var _chunks_applied:    int      = 0
 
 
 func _ready() -> void:
@@ -51,16 +51,30 @@ func _ready() -> void:
 
 func _deferred_init() -> void:
 	_player = _find_player()
+	_load_chunks_around(_spawn_center, spawn_chunk_radius)
 	if _player != null:
-		_spawn_center = _world_to_chunk(_player.global_position)
-		_load_chunks_around(_spawn_center, load_radius + 1)
-		_update_chunks()
+		var player_chunk := _world_to_chunk(_player.global_position)
+		if player_chunk != _spawn_center:
+			_load_chunks_around(player_chunk, load_radius + 1)
+	_update_chunks()
 
 
 func _process(_delta: float) -> void:
-	# On applique AU MAXIMUM max_chunks_per_frame chunks par frame
-	# pour éviter les saccades quand plusieurs chunks arrivent ensemble
 	_flush_ready_queue()
+
+	# N'émet le signal que si :
+	# 1) pas encore émis
+	# 2) au moins un chunk a été appliqué (évite le faux positif au 1er frame)
+	# 3) les deux queues sont vides (thread fini + main thread fini)
+	if not _initial_load_done and _chunks_applied > 0:
+		var gen_empty: bool = false
+		_thread_mutex.lock()
+		gen_empty = _gen_queue.is_empty() and _ready_queue.is_empty()
+		_thread_mutex.unlock()
+		if gen_empty:
+			_initial_load_done = true
+			initial_load_completed.emit()
+
 	if _player == null or not is_instance_valid(_player):
 		_find_player_cd -= 1
 		if _find_player_cd <= 0:
@@ -73,15 +87,12 @@ func _process(_delta: float) -> void:
 func _exit_tree() -> void:
 	_thread_running = false
 	_thread_mutex.lock()
-	_gen_queue.append(null)  # signal d'arrêt
+	_gen_queue.append(null)
 	_thread_mutex.unlock()
 	if _gen_thread and _gen_thread.is_started():
 		_gen_thread.wait_to_finish()
 
 
-# ---------------------------------------------------------------------------
-# THREAD — calcul pur, zéro accès au scene tree
-# ---------------------------------------------------------------------------
 func _generation_thread_loop() -> void:
 	while _thread_running:
 		_thread_mutex.lock()
@@ -106,25 +117,17 @@ func _compute_chunk_data(coords: Vector2i) -> Dictionary:
 	return {"type": ctype}
 
 
-# ---------------------------------------------------------------------------
-# MAIN THREAD — application des données + gestion du pool
-# ---------------------------------------------------------------------------
 func _flush_ready_queue() -> void:
-	# On extrait seulement max_chunks_per_frame éléments du ready_queue
 	_thread_mutex.lock()
 	var available: int = _ready_queue.size()
 	_thread_mutex.unlock()
-
 	if available == 0:
 		return
-
 	var to_apply: int = mini(available, max_chunks_per_frame)
-
 	for _i: int in to_apply:
 		_thread_mutex.lock()
 		var item: Dictionary = _ready_queue.pop_front()
 		_thread_mutex.unlock()
-
 		var coords: Vector2i = item["coords"]
 		var data: Dictionary  = item["data"]
 		if not _loaded_chunks.has(coords):
@@ -133,11 +136,9 @@ func _flush_ready_queue() -> void:
 		if is_instance_valid(chunk):
 			chunk.setup(coords, chunk_size, data["type"])
 			_apply_ticket(coords)
+			_chunks_applied += 1
 
 
-# ---------------------------------------------------------------------------
-# TICKETS — contrôle le niveau d'activité de chaque chunk
-# ---------------------------------------------------------------------------
 func _apply_ticket(coords: Vector2i) -> void:
 	if not _loaded_chunks.has(coords) or not _ticket_levels.has(coords):
 		return
@@ -155,9 +156,6 @@ func _apply_ticket(coords: Vector2i) -> void:
 			pass
 
 
-# ---------------------------------------------------------------------------
-# POOL — réutilisation des nodes, zéro GC spike
-# ---------------------------------------------------------------------------
 func _get_chunk_from_pool() -> Node2D:
 	if _chunk_pool.size() > 0:
 		return _chunk_pool.pop_back() as Node2D
@@ -174,9 +172,6 @@ func _return_chunk_to_pool(chunk: Node2D) -> void:
 	_chunk_pool.append(chunk)
 
 
-# ---------------------------------------------------------------------------
-# CHARGEMENT / DÉCHARGEMENT
-# ---------------------------------------------------------------------------
 func _load_chunks_around(center: Vector2i, radius: int) -> void:
 	for x: int in range(center.x - radius, center.x + radius + 1):
 		for y: int in range(center.y - radius, center.y + radius + 1):
@@ -196,17 +191,14 @@ func _update_chunks() -> void:
 	var active_set: Dictionary = {}
 	var lazy_set:   Dictionary = {}
 
-	# Spawn chunks — toujours ACTIVE
 	for x: int in range(_spawn_center.x - spawn_chunk_radius, _spawn_center.x + spawn_chunk_radius + 1):
 		for y: int in range(_spawn_center.y - spawn_chunk_radius, _spawn_center.y + spawn_chunk_radius + 1):
 			active_set[Vector2i(x, y)] = true
 
-	# Zone joueur → ACTIVE
 	for x: int in range(current.x - load_radius, current.x + load_radius + 1):
 		for y: int in range(current.y - load_radius, current.y + load_radius + 1):
 			active_set[Vector2i(x, y)] = true
 
-	# Anneau LAZY
 	for x: int in range(current.x - lazy_radius, current.x + lazy_radius + 1):
 		for y: int in range(current.y - lazy_radius, current.y + lazy_radius + 1):
 			var c := Vector2i(x, y)
@@ -255,7 +247,6 @@ func _set_ticket(coords: Vector2i, level: TicketLevel) -> void:
 
 
 func _unload_chunk(coords: Vector2i) -> void:
-	# Spawn chunks protégés
 	var dx: int = absi(coords.x - _spawn_center.x)
 	var dy: int = absi(coords.y - _spawn_center.y)
 	if dx <= spawn_chunk_radius and dy <= spawn_chunk_radius:
@@ -267,9 +258,6 @@ func _unload_chunk(coords: Vector2i) -> void:
 		_ticket_levels.erase(coords)
 
 
-# ---------------------------------------------------------------------------
-# UTILITAIRES
-# ---------------------------------------------------------------------------
 func _find_player() -> Node2D:
 	var direct: Node = get_node_or_null("../PlayerContainer/Player")
 	if direct is Node2D:

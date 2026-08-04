@@ -52,7 +52,7 @@ func from_dict(data: Dictionary) -> void:
 	player_gold     = int(data.get("player_gold",   0))
 	player_level    = int(data.get("player_level",  1))
 	current_scene   = str(data.get("current_scene", OVERWORLD))
-	play_time       = float(str(data.get("play_time",   0.0)))
+	play_time       = float(data.get("play_time",   0.0))
 	day_count       = int(float(str(data.get("day_count", 1))))
 	companions      = data.get("companions",        [])
 	workers         = data.get("workers",           [])

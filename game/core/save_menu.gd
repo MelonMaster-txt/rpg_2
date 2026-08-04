@@ -40,8 +40,8 @@ func setup(p_mode: int, p_embedded: bool = false) -> void:
 
 
 func _apply_embedded() -> void:
-	title_label.visible   = not embedded
-	back_btn.visible      = not embedded
+	title_label.visible = not embedded
+	back_btn.visible    = not embedded
 	delete_button.visible = not embedded
 	if not embedded:
 		match mode:
@@ -97,7 +97,7 @@ func _execute(slot: int) -> void:
 
 
 func _on_delete_button_pressed() -> void:
-	# Supprime le slot actuellement sélectionné (le dernier sur lequel on a cliqué)
+	# Bouton global Supprimer : supprime le slot sélectionné dans le menu principal
 	if _pending_slot < 0:
 		return
 	if not SaveSystem.slot_exists(_pending_slot):
