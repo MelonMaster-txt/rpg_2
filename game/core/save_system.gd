@@ -70,10 +70,11 @@ func get_slot_info(slot: int) -> Dictionary:
 		return {}
 	file.close()
 	var d = json.get_data()
+	# float() avant int() : JSON parse les nombres en float, int() direct peut donner 0
 	return {
-		"save_date":    str(d.get("save_date", "")),
-		"player_name":  str(d.get("player_name", "?")),
-		"player_level": int(d.get("player_level", 1)),
-		"play_time":    int(d.get("play_time", 0)),
-		"day_count":    int(d.get("day_count", 1)),
+		"save_date":    str(d.get("save_date",    "")),
+		"player_name":  str(d.get("player_name",  "?")),
+		"player_level": int(float(str(d.get("player_level", 1)))),
+		"play_time":    int(float(str(d.get("play_time",    0)))),
+		"day_count":    int(float(str(d.get("day_count",    1)))),
 	}
