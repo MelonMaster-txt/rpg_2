@@ -45,6 +45,7 @@ var _pending_seed:      int  = -1
 
 func _ready() -> void:
 	current_hp = max_hp
+	add_to_group("npc")  # indispensable pour le SaveSystem
 	_interaction_area.body_entered.connect(_on_player_enter)
 	_interaction_area.body_exited.connect(_on_player_exit)
 	if _pending_randomize:
@@ -96,7 +97,10 @@ func _update_color_rect() -> void:
 # ─── Physique & IA ────────────────────────────────────────────────────────────
 
 func _physics_process(delta: float) -> void:
-	if _ai == AiState.DEAD or _ai == AiState.WORKING: return
+	if _ai == AiState.DEAD: return
+	# En mode WORKING : le WorkerAI gère le move_and_slide lui-même
+	# On garde quand même le timer d'attaque à jour
+	if _ai == AiState.WORKING: return
 	_attack_timer = max(0.0, _attack_timer - delta)
 	_update_ai(delta)
 
@@ -198,7 +202,8 @@ func recruit() -> void:
 	var entry: Dictionary = _build_kingdom_entry("companion")
 	CompanionManager.add_companion(entry)
 	npc_recruited.emit(self)
-	_start_working("")
+	# Job par défaut : bûcheron (modifiable ensuite)
+	_start_working("woodcutter")
 	_add_relation_component()
 
 
@@ -208,13 +213,14 @@ func capture() -> void:
 	var entry: Dictionary = _build_kingdom_entry("slave")
 	CompanionManager.add_slave(entry)
 	npc_captured.emit(self)
-	_start_working("")
+	# Job par défaut : bûcheron (modifiable ensuite)
+	_start_working("woodcutter")
 	_add_relation_component()
 
 
 func _add_relation_component() -> void:
 	var existing = get_node_or_null("RelationComponent")
-	if existing: return  # déjà là
+	if existing: return
 	var rel_script: Script = load("res://game/characters/npcs/npc_relation.gd")
 	if rel_script == null:
 		push_error("random_npc: npc_relation.gd introuvable")
@@ -228,6 +234,7 @@ func _add_relation_component() -> void:
 
 func _start_working(initial_job: String) -> void:
 	_ai = AiState.WORKING
+	_interaction_area.monitoring = false
 	_update_color_rect()
 	var worker_script: Script = load("res://game/characters/npcs/worker_ai.gd")
 	if worker_script == null:
