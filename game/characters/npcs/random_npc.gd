@@ -216,10 +216,12 @@ func die() -> void:
 func recruit() -> void:
 	state = 1
 	is_hostile = false
+	# Job vide au recrutement : sera assigné juste après via le menu
 	var entry: Dictionary = _build_kingdom_entry("companion")
 	CompanionManager.add_companion(entry)
 	npc_recruited.emit(self)
-	_start_working(entry.get("job", "farmer"))
+	# Démarre le WorkerAI avec un job temporaire vide (écrasé par change_job())
+	_start_working("")
 
 
 func capture() -> void:
@@ -228,24 +230,25 @@ func capture() -> void:
 	var entry: Dictionary = _build_kingdom_entry("slave")
 	CompanionManager.add_slave(entry)
 	npc_captured.emit(self)
-	_start_working(entry.get("job", "woodcutter"))
+	_start_working("")
 
 
-func _start_working(assigned_job: String) -> void:
+func _start_working(initial_job: String) -> void:
 	_ai = AiState.WORKING
 	_update_color_rect()
-	# L'InteractionArea reste ACTIVE : le joueur peut toujours parler à l'allié
-	# Le menu d'interaction détecte state != 0 et affiche un menu adapté (statut, changer job)
 	var worker_script: Script = load("res://game/characters/npcs/worker_ai.gd")
 	if worker_script == null:
 		push_error("RandomNpc: worker_ai.gd introuvable")
 		return
+	# Supprime un ancien WorkerAI s'il existe déjà
+	var old = get_node_or_null("WorkerAI")
+	if old:
+		old.queue_free()
 	var worker: Node = Node.new()
 	worker.set_script(worker_script)
 	worker.name = "WorkerAI"
-	worker.job  = assigned_job if assigned_job != "" else "woodcutter"
+	worker.job  = initial_job  # sera mis à jour par change_job() depuis le menu
 	add_child(worker)
-	print("[RandomNpc] %s → travailleur (%s)" % [npc_name, assigned_job])
 
 
 func get_worker_ai() -> Node:
@@ -253,10 +256,11 @@ func get_worker_ai() -> Node:
 
 
 func change_job(new_job: String) -> void:
+	# Appelé par le menu après que le joueur a choisi un métier
 	var w = get_worker_ai()
 	if w != null:
 		w.update_job(new_job)
-	print("[RandomNpc] %s change de métier : %s" % [npc_name, new_job])
+	print("[RandomNpc] %s → métier : %s" % [npc_name, new_job])
 
 
 func _build_kingdom_entry(role: String) -> Dictionary:
