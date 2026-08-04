@@ -14,6 +14,11 @@ script = ExtResource("1_npcbase")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_body")
 
+[node name="ColorRect" type="ColorRect" parent="."]
+position = Vector2(-8, -8)
+size = Vector2(16, 16)
+color = Color(1, 1, 1, 1)
+
 [node name="NameLabel" type="Label" parent="."]
 offset_top = -28.0
 offset_left = -30.0

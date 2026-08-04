@@ -66,14 +66,14 @@ func _on_btn_recruit_pressed() -> void:
 		result_label.text = msg
 
 func _on_btn_fight_pressed() -> void:
-	var player_power := GameManager.force + GameManager.stamina
-	var npc_power    := _npc.data.stats.force + _npc.data.stats.defense
-	var player_wins  := player_power + randi_range(0, GameManager.luck) >= \
-						npc_power    + randi_range(0, _npc.data.stats.luck)
+	var player_power: int = GameManager.force + GameManager.stamina
+	var npc_power: int    = int(_npc.data.stats.force) + int(_npc.data.stats.defense)
+	var player_wins: bool = player_power + randi_range(0, GameManager.luck) >= \
+						npc_power    + randi_range(0, int(_npc.data.stats.luck))
 	if player_wins:
 		_show_victory_choice()
 	else:
-		var dmg := max(1, npc_power / 4)
+		var dmg: int = max(1, npc_power / 4)
 		GameManager.life = max(0, GameManager.life - dmg)
 		result_label.text = "Vous perdez ! Vous prenez %d degats." % dmg
 		btn_fight.disabled = true

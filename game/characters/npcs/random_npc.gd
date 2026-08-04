@@ -1,21 +1,11 @@
 # random_npc.gd
-# ──────────────────────────────────────────────────────────────────────
-# NPC générique rencontrable dans la forêt.
-# Utilise CharacterAppearance pour le visuel (layers LPC + RGB modulate).
-#
-# SCÈNE ATTENDUE : random_npc.tscn
-#   RandomNPC  (CharacterBody2D)  ← ce script
-#   ├─ CharacterAppearance (Node) ← character_appearance.gd
-#   ├─ CollisionShape2D
-#   ├─ InteractionArea (Area2D)
-#   │   └─ CollisionShape2D
-#   └─ NameLabel (Label)
-# ──────────────────────────────────────────────────────────────────────
+# NPC generique rencontrable dans la foret.
 extends CharacterBody2D
 
 signal interaction_requested(npc)
 signal npc_defeated(npc)
 signal npc_captured(npc)
+
 @export var npc_name:    String = ""
 @export var max_hp:      int    = 30
 @export var strength:    int    = 5
@@ -25,29 +15,32 @@ signal npc_captured(npc)
 var current_hp:   int
 var _appearance:  Node
 var _name_label:  Label
+var _color_rect:  ColorRect
 var _player_near: bool   = false
 var _state:       String = "idle"
 
 const NAMES_MALE   := ["Bjorn","Ulf","Ragnar","Gunnar","Leif","Sigurd","Erik","Ivar"]
 const NAMES_FEMALE := ["Astrid","Freya","Sigrid","Hilde","Runa","Ylva","Ingrid","Solveig"]
 
-var _wander_timer: float  = 2.0
+const COLOR_HOSTILE  := Color(0.90, 0.15, 0.15)  # rouge  = hostile
+const COLOR_FRIENDLY := Color(0.15, 0.75, 0.25)  # vert   = neutre/ami
+
+var _wander_timer: float   = 2.0
 var _wander_dir:   Vector2 = Vector2.ZERO
 
 var _pending_randomize: bool = false
 var _pending_seed:      int  = -1
 
 func _ready() -> void:
-	current_hp  = max_hp
-	_appearance = $CharacterAppearance
-	_name_label = $NameLabel
-	$InteractionArea.body_entered.connect(_on_player_enter)
-	$InteractionArea.body_exited.connect(_on_player_exit)
-	_name_label = $NameLabel
+	current_hp   = max_hp
+	_appearance  = $CharacterAppearance
+	_name_label  = $NameLabel
+	_color_rect  = $ColorRect
 	$InteractionArea.body_entered.connect(_on_player_enter)
 	$InteractionArea.body_exited.connect(_on_player_exit)
 	if _pending_randomize:
 		_do_randomize(_pending_seed)
+	_update_color_rect()
 
 
 func randomize_full(seed_val: int = -1) -> void:
@@ -73,6 +66,13 @@ func _do_randomize(seed_val: int) -> void:
 	speed      = randf_range(40.0, 90.0)
 	is_hostile = randf() < 0.25
 	current_hp = max_hp
+	_update_color_rect()
+
+
+func _update_color_rect() -> void:
+	if _color_rect == null:
+		return
+	_color_rect.color = COLOR_HOSTILE if is_hostile else COLOR_FRIENDLY
 
 
 func set_appearance(data: Dictionary) -> void:
@@ -115,6 +115,8 @@ func _die() -> void:
 	_state = "dead"
 	if _appearance:
 		_appearance.set_eye_style("closed")
+	if _color_rect:
+		_color_rect.color = Color(0.3, 0.3, 0.3)  # gris = mort
 	npc_defeated.emit(self)
 
 
@@ -164,6 +166,5 @@ func _update_facing() -> void:
 		dominant = "down" if velocity.y > 0 else "up"
 	if _appearance:
 		_appearance.set_direction(dominant)
-		# Bitshift >> 3 == division par 8 sans INTEGER_DIVISION warning
 		var f: int = (Engine.get_process_frames() >> 3) % 4 + 1
 		_appearance.set_walk_frame(f)

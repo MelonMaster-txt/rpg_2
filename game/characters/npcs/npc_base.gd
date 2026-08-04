@@ -8,10 +8,21 @@ enum Behaviour { WANDERING, IDLE, WORKING, FOLLOWING }
 
 const INTERACTION_MENU_SCENE := "res://game/systems/npc_interaction_menu.tscn"
 
+# Couleurs par archetype (index = Archetype enum)
+const ARCHETYPE_COLORS: Array = [
+	Color(0.85, 0.15, 0.15),  # BANDIT      rouge
+	Color(0.20, 0.60, 1.00),  # WANDERER    bleu
+	Color(1.00, 0.80, 0.10),  # MERCHANT    jaune
+	Color(0.55, 0.25, 0.80),  # HERMIT      violet
+	Color(0.15, 0.75, 0.25),  # FARMER      vert
+	Color(0.60, 0.35, 0.10),  # WOODCUTTER  marron
+]
+
 @export var data: NpcData = null
 
 @onready var name_label: Label        = $NameLabel
 @onready var interact_area: Area2D    = $InteractArea
+@onready var color_rect: ColorRect    = $ColorRect
 
 var state: State         = State.LIBRE
 var behaviour: Behaviour = Behaviour.WANDERING
@@ -40,6 +51,13 @@ func _ready() -> void:
 func _setup_visuals() -> void:
 	if name_label:
 		name_label.text = data.npc_name
+	# Colorer le carre selon l'archetype
+	if color_rect:
+		var idx: int = int(data.archetype)
+		if idx >= 0 and idx < ARCHETYPE_COLORS.size():
+			color_rect.color = ARCHETYPE_COLORS[idx]
+		else:
+			color_rect.color = Color.WHITE
 
 func _physics_process(delta: float) -> void:
 	if _interaction_cooldown > 0:
