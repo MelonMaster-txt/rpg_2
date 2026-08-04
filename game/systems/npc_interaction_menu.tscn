@@ -1,0 +1,55 @@
+[gd_scene load_steps=2 format=3 uid="uid://npc_menu"]
+
+[ext_resource type="Script" path="res://game/systems/npc_interaction_menu.gd" id="1_menu"]
+
+[node name="NpcInteractionMenu" type="CanvasLayer"]
+script = ExtResource("1_menu")
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -160.0
+offset_top = -200.0
+offset_right = 160.0
+offset_bottom = 200.0
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+
+[node name="NpcNameLabel" type="Label" parent="Panel/VBox"]
+text = "Nom NPC"
+horizontal_alignment = 1
+
+[node name="ArchetypeLabel" type="Label" parent="Panel/VBox"]
+text = "Archetype"
+horizontal_alignment = 1
+
+[node name="DialogueLabel" type="Label" parent="Panel/VBox"]
+text = "..."
+auto_translate_mode = 0
+
+[node name="ResultLabel" type="Label" parent="Panel/VBox"]
+text = ""
+modulate = Color(1, 0.9, 0.3, 1)
+auto_translate_mode = 0
+
+[node name="Buttons" type="HBoxContainer" parent="Panel/VBox"]
+
+[node name="BtnTalk" type="Button" parent="Panel/VBox/Buttons"]
+size_flags_horizontal = 3
+text = "Parler"
+
+[node name="BtnRecruit" type="Button" parent="Panel/VBox/Buttons"]
+size_flags_horizontal = 3
+text = "Recruter"
+
+[node name="BtnFight" type="Button" parent="Panel/VBox/Buttons"]
+size_flags_horizontal = 3
+text = "Combattre"
+
+[node name="BtnClose" type="Button" parent="Panel/VBox"]
+text = "Fermer"
+horizontal_alignment = 1
