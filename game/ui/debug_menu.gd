@@ -1,5 +1,5 @@
 # debug_menu.gd - Menu debug F1
-# Give items, teleport, vitesse
+# Give items, teleport, vitesse, spawn NPC
 extends CanvasLayer
 
 const GIVE_SETS: Array[Dictionary] = [
@@ -87,6 +87,27 @@ func _build_ui() -> void:
 	btn_clear.pressed.connect(_on_clear_inventory)
 	vb.add_child(btn_clear)
 
+	# ── Section NPC ────────────────────────────────────────────────
+	_add_separator(vb, "-- NPC --")
+
+	var btn_spawn1 := Button.new()
+	btn_spawn1.text = "Spawn NPC x1"
+	_style_btn(btn_spawn1, Color(0.3, 0.6, 1.0))
+	btn_spawn1.pressed.connect(_on_spawn_npc.bind(1))
+	vb.add_child(btn_spawn1)
+
+	var btn_spawn5 := Button.new()
+	btn_spawn5.text = "Spawn NPC x5"
+	_style_btn(btn_spawn5, Color(0.2, 0.5, 0.9))
+	btn_spawn5.pressed.connect(_on_spawn_npc.bind(5))
+	vb.add_child(btn_spawn5)
+
+	var btn_clear_npc := Button.new()
+	btn_clear_npc.text = "Clear NPC"
+	_style_btn(btn_clear_npc, Color(0.8, 0.2, 0.2))
+	btn_clear_npc.pressed.connect(_on_clear_npc)
+	vb.add_child(btn_clear_npc)
+
 func _add_separator(vb: VBoxContainer, txt: String) -> void:
 	var lbl := Label.new()
 	lbl.text = txt
@@ -137,9 +158,18 @@ func _on_clear_inventory() -> void:
 		GameManager.inventory[id] = 0
 
 func _change_speed(delta: int) -> void:
-	var player = get_tree().get_first_node_in_group("player")
+	var player: Node = get_tree().get_first_node_in_group("player")
 	if player == null:
 		return
-	var new_speed: float = clamp(player.move_speed + delta, 40.0, 400.0)
-	player.move_speed = new_speed
+	var new_speed: float = clamp((player as Node2D).get("move_speed") + delta, 40.0, 400.0)
+	(player as Node2D).set("move_speed", new_speed)
 	_speed_label.text = str(int(new_speed))
+
+func _on_spawn_npc(count: int) -> void:
+	var player: Node = get_tree().get_first_node_in_group("player")
+	if player == null:
+		return
+	NpcSpawner.spawn_random_around((player as Node2D).global_position, 200.0, count)
+
+func _on_clear_npc() -> void:
+	NpcSpawner.despawn_all()

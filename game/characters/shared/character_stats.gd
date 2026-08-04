@@ -18,13 +18,12 @@ extends Resource
 @export var luck: int         = 5
 
 # ── Competences metier (buffs de production) ───────────────────────
-# Valeur entre 0 et 100, genere aleatoirement sur les NPC
-@export var skill_farming: int    = 0   # +% recolte agricole
-@export var skill_woodcutting: int = 0  # +% bois coupe
-@export var skill_mining: int     = 0   # +% pierre/minerai
-@export var skill_crafting: int   = 0   # +% production artisanat
-@export var skill_combat: int     = 0   # +% degats/defense combat
-@export var skill_trading: int    = 0   # +% valeur echanges
+@export var skill_farming: int    = 0
+@export var skill_woodcutting: int = 0
+@export var skill_mining: int     = 0
+@export var skill_crafting: int   = 0
+@export var skill_combat: int     = 0
+@export var skill_trading: int    = 0
 
 func randomize_stats(min_val: int = 1, max_val: int = 15) -> void:
 	force        = randi_range(min_val, max_val)
@@ -39,21 +38,19 @@ func randomize_stats(min_val: int = 1, max_val: int = 15) -> void:
 	hp           = hp_max
 
 func randomize_skills() -> void:
-	# Un NPC a 1 ou 2 competences dominantes, les autres sont faibles
-	var skills := ["skill_farming", "skill_woodcutting", "skill_mining",
+	var skills: Array[String] = ["skill_farming", "skill_woodcutting", "skill_mining",
 				   "skill_crafting", "skill_combat", "skill_trading"]
 	for s in skills:
 		set(s, randi_range(0, 20))
-	# On booste 1 ou 2 competences dominantes
-	var nb_dominant := randi_range(1, 2)
-	var dominant := skills.duplicate()
+	var nb_dominant: int = randi_range(1, 2)
+	var dominant: Array[String] = skills.duplicate()
 	dominant.shuffle()
 	for i in nb_dominant:
 		set(dominant[i], randi_range(50, 100))
 
 func get_primary_skill() -> String:
-	var best := "skill_farming"
-	var best_val := skill_farming
+	var best: String = "skill_farming"
+	var best_val: int = skill_farming
 	if skill_woodcutting > best_val: best = "skill_woodcutting"; best_val = skill_woodcutting
 	if skill_mining      > best_val: best = "skill_mining";      best_val = skill_mining
 	if skill_crafting    > best_val: best = "skill_crafting";    best_val = skill_crafting
@@ -65,6 +62,6 @@ func is_alive() -> bool:
 	return hp > 0
 
 func take_damage(amount: int) -> int:
-	var dmg := max(1, amount - defense)
+	var dmg: int = max(1, amount - defense)
 	hp = max(0, hp - dmg)
 	return dmg
