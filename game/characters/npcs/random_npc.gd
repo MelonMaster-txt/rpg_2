@@ -21,10 +21,10 @@ var is_hostile: bool   = false
 var speed:      float  = 60.0
 var state:      int    = 0  # 0=LIBRE 1=COMPAGNON 2=ESCLAVE
 
-@onready var _appearance:     Node      = $CharacterAppearance
-@onready var _name_label:     Label     = $NameLabel
-@onready var _color_rect:     ColorRect = $ColorRect
-@onready var _interaction_area: Area2D  = $InteractionArea
+@onready var _appearance:       Node      = $CharacterAppearance
+@onready var _name_label:       Label     = $NameLabel
+@onready var _color_rect:       ColorRect = $ColorRect
+@onready var _interaction_area: Area2D    = $InteractionArea
 
 const COLOR_MALE    := Color(0.25, 0.50, 1.00)
 const COLOR_FEMALE  := Color(1.00, 0.45, 0.70)
@@ -37,9 +37,9 @@ enum AiState { IDLE, WANDER, FLEE, CHASE, DEAD }
 var _ai: AiState = AiState.IDLE
 var _wander_timer: float   = 2.0
 var _wander_dir:   Vector2 = Vector2.ZERO
-var _target:       Node    = null
-const DETECT_RANGE  := 120.0
-const ATTACK_RANGE  := 32.0
+var _target:       Node2D  = null   # Node2D pour avoir .global_position typé
+const DETECT_RANGE    := 120.0
+const ATTACK_RANGE    := 32.0
 const ATTACK_COOLDOWN := 1.5
 var _attack_timer: float = 0.0
 
@@ -70,8 +70,7 @@ func _do_randomize(seed_val: int) -> void:
 	_pending_randomize = false
 	if seed_val >= 0:
 		seed(seed_val)
-	# Générer NpcData complet
-	data = NpcData.generate_random()
+	data       = NpcData.generate_random()
 	npc_name   = data.npc_name
 	npc_gender = _gender_from_archetype(data.archetype)
 	strength   = data.stats.force
@@ -79,7 +78,6 @@ func _do_randomize(seed_val: int) -> void:
 	current_hp = max_hp
 	is_hostile = data.archetype == NpcData.Archetype.BANDIT or randf() < 0.2
 	speed      = randf_range(40.0, 90.0)
-	# Apparence
 	if _appearance:
 		_appearance.randomize_appearance()
 		var adat: Dictionary = _appearance.get_appearance_data()
@@ -90,7 +88,6 @@ func _do_randomize(seed_val: int) -> void:
 
 
 func _gender_from_archetype(arch: int) -> String:
-	# Les monstres ont un genre "monster" visuellement
 	if arch == NpcData.Archetype.BANDIT and randf() < 0.3:
 		return "monster"
 	return ["male", "female"].pick_random()
@@ -118,15 +115,13 @@ func _physics_process(delta: float) -> void:
 
 
 func _update_ai(delta: float) -> void:
-	# Détecter le joueur
-	var players := get_tree().get_nodes_in_group("player")
+	var players: Array = get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
-		_target = players[0]
-	var dist := INF
-	if _target:
+		_target = players[0] as Node2D
+	var dist: float = INF
+	if _target != null:
 		dist = global_position.distance_to(_target.global_position)
 
-	# Transitions selon hostilité
 	if is_hostile and _target != null:
 		if dist < DETECT_RANGE and _ai not in [AiState.CHASE, AiState.FLEE]:
 			_ai = AiState.CHASE
@@ -136,11 +131,10 @@ func _update_ai(delta: float) -> void:
 			_update_color_rect()
 	else:
 		if dist < DETECT_RANGE * 0.6 and _ai != AiState.FLEE:
-			_ai = AiState.FLEE  # NPC pacifique fuit si trop proche
+			_ai = AiState.FLEE
 		elif dist > DETECT_RANGE and _ai == AiState.FLEE:
 			_ai = AiState.WANDER
 
-	# Actions IA
 	match _ai:
 		AiState.IDLE:
 			velocity = Vector2.ZERO
@@ -156,26 +150,25 @@ func _update_ai(delta: float) -> void:
 				_ai = AiState.IDLE
 				velocity = Vector2.ZERO
 		AiState.FLEE:
-			if _target:
-				var dir := (global_position - _target.global_position).normalized()
+			if _target != null:
+				var dir: Vector2 = (global_position - _target.global_position).normalized()
 				velocity = dir * speed * 1.3
 				_update_facing()
 				move_and_slide()
 		AiState.CHASE:
-			if _target:
-				var dir := (_target.global_position - global_position).normalized()
+			if _target != null:
+				var dir: Vector2 = (_target.global_position - global_position).normalized()
 				velocity = dir * speed * 1.1
 				_update_facing()
 				move_and_slide()
-				# Attaque au corps à corps
 				if dist < ATTACK_RANGE and _attack_timer <= 0.0:
 					_melee_attack()
 
 
 func _melee_attack() -> void:
 	_attack_timer = ATTACK_COOLDOWN
-	var dmg := max(1, strength / 3)
-	if _target and _target.has_method("take_damage"):
+	var dmg: int = max(1, strength / 3)
+	if _target != null and _target.has_method("take_damage"):
 		_target.take_damage(dmg)
 
 # ─── Interaction joueur ───────────────────────────────────────────────────────
@@ -190,7 +183,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _open_interaction_menu() -> void:
-	var menu_scene := load("res://game/systems/npc_interaction_menu.tscn")
+	var menu_scene: PackedScene = load("res://game/systems/npc_interaction_menu.tscn")
 	if menu_scene == null:
 		push_error("RandomNpc: npc_interaction_menu.tscn introuvable")
 		return
@@ -224,30 +217,30 @@ func die() -> void:
 # ─── Recrutement / Capture ────────────────────────────────────────────────────
 
 func recruit() -> void:
-	state = 1  # COMPAGNON
+	state = 1
 	is_hostile = false
 	_ai = AiState.IDLE
 	_update_color_rect()
-	var entry := _build_kingdom_entry("companion")
+	var entry: Dictionary = _build_kingdom_entry("companion")
 	CompanionManager.add_companion(entry)
 	npc_recruited.emit(self)
 	queue_free()
 
 
 func capture() -> void:
-	state = 2  # ESCLAVE
+	state = 2
 	is_hostile = false
-	_ai = AiState.DEAD  # Immobilisé
+	_ai = AiState.DEAD
 	if _color_rect:
 		_color_rect.color = COLOR_DEAD
-	var entry := _build_kingdom_entry("slave")
+	var entry: Dictionary = _build_kingdom_entry("slave")
 	CompanionManager.add_slave(entry)
 	npc_captured.emit(self)
 	queue_free()
 
 
 func _build_kingdom_entry(role: String) -> Dictionary:
-	var entry := {
+	var entry: Dictionary = {
 		"name":      npc_name,
 		"gender":    npc_gender,
 		"role":      role,
@@ -261,7 +254,7 @@ func _build_kingdom_entry(role: String) -> Dictionary:
 	if data != null:
 		entry["archetype"] = NpcData.Archetype.keys()[data.archetype]
 		entry["skills"] = {
-			"farming":     data.stats.get("skill_farming")    if data.stats.get("skill_farming")    != null else 0,
+			"farming":     data.stats.get("skill_farming")     if data.stats.get("skill_farming")     != null else 0,
 			"woodcutting": data.stats.get("skill_woodcutting") if data.stats.get("skill_woodcutting") != null else 0,
 			"mining":      data.stats.get("skill_mining")      if data.stats.get("skill_mining")      != null else 0,
 			"combat":      data.stats.get("skill_combat")      if data.stats.get("skill_combat")      != null else 0,
@@ -303,7 +296,7 @@ func _pick_wander_dir() -> void:
 		_wander_timer = randf_range(1.5, 3.0)
 		return
 	_ai = AiState.WANDER
-	var angle := randf() * TAU
+	var angle: float = randf() * TAU
 	_wander_dir = Vector2(cos(angle), sin(angle))
 	_wander_timer = randf_range(0.8, 2.5)
 
