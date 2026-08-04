@@ -9,15 +9,13 @@ var _active_npcs: Array = []   # NPC en vie dans le monde
 var _kingdom_npcs: Array = []  # Compagnons + esclaves
 
 func spawn_random_around(origin: Vector2, radius: float, count: int) -> void:
-	var scene := load(NPC_SCENE)
+	var scene: PackedScene = load(NPC_SCENE)
 	if scene == null:
 		push_error("NpcSpawner: npc_base.tscn introuvable")
 		return
 	var root := get_tree().current_scene
 	for i in range(count):
-		var npc := scene.instantiate()
-		if not npc is Node2D:
-			continue
+		var npc: Node2D = scene.instantiate()
 		var angle := randf() * TAU
 		var dist  := randf_range(60.0, radius)
 		npc.global_position = origin + Vector2(cos(angle), sin(angle)) * dist
