@@ -206,7 +206,7 @@ func _find_chest() -> void:
 
 func _find_nearest_target(exclude: Node2D = null) -> Node2D:
 	var group: String = JOB_TARGET_GROUP.get(job, "")
-	if group == ": return null
+	if group == : return null
 	var nodes: Array = get_tree().get_nodes_in_group(group)
 	var best: Node2D = null
 	var best_dist: float = INF
