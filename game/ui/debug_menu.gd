@@ -1,5 +1,5 @@
 # debug_menu.gd - Menu debug F1
-# Give items, teleport, vitesse, spawn NPC
+# Give items, teleport, vitesse, spawn NPC, stats joueur
 extends CanvasLayer
 
 const GIVE_SETS: Array[Dictionary] = [
@@ -10,9 +10,21 @@ const GIVE_SETS: Array[Dictionary] = [
 	{"label": "Baies x20",     "items": {"baies":20}},
 ]
 
+# stat_key -> [label_display, couleur_bouton]
+const STAT_DEFS: Array = [
+	["force",        "⚔ Force",      Color(0.8, 0.3, 0.2)],
+	["charisma",     "✦ Charisme",   Color(0.8, 0.3, 0.8)],
+	["stamina",      "🛡 Endurance",  Color(0.3, 0.6, 0.8)],
+	["luck",         "★ Chance",     Color(0.9, 0.75, 0.1)],
+	["intelligence", "◆ Intell.",    Color(0.2, 0.7, 0.7)],
+	["speed",        "⚡ Agilité",   Color(0.3, 0.9, 0.4)],
+	["life",         "♥ HP max",     Color(0.9, 0.2, 0.2)],
+]
+
 var _visible: bool = false
 var _panel: PanelContainer
 var _speed_label: Label
+var _stat_labels: Dictionary = {}   # stat_key -> Label
 
 func _ready() -> void:
 	layer = 100
@@ -87,6 +99,55 @@ func _build_ui() -> void:
 	btn_clear.pressed.connect(_on_clear_inventory)
 	vb.add_child(btn_clear)
 
+	# ── Section STATS ────────────────────────────────────────────────
+	_add_separator(vb, "-- Stats joueur --")
+
+	for sdef in STAT_DEFS:
+		var key: String     = sdef[0]
+		var lbl_txt: String = sdef[1]
+		var col: Color      = sdef[2]
+
+		var row := HBoxContainer.new()
+		row.add_theme_constant_override("separation", 4)
+
+		var lbl_name := Label.new()
+		lbl_name.text = lbl_txt
+		lbl_name.custom_minimum_size = Vector2(90, 0)
+		lbl_name.add_theme_font_size_override("font_size", 11)
+		lbl_name.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
+		row.add_child(lbl_name)
+
+		var val_lbl := Label.new()
+		val_lbl.text = str(GameManager.get(key) if GameManager.get(key) != null else 0)
+		val_lbl.custom_minimum_size = Vector2(30, 0)
+		val_lbl.add_theme_font_size_override("font_size", 11)
+		val_lbl.add_theme_color_override("font_color", col)
+		_stat_labels[key] = val_lbl
+		row.add_child(val_lbl)
+
+		var btn_minus := Button.new()
+		btn_minus.text = "-10"
+		_style_btn(btn_minus, Color(0.6, 0.25, 0.2))
+		btn_minus.custom_minimum_size = Vector2(36, 0)
+		btn_minus.pressed.connect(_modify_stat.bind(key, -10))
+		row.add_child(btn_minus)
+
+		var btn_plus := Button.new()
+		btn_plus.text = "+10"
+		_style_btn(btn_plus, col)
+		btn_plus.custom_minimum_size = Vector2(36, 0)
+		btn_plus.pressed.connect(_modify_stat.bind(key, 10))
+		row.add_child(btn_plus)
+
+		var btn_max := Button.new()
+		btn_max.text = "MAX"
+		_style_btn(btn_max, Color(col.r * 0.7, col.g * 0.7, col.b * 0.7))
+		btn_max.custom_minimum_size = Vector2(36, 0)
+		btn_max.pressed.connect(_max_stat.bind(key))
+		row.add_child(btn_max)
+
+		vb.add_child(row)
+
 	# ── Section NPC ────────────────────────────────────────────────
 	_add_separator(vb, "-- NPC --")
 
@@ -148,6 +209,23 @@ func _unhandled_input(event: InputEvent) -> void:
 func _toggle() -> void:
 	_visible = not _visible
 	_panel.visible = _visible
+	if _visible:
+		_refresh_stats()
+
+func _refresh_stats() -> void:
+	for key in _stat_labels:
+		var val = GameManager.get(key)
+		_stat_labels[key].text = str(val if val != null else 0)
+
+func _modify_stat(key: String, delta: int) -> void:
+	var current: int = GameManager.get(key) if GameManager.get(key) != null else 0
+	var new_val: int = max(0, current + delta)
+	GameManager.set(key, new_val)
+	_stat_labels[key].text = str(new_val)
+
+func _max_stat(key: String) -> void:
+	GameManager.set(key, 100)
+	_stat_labels[key].text = "100"
 
 func _on_give_pressed(items: Dictionary) -> void:
 	for id in items:
