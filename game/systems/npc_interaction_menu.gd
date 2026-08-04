@@ -1,5 +1,5 @@
 # npc_interaction_menu.gd
-# Menu d'interaction a 3 choix : Parler / Recruter / Combattre
+# Menu d'interaction NPC : Parler / Recruter / Combattre / Assigner job
 # Compatible random_npc.gd (proprietes directes) ET npc_base.gd (avec .data)
 extends CanvasLayer
 
@@ -13,10 +13,16 @@ extends CanvasLayer
 @onready var btn_close:       Button         = $Panel/VBox/BtnClose
 @onready var result_label:    Label          = $Panel/VBox/ResultLabel
 
+# ─── Panneau assignation de job (affiché après recrutement/capture) ───────────
+@onready var job_panel:  VBoxContainer = $Panel/VBox/JobPanel
+@onready var job_label:  Label         = $Panel/VBox/JobPanel/JobLabel
+@onready var job_option: OptionButton  = $Panel/VBox/JobPanel/JobOption
+@onready var btn_assign: Button        = $Panel/VBox/JobPanel/BtnAssign
+
 var _npc: Node = null
+var _pending_assign_name: String = ""
 
 # ─── Helpers lecture universelle ──────────────────────────────────────────────
-# Fonctionne que le NPC ait .data (NpcBase) ou des proprietes directes (RandomNpc)
 
 func _npc_name() -> String:
 	if _npc.get("data") != null:
@@ -41,13 +47,7 @@ func _npc_archetype() -> String:
 func _npc_dialogue() -> String:
 	if _npc.get("data") != null:
 		return _npc.data.get_dialogue_line()
-	var lines := [
-		"...",
-		"Que me veux-tu ?",
-		"Passe ton chemin.",
-		"Hmm.",
-		"Je ne te connais pas.",
-	]
+	var lines := ["...", "Que me veux-tu ?", "Passe ton chemin.", "Hmm.", "Je ne te connais pas."]
 	return lines[randi() % lines.size()]
 
 func _npc_strength() -> int:
@@ -68,12 +68,11 @@ func _npc_luck() -> int:
 func _npc_already_taken() -> bool:
 	var s = _npc.get("state")
 	if s == null: return false
-	return int(s) != 0  # 0 = LIBRE
+	return int(s) != 0
 
 func _can_recruit() -> bool:
 	if _npc.get("data") != null:
 		return _npc.data.can_be_recruited_by_player()
-	# Pour random_npc : toujours recrutablé (pas de seuil de stats)
 	return true
 
 # ─── Cycle de vie ─────────────────────────────────────────────────────────────
@@ -83,6 +82,13 @@ func _ready() -> void:
 	btn_recruit.pressed.connect(_on_btn_recruit_pressed)
 	btn_fight.pressed.connect(_on_btn_fight_pressed)
 	btn_close.pressed.connect(_on_btn_close_pressed)
+	# Job panel
+	if job_panel != null:
+		job_panel.visible = false
+		_populate_job_option()
+		if btn_assign != null:
+			btn_assign.pressed.connect(_on_btn_assign_pressed)
+
 
 func open(npc: Node) -> void:
 	if not npc is CharacterBody2D:
@@ -92,6 +98,7 @@ func open(npc: Node) -> void:
 	_refresh()
 	get_tree().paused = true
 	process_mode = Node.PROCESS_MODE_ALWAYS
+
 
 func _refresh() -> void:
 	if _npc == null:
@@ -103,15 +110,26 @@ func _refresh() -> void:
 	var taken := _npc_already_taken()
 	btn_recruit.disabled = taken
 	btn_fight.disabled   = taken
+	if job_panel != null:
+		job_panel.visible = false
+
+
+func _populate_job_option() -> void:
+	if job_option == null:
+		return
+	job_option.clear()
+	for job in CompanionManager.JOBS:
+		job_option.add_item(job if job != "" else "(aucun)")
 
 # ─── Boutons ──────────────────────────────────────────────────────────────────
 
 func _on_btn_talk_pressed() -> void:
 	if _npc.get("data") != null:
 		var reveal: String = _npc.data.get_reveal_info()
-		result_label.text = "Vous apprenez : " + reveal if reveal != "" else "Vous le connaissez deja bien."
+		result_label.text = "Vous apprenez : " + reveal if reveal != "" else "Vous le connaissez déjà bien."
 	else:
 		result_label.text = _npc_dialogue()
+
 
 func _on_btn_recruit_pressed() -> void:
 	if _can_recruit():
@@ -120,14 +138,19 @@ func _on_btn_recruit_pressed() -> void:
 		result_label.text = _npc_name() + " rejoint votre groupe !"
 		btn_recruit.disabled = true
 		btn_fight.disabled   = true
+		_pending_assign_name = _npc_name()
+		_show_job_panel()
 	else:
-		# NpcBase avec seuils de stats
-		var d = _npc.data
-		var msg := "Refus. Requis — "
-		if GameManager.charisma  < d.recruit_min_charisma: msg += "Charisme %d/%d "  % [GameManager.charisma,     d.recruit_min_charisma]
-		if GameManager.force     < d.recruit_min_force:    msg += "Force %d/%d "     % [GameManager.force,        d.recruit_min_force]
-		if GameManager.intelligence < d.recruit_min_intel: msg += "Intel %d/%d "     % [GameManager.intelligence, d.recruit_min_intel]
-		result_label.text = msg
+		if _npc.get("data") != null:
+			var d = _npc.data
+			var msg := "Refus. Requis — "
+			if GameManager.charisma      < d.recruit_min_charisma: msg += "Charisme %d/%d " % [GameManager.charisma,     d.recruit_min_charisma]
+			if GameManager.force         < d.recruit_min_force:    msg += "Force %d/%d "    % [GameManager.force,        d.recruit_min_force]
+			if GameManager.intelligence  < d.recruit_min_intel:    msg += "Intel %d/%d "    % [GameManager.intelligence, d.recruit_min_intel]
+			result_label.text = msg
+		else:
+			result_label.text = "Ce personnage refuse de vous suivre."
+
 
 func _on_btn_fight_pressed() -> void:
 	var player_power: int = GameManager.force + GameManager.stamina
@@ -139,10 +162,11 @@ func _on_btn_fight_pressed() -> void:
 	if player_wins:
 		_show_victory_choice()
 	else:
-		var dmg: int = max(1, npc_power / 4)
+		var dmg: int = max(1, npc_power / 4)  # int division intentionnelle
 		GameManager.life = max(0, GameManager.life - dmg)
 		result_label.text = "Vous perdez ! Vous prenez %d dégâts." % dmg
 		btn_fight.disabled = true
+
 
 func _show_victory_choice() -> void:
 	result_label.text = "Victoire ! Tuer ou capturer ?"
@@ -156,20 +180,47 @@ func _show_victory_choice() -> void:
 	btn_recruit.pressed.disconnect(_on_btn_recruit_pressed)
 	btn_recruit.pressed.connect(_on_btn_capture_pressed)
 
+
 func _on_btn_kill_pressed() -> void:
 	result_label.text = _npc_name() + " est mort."
 	if _npc.has_method("die"): _npc.die()
 	else: _npc.queue_free()
 	_close()
 
+
 func _on_btn_capture_pressed() -> void:
 	if _npc.has_method("capture"): _npc.capture()
 	result_label.text = _npc_name() + " est maintenant votre esclave."
 	btn_fight.disabled   = true
 	btn_recruit.disabled = true
+	_pending_assign_name = _npc_name()
+	_show_job_panel()
+
+# ─── Panneau Job ──────────────────────────────────────────────────────────────
+
+func _show_job_panel() -> void:
+	if job_panel == null:
+		return
+	if job_label != null:
+		job_label.text = "Assigner un métier à %s :" % _pending_assign_name
+	job_panel.visible = true
+
+
+func _on_btn_assign_pressed() -> void:
+	if _pending_assign_name == "" or job_option == null:
+		return
+	var idx: int   = job_option.selected
+	var job: String = CompanionManager.JOBS[idx]
+	CompanionManager.assign_job(_pending_assign_name, job)
+	var label: String = job if job != "" else "(aucun)"
+	result_label.text = "%s assigné au poste : %s" % [_pending_assign_name, label]
+	job_panel.visible = false
+
+# ─── Fermeture ────────────────────────────────────────────────────────────────
 
 func _on_btn_close_pressed() -> void:
 	_close()
+
 
 func _close() -> void:
 	get_tree().paused = false
