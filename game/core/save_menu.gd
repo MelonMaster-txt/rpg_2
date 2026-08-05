@@ -1,7 +1,7 @@
 # save_menu.gd
 # Les signaux Slot1-8, Back, DeleteButton, Yes, No
 # sont DEJA connectés dans save_menu.tscn via [connection].
-# On ne reconnecte PAS dans _ready() pour éviter la double connexion.
+# On ne reconnecte PAS dans _ready().
 extends Control
 
 signal save_requested(slot_index: int)
@@ -10,14 +10,11 @@ signal load_requested(slot_index: int)
 const MAX_SLOTS: int = 8
 
 @onready var _grid:          GridContainer = $GridContainer
-@onready var _delete_btn:    Button        = $DeleteButton
 @onready var _confirm_panel: Panel         = $ConfirmPanel
 @onready var _confirm_label: Label         = $ConfirmPanel/VBox/ConfirmLabel
-@onready var _yes_btn:       Button        = $ConfirmPanel/VBox/Buttons/Yes
-@onready var _no_btn:        Button        = $ConfirmPanel/VBox/Buttons/No
 
 var _selected_slot: int = -1
-var _mode: String = "save"
+var _mode: String       = "save"
 
 
 func _ready() -> void:
