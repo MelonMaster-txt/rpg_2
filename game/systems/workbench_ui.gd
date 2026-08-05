@@ -59,8 +59,6 @@ func _build_list() -> void:
 	for child in _item_list.get_children():
 		child.queue_free()
 
-	# Collecte les craftables de la catégorie active
-	# "outil2" = outil tier 2 seulement
 	var items: Array = []
 	for item_id in ItemDatabase.get_craftable_items():
 		var data: Dictionary = ItemDatabase.get_item(item_id)
@@ -87,7 +85,8 @@ func _build_list() -> void:
 		_item_list.add_child(_build_row(item_id))
 
 
-func _build_row(item_id: String) -> HBoxContainer:
+# Retourne un VBoxContainer (row + separateur)
+func _build_row(item_id: String) -> VBoxContainer:
 	var data: Dictionary = ItemDatabase.get_item(item_id)
 	var can_craft: bool  = ItemDatabase.can_craft(item_id, GameManager.inventory)
 	var in_inv: int      = GameManager.get_item(item_id)
@@ -167,7 +166,7 @@ func _build_row(item_id: String) -> HBoxContainer:
 	var wrapper := VBoxContainer.new()
 	wrapper.add_child(row)
 	wrapper.add_child(sep)
-	return wrapper as HBoxContainer
+	return wrapper
 
 
 # ─── ACTIONS ─────────────────────────────────────────────────────────────
@@ -191,7 +190,6 @@ func _on_use_pressed(item_id: String) -> void:
 func _show_feedback(msg: String, col: Color) -> void:
 	_feedback.text = msg
 	_feedback.modulate = col
-	# Efface après 3 secondes
 	var tw := create_tween()
 	tw.tween_interval(3.0)
 	tw.tween_callback(func(): _feedback.text = "")

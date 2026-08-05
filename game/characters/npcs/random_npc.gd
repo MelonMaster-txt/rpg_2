@@ -68,7 +68,7 @@ func _do_randomize(seed_val: int) -> void:
 	npc_name   = data.npc_name
 	npc_gender = _gender_from_archetype(data.archetype)
 	strength   = data.stats.force
-	max_hp     = data.stats.max_hp if data.stats.get("max_hp") != null else randi_range(20, 60)
+	max_hp     = data.stats.max_hp
 	current_hp = max_hp
 	is_hostile = data.archetype == NpcData.Archetype.BANDIT or randf() < 0.2
 	speed      = randf_range(40.0, 90.0)
@@ -209,7 +209,8 @@ func recruit() -> void:
 	state = 1
 	is_hostile = false
 	var entry: Dictionary = _build_kingdom_entry("companion")
-	CompanionManager.add_companion(entry)
+	if PopulationManager != null:
+		PopulationManager.add_companion(entry)
 	npc_recruited.emit(self)
 	_start_working("woodcutter")
 	_add_relation_component()
@@ -219,7 +220,8 @@ func capture() -> void:
 	state = 2
 	is_hostile = false
 	var entry: Dictionary = _build_kingdom_entry("slave")
-	CompanionManager.add_slave(entry)
+	if PopulationManager != null:
+		PopulationManager.add_slave(entry)
 	npc_captured.emit(self)
 	_start_working("woodcutter")
 	_add_relation_component()
@@ -284,31 +286,11 @@ func _build_kingdom_entry(role: String) -> Dictionary:
 	if data != null:
 		entry["archetype"] = NpcData.Archetype.keys()[data.archetype]
 		entry["skills"] = {
-			"farming": (
-				data.stats.get("skill_farming")
-				if data.stats.get("skill_farming") != null
-				else 0
-			),
-			"woodcutting": (
-				data.stats.get("skill_woodcutting")
-				if data.stats.get("skill_woodcutting") != null
-				else 0
-			),
-			"mining": (
-				data.stats.get("skill_mining")
-				if data.stats.get("skill_mining") != null
-				else 0
-			),
-			"combat": (
-				data.stats.get("skill_combat")
-				if data.stats.get("skill_combat") != null
-				else 0
-			),
-			"trading": (
-				data.stats.get("skill_trading")
-				if data.stats.get("skill_trading") != null
-				else 0
-			),
+			"farming":     data.stats.skill_farming,
+			"woodcutting": data.stats.skill_woodcutting,
+			"mining":      data.stats.skill_mining,
+			"combat":      data.stats.skill_combat,
+			"trading":     data.stats.skill_trading,
 		}
 	return entry
 
