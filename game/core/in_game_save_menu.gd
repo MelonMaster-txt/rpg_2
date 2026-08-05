@@ -1,22 +1,13 @@
 extends CanvasLayer
-
 # in_game_save_menu.gd
 # Hiérarchie réelle dans in_game_save_menu.tscn :
 #   InGameSaveMenu (CanvasLayer)
-#     Panel (Control)
-#       Overlay (ColorRect)
-#       CenterBox (VBoxContainer)
-#         ModeButtons > BtnSaveMode, BtnLoadMode
-#         BottomButtons > BtnResume, BtnQuitToMenu
+#     Panel
 #       SaveMenu (instance save_menu.tscn)
 
 signal resume_requested
 
-@onready var _save_menu:      Control = $Panel/SaveMenu
-@onready var _btn_save_mode:  Button  = $Panel/CenterBox/ModeButtons/BtnSaveMode
-@onready var _btn_load_mode:  Button  = $Panel/CenterBox/ModeButtons/BtnLoadMode
-@onready var _btn_resume:     Button  = $Panel/CenterBox/BottomButtons/BtnResume
-@onready var _btn_quit:       Button  = $Panel/CenterBox/BottomButtons/BtnQuitToMenu
+@onready var _save_menu: Control = $Panel/SaveMenu
 
 
 func _ready() -> void:
@@ -24,8 +15,6 @@ func _ready() -> void:
 		push_error("InGameSaveMenu: $Panel/SaveMenu introuvable")
 		return
 	_save_menu.visible = false
-	# Les signaux BtnSaveMode/BtnLoadMode/BtnResume/BtnQuitToMenu
-	# sont connectés via le .tscn -> on ne reconnecte PAS ici
 
 
 func open() -> void:
@@ -42,6 +31,10 @@ func close() -> void:
 
 
 # Callbacks connectés via .tscn
+func _on_btn_resume_pressed() -> void:
+	close()
+
+
 func _on_btn_save_mode_pressed() -> void:
 	if _save_menu:
 		_save_menu.set_mode("save")
@@ -52,10 +45,6 @@ func _on_btn_load_mode_pressed() -> void:
 	if _save_menu:
 		_save_menu.set_mode("load")
 		_save_menu.visible = true
-
-
-func _on_btn_resume_pressed() -> void:
-	close()
 
 
 func _on_btn_quit_to_menu_pressed() -> void:

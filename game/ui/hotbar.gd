@@ -2,14 +2,15 @@ extends CanvasLayer
 
 const SLOT_COUNT: int = 8
 
-# FIX : le nœud dans hotbar.tscn s'appelle "SlotsRow", pas "HBoxContainer"
 @onready var _slots: HBoxContainer = $HotbarPanel/SlotsRow
 
 var _selected_slot: int = 0
 var _slot_nodes: Array[Control] = []
 
+
 func _ready() -> void:
 	_build_hotbar()
+
 
 func _build_hotbar() -> void:
 	if _slots == null:
@@ -22,12 +23,19 @@ func _build_hotbar() -> void:
 		_slot_nodes.append(slot)
 	_highlight_slot(0)
 
+
 func _input(event: InputEvent) -> void:
+	# FIX: is_action_just_pressed n'existe pas sur InputEventMouseMotion
+	# On filtre uniquement les évènements clavier / manette
+	if not (event is InputEventKey or event is InputEventJoypadButton):
+		return
 	for i: int in range(SLOT_COUNT):
-		if event.is_action_just_pressed("hotbar_%d" % (i + 1)):
+		if event.is_action_pressed("hotbar_%d" % (i + 1)):
 			_selected_slot = i
 			_highlight_slot(i)
+			get_viewport().set_input_as_handled()
 			return
+
 
 func _highlight_slot(index: int) -> void:
 	for i: int in range(_slot_nodes.size()):
