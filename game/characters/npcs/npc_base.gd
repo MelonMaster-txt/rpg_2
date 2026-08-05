@@ -149,7 +149,9 @@ func set_state(new_state: State) -> void:
 func die() -> void:
 	if color_rect:
 		color_rect.color = COLOR_DEAD
-	NpcSpawner.unregister(self)
+	# FIX: NpcSpawner n'a pas de méthode unregister() — on utilise _on_npc_defeated
+	if NpcSpawner != null:
+		NpcSpawner._on_npc_defeated(self)
 	queue_free()
 
 

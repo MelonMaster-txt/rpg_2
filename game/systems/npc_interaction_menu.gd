@@ -109,7 +109,7 @@ func _refresh() -> void:
 		var rel = _get_relation()
 		var worker = _npc.get_node_or_null("WorkerAI")
 		var current_job: String = worker.job if worker != null else "(aucun)"
-		dialogue_label.text = "🟡 Allié — Métier : %s" % current_job
+		dialogue_label.text = "Allié — Métier : %s" % current_job
 		btn_recruit.visible = false
 		btn_fight.visible   = false
 		btn_talk.visible    = false
@@ -145,7 +145,7 @@ func _on_rel_talk() -> void:
 	if rel == null:
 		result_label.text = "(Pas de composant relation)"
 		return
-	# FIX: float division
+	# FIX: float division explicite
 	var day: int = int(float(Time.get_ticks_msec()) / 86400000.0)
 	var msg: String = rel.talk(day)
 	result_label.text = msg
@@ -155,10 +155,11 @@ func _on_rel_talk() -> void:
 func _on_rel_gift() -> void:
 	var rel = _get_relation()
 	if rel == null: return
-	if GameManager.get("gold") != null and GameManager.gold < 5:
+	# FIX: GameManager n'a pas de variable gold — on utilise get_item/remove_item avec la clé "or"
+	if GameManager.get_item("or") < 5:
 		result_label.text = "Pas assez d'or (5 nécessaires)."
 		return
-	if GameManager.get("gold") != null: GameManager.gold -= 5
+	GameManager.remove_item("or", 5)
 	var msg: String = rel.give_gift(5)
 	result_label.text = msg
 	relation_label.text = rel.summary()
@@ -215,7 +216,7 @@ func _on_btn_fight_pressed() -> void:
 	if player_wins:
 		_show_victory_choice()
 	else:
-		# FIX: float division
+		# FIX: float division explicite
 		var dmg: int = max(1, int(float(npc_power) / 4.0))
 		GameManager.life = max(0, GameManager.life - dmg)
 		result_label.text = "Vous perdez ! -%d PV." % dmg

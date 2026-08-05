@@ -17,13 +17,14 @@ var companions: Array[Dictionary] = []
 var slaves:     Array[Dictionary] = []
 
 # Production par tick de jour (ressources générées chaque nouveau jour)
+# FIX: clés alignées sur GameManager.inventory (français) + "or" pour gold
 const JOB_PRODUCTION := {
-	"farmer":      { "food": 3 },
-	"woodcutter":  { "wood": 4 },
-	"miner":       { "stone": 3, "ore": 1 },
-	"guard":       {},   # Bonus défensif, pas de ressource
-	"trader":      { "gold": 2 },
-	"builder":     { "wood": -1, "stone": -1, "build_points": 1 },
+	"farmer":      { "baies": 3 },
+	"woodcutter":  { "bois": 4 },
+	"miner":       { "pierre": 3 },
+	"guard":       {},
+	"trader":      { "or": 2 },
+	"builder":     { "bois": -1, "pierre": -1, "build_points": 1 },
 }
 
 # Jobs disponibles
@@ -70,11 +71,11 @@ func assign_job(person_name: String, job: String) -> bool:
 
 func _slave_happiness_penalty(job: String) -> int:
 	match job:
-		"miner":     return 15
-		"builder":   return 10
+		"miner":      return 15
+		"builder":    return 10
 		"woodcutter": return 8
-		"farmer":    return 5
-		_:           return 3
+		"farmer":     return 5
+		_:            return 3
 
 # ─── Production quotidienne ──────────────────────────────────────────────────
 # Appelé par GameManager ou TimeSystem chaque nouveau jour
@@ -92,13 +93,12 @@ func process_daily_production() -> void:
 			if amount == 0:
 				continue
 			if resource == "build_points":
-				GameManager.build_points = GameManager.get("build_points") + amount if GameManager.get("build_points") != null else amount
-			elif resource == "gold":
-				GameManager.gold += amount
+				# FIX: build_points stockés dans GameManager directement
+				var cur_bp: int = GameManager.get("build_points") if GameManager.get("build_points") != null else 0
+				GameManager.set("build_points", cur_bp + amount)
 			else:
-				# Ressources génériques via inventory
-				var cur: int = GameManager.inventory.get(resource, 0)
-				GameManager.inventory[resource] = cur + amount
+				# FIX: toutes les autres ressources passent par add_item (clés fr)
+				GameManager.add_item(resource, amount)
 		# Réduction bonheur esclaves au fil du temps
 		if person["role"] == "slave":
 			person["happiness"] = max(0, person.get("happiness", 50) - 1)
@@ -108,16 +108,16 @@ func _get_skill_bonus(person: Dictionary, job: String) -> float:
 	var skills: Dictionary = person.get("skills", {})
 	var key: String
 	match job:
-		"farmer":      key = "farming"
-		"woodcutter":  key = "woodcutting"
-		"miner":       key = "mining"
-		"trader":      key = "trading"
-		"guard":       key = "combat"
-		_:             key = ""
+		"farmer":     key = "farming"
+		"woodcutter": key = "woodcutting"
+		"miner":      key = "mining"
+		"trader":     key = "trading"
+		"guard":      key = "combat"
+		_:            key = ""
 	if key == "" or not skills.has(key):
 		return 1.0
 	# Skill 0-100 → bonus 0.5x à 2.0x
-	return 0.5 + (skills[key] / 100.0) * 1.5
+	return 0.5 + (float(skills[key]) / 100.0) * 1.5
 
 # ─── Sérialisation (sauvegarde) ───────────────────────────────────────────────
 

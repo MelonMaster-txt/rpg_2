@@ -9,6 +9,7 @@ var inventory: Dictionary = {
 	"graine_baie": 0,
 	"pioche":      0,
 	"arrosoir":    0,
+	"or":          0,
 }
 
 signal inventory_changed(item: String, amount: int)
@@ -31,13 +32,14 @@ func get_item(item: String) -> int:
 	return inventory.get(item, 0)
 
 # ──── GAME STATS ──────────────────────────────────────────────────────────────────
-var life: int = 0
-var force: int = 0
-var stamina: int = 0
-var luck: int = 0
-var intelligence: int = 0
-var charisma: int = 0
-var speed: int = 0
+# FIX: valeurs initiales non-nulles pour que le joueur soit jouable dès le départ
+var life: int       = 100
+var force: int      = 10
+var stamina: int    = 10
+var luck: int       = 5
+var intelligence: int = 8
+var charisma: int   = 8
+var speed: int      = 10
 
 # ─── SPAWN POSITION ───────────────────────────────────────────────────────────────
 var saved_spawn_position: Vector2 = Vector2.ZERO
