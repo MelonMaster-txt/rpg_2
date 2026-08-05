@@ -1,16 +1,16 @@
 # npc_base.gd
-# NPC vivant : wandering, etats, interaction avec le joueur
+# Living NPC: wandering, states, interaction with the player
 class_name NpcBase
 extends CharacterBody2D
 
-enum State { LIBRE, COMPAGNON, ESCLAVE }
+enum State { FREE, COMPANION, SLAVE }
 enum Behaviour { WANDERING, IDLE, WORKING, FOLLOWING }
 
 const INTERACTION_MENU_SCENE := "res://game/systems/npc_interaction_menu.tscn"
-const COLOR_MALE    := Color(0.25, 0.50, 1.00)  # bleu  = homme
-const COLOR_FEMALE  := Color(1.00, 0.45, 0.70)  # rose  = femme
-const COLOR_MONSTER := Color(0.10, 0.75, 0.20)  # vert  = monstre
-const COLOR_DEAD    := Color(0.30, 0.30, 0.30)  # gris  = mort
+const COLOR_MALE    := Color(0.25, 0.50, 1.00)
+const COLOR_FEMALE  := Color(1.00, 0.45, 0.70)
+const COLOR_MONSTER := Color(0.10, 0.75, 0.20)
+const COLOR_DEAD    := Color(0.30, 0.30, 0.30)
 const WANDER_RADIUS   := 200.0
 const WANDER_INTERVAL := 4.0
 const IDLE_DURATION   := 2.0
@@ -22,7 +22,7 @@ const IDLE_DURATION   := 2.0
 @onready var interact_area: Area2D = $InteractArea
 @onready var color_rect: ColorRect = $ColorRect
 
-var state: State         = State.LIBRE
+var state: State         = State.FREE
 var behaviour: Behaviour = Behaviour.WANDERING
 var _wander_target: Vector2 = Vector2.ZERO
 var _wander_timer: float    = 0.0
@@ -124,24 +124,24 @@ func _on_player_exit(body: Node) -> void:
 func _open_interaction_menu() -> void:
 	var menu_scene := load(INTERACTION_MENU_SCENE)
 	if menu_scene == null:
-		push_error("NpcBase: npc_interaction_menu.tscn introuvable")
+		push_error("NpcBase: npc_interaction_menu.tscn not found")
 		return
 	var menu: Node = menu_scene.instantiate()
 	get_tree().current_scene.add_child(menu)
 	menu.open(self)
 
 
-# ── API publique ──────────────────────────────────────────────────
+# ── Public API ────────────────────────────────────────────────────────────────
 
 func set_state(new_state: State) -> void:
 	state = new_state
 	match state:
-		State.COMPAGNON:
+		State.COMPANION:
 			behaviour = Behaviour.FOLLOWING
 			_move_speed = 60.0
-		State.ESCLAVE:
+		State.SLAVE:
 			behaviour = Behaviour.WORKING
-		State.LIBRE:
+		State.FREE:
 			behaviour = Behaviour.WANDERING
 			_pick_wander_target()
 
@@ -149,11 +149,10 @@ func set_state(new_state: State) -> void:
 func die() -> void:
 	if color_rect:
 		color_rect.color = COLOR_DEAD
-	# FIX: NpcSpawner n'a pas de méthode unregister() — on utilise _on_npc_defeated
 	if NpcSpawner != null:
 		NpcSpawner._on_npc_defeated(self)
 	queue_free()
 
 
 func capture() -> void:
-	set_state(State.ESCLAVE)
+	set_state(State.SLAVE)

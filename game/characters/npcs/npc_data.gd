@@ -1,5 +1,5 @@
 # npc_data.gd
-# Resource qui definit le profil complet d'un NPC (genere aleatoirement ou a la main)
+# Resource defining the full profile of an NPC (randomly generated or hand-crafted)
 class_name NpcData
 extends Resource
 
@@ -21,34 +21,34 @@ const FIRST_NAMES := [
 
 const ARCHETYPE_DIALOGUE := {
 	Archetype.BANDIT: [
-		"Qu'est-ce que tu veux ?",
-		"Je n'ai peur de rien.",
-		"Va-t-en avant de le regretter."
+		"What do you want?",
+		"I fear nothing.",
+		"Leave before you regret it."
 	],
 	Archetype.WANDERER: [
-		"J'ai vu bien des choses sur la route...",
-		"Le monde est vaste et plein de mysteres.",
-		"Tu cherches quelque chose ?"
+		"I have seen many things on the road...",
+		"The world is vast and full of mystery.",
+		"Are you looking for something?"
 	],
 	Archetype.MERCHANT: [
-		"Les affaires sont les affaires.",
-		"J'ai vu de meilleures offres dans ma vie.",
-		"Tu as l'air d'avoir besoin d'aide."
+		"Business is business.",
+		"I have seen better offers in my life.",
+		"You look like you need help."
 	],
 	Archetype.HERMIT: [
-		"Laisse-moi tranquille.",
-		"La solitude est une sagesse.",
+		"Leave me alone.",
+		"Solitude is wisdom.",
 		"..."
 	],
 	Archetype.FARMER: [
-		"La recolte a ete mauvaise cette annee.",
-		"Je cherche une terre a cultiver.",
-		"La vie est dure pour un paysan."
+		"The harvest was bad this year.",
+		"I am looking for land to cultivate.",
+		"Life is hard for a farmer."
 	],
 	Archetype.WOODCUTTER: [
-		"Ces arbres ne se couperont pas tout seuls.",
-		"Le bois se fait rare par ici.",
-		"Je connais chaque arbre de cette foret."
+		"These trees won't cut themselves.",
+		"Wood is scarce around here.",
+		"I know every tree in this forest."
 	]
 }
 

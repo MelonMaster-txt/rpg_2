@@ -3,39 +3,39 @@ extends Node
 
 const JOB_RESOURCE: Dictionary = {
 	"woodcutter": "wood",
-	"farmer": "food",
-	"miner": "stone",
-	"guard": "",
-	"trader": "gold",
-	"builder": "build_points",
+	"farmer":     "berries",
+	"miner":      "stone",
+	"guard":      "",
+	"trader":     "gold",
+	"builder":    "build_points",
 }
 
 const JOB_HARVEST_TIME: Dictionary = {
 	"woodcutter": 4.0,
-	"farmer": 6.0,
-	"miner": 5.0,
-	"guard": 999.0,
-	"trader": 8.0,
-	"builder": 5.0,
+	"farmer":     6.0,
+	"miner":      5.0,
+	"guard":      999.0,
+	"trader":     8.0,
+	"builder":    5.0,
 }
 
 const JOB_ICON: Dictionary = {
-	"woodcutter": "[bois]",
-	"farmer": "[ferme]",
-	"miner": "[mine]",
-	"guard": "[garde]",
-	"trader": "[trade]",
-	"builder": "[build]",
-	"": "[zzz]",
+	"woodcutter": "[wood]",
+	"farmer":     "[farm]",
+	"miner":      "[mine]",
+	"guard":      "[guard]",
+	"trader":     "[trade]",
+	"builder":    "[build]",
+	"":           "[zzz]",
 }
 
 const JOB_TARGET_GROUP: Dictionary = {
 	"woodcutter": "tree",
-	"farmer": "tree",
-	"miner": "rock",
-	"guard": "",
-	"trader": "",
-	"builder": "tree",
+	"farmer":     "tree",
+	"miner":      "rock",
+	"guard":      "",
+	"trader":     "",
+	"builder":    "tree",
 }
 
 enum State { IDLE, SEEK_TARGET, HARVEST, RETURN_HOME, DEPOSIT }
@@ -59,11 +59,11 @@ var _wander_dir: Vector2 = Vector2.ZERO
 func _ready() -> void:
 	_owner_npc = get_parent() as CharacterBody2D
 	if _owner_npc == null:
-		push_error("WorkerAI: parent doit etre CharacterBody2D")
+		push_error("WorkerAI: parent must be a CharacterBody2D")
 		return
 	_create_job_label()
 	_state = State.IDLE
-	print("[WorkerAI] Demarre pour '%s' avec job='%s'" % [_owner_npc.get("npc_name"), job])
+	print("[WorkerAI] Started for '%s' with job='%s'" % [_owner_npc.get("npc_name"), job])
 
 
 func _create_job_label() -> void:
@@ -121,7 +121,7 @@ func _on_idle(delta: float) -> void:
 	if _target_node != null:
 		_state = State.SEEK_TARGET
 		print(
-			"[WorkerAI] '%s' -> cible '%s' (dist=%.0f)"
+			"[WorkerAI] '%s' -> target '%s' (dist=%.0f)"
 			% [
 				_owner_npc.get("npc_name"),
 				_target_node.name,
@@ -195,7 +195,7 @@ func _on_deposit() -> void:
 	if resource != "" and _chest_node != null and _chest_node.has_method("deposit"):
 		_chest_node.deposit(resource, _inventory)
 		print(
-			"[WorkerAI] '%s' depose %d %s dans le coffre"
+			"[WorkerAI] '%s' deposited %d %s in chest"
 			% [_owner_npc.get("npc_name"), _inventory, resource]
 		)
 	_inventory = 0
@@ -264,4 +264,4 @@ func update_job(new_job: String) -> void:
 	_retry_timer = 0.0
 	_state = State.IDLE
 	_update_label()
-	print("[WorkerAI] Nouveau metier : ", new_job)
+	print("[WorkerAI] New job: ", new_job)

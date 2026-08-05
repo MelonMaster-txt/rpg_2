@@ -1,57 +1,55 @@
 # companion_manager.gd
-# Autoload — Gère compagnons et esclaves du royaume.
-# Accès : CompanionManager.companions, CompanionManager.slaves
+# Autoload — Manages companions and slaves of the kingdom.
+# Access: CompanionManager.companions, CompanionManager.slaves
 extends Node
 
-# ─── Données ─────────────────────────────────────────────────────────────────
-# Chaque entrée est un Dictionary :
+# ─── Data ─────────────────────────────────────────────────────────────────────
+# Each entry is a Dictionary:
 # {
 #   "name": String, "gender": String, "role": "companion"|"slave",
-#   "job": String ("" = inactif), "archetype": String,
+#   "job": String ("" = inactive), "archetype": String,
 #   "strength": int, "max_hp": int,
 #   "skills": { "farming":int, "woodcutting":int, ... },
-#   "happiness": int  (0-100, esclaves descendent si job trop dur)
+#   "happiness": int  (0-100, slaves decrease if job is too hard)
 # }
 
 var companions: Array[Dictionary] = []
 var slaves:     Array[Dictionary] = []
 
-# Production par tick de jour (ressources générées chaque nouveau jour)
-# FIX: clés alignées sur GameManager.inventory (français) + "or" pour gold
+# Production per day tick (resources generated each new day)
 const JOB_PRODUCTION := {
-	"farmer":      { "baies": 3 },
-	"woodcutter":  { "bois": 4 },
-	"miner":       { "pierre": 3 },
-	"guard":       {},
-	"trader":      { "or": 2 },
-	"builder":     { "bois": -1, "pierre": -1, "build_points": 1 },
+	"farmer":     { "berries": 3 },
+	"woodcutter": { "wood": 4 },
+	"miner":      { "stone": 3 },
+	"guard":      {},
+	"trader":     { "gold": 2 },
+	"builder":    { "wood": -1, "stone": -1, "build_points": 1 },
 }
 
-# Jobs disponibles
 const JOBS := ["farmer", "woodcutter", "miner", "guard", "trader", "builder", ""]
 
 signal roster_changed
 
-# ─── Ajout ───────────────────────────────────────────────────────────────────
+# ─── Add ──────────────────────────────────────────────────────────────────────
 
 func add_companion(entry: Dictionary) -> void:
 	entry["role"] = "companion"
 	companions.append(entry)
 	roster_changed.emit()
-	print("[CompanionManager] Compagnon ajouté : ", entry.get("name", "?"))
+	print("[CompanionManager] Companion added: ", entry.get("name", "?"))
 
 
 func add_slave(entry: Dictionary) -> void:
 	entry["role"] = "slave"
 	slaves.append(entry)
 	roster_changed.emit()
-	print("[CompanionManager] Esclave ajouté : ", entry.get("name", "?"))
+	print("[CompanionManager] Slave added: ", entry.get("name", "?"))
 
-# ─── Gestion des jobs ────────────────────────────────────────────────────────
+# ─── Job management ───────────────────────────────────────────────────────────
 
 func assign_job(person_name: String, job: String) -> bool:
 	if not job in JOBS:
-		push_warning("CompanionManager: job inconnu '%s'" % job)
+		push_warning("CompanionManager: unknown job '%s'" % job)
 		return false
 	for entry in companions:
 		if entry["name"] == person_name:
@@ -61,7 +59,6 @@ func assign_job(person_name: String, job: String) -> bool:
 	for entry in slaves:
 		if entry["name"] == person_name:
 			entry["job"] = job
-			# Les esclaves perdent du bonheur selon la dureté du job
 			var penalty: int = _slave_happiness_penalty(job)
 			entry["happiness"] = max(0, entry.get("happiness", 100) - penalty)
 			roster_changed.emit()
@@ -77,8 +74,8 @@ func _slave_happiness_penalty(job: String) -> int:
 		"farmer":     return 5
 		_:            return 3
 
-# ─── Production quotidienne ──────────────────────────────────────────────────
-# Appelé par GameManager ou TimeSystem chaque nouveau jour
+# ─── Daily production ─────────────────────────────────────────────────────────
+# Called by GameManager each new day
 
 func process_daily_production() -> void:
 	var all_workers := companions + slaves
@@ -93,13 +90,9 @@ func process_daily_production() -> void:
 			if amount == 0:
 				continue
 			if resource == "build_points":
-				# FIX: build_points stockés dans GameManager directement
-				var cur_bp: int = GameManager.get("build_points") if GameManager.get("build_points") != null else 0
-				GameManager.set("build_points", cur_bp + amount)
+				GameManager.build_points += amount
 			else:
-				# FIX: toutes les autres ressources passent par add_item (clés fr)
 				GameManager.add_item(resource, amount)
-		# Réduction bonheur esclaves au fil du temps
 		if person["role"] == "slave":
 			person["happiness"] = max(0, person.get("happiness", 50) - 1)
 
@@ -116,10 +109,9 @@ func _get_skill_bonus(person: Dictionary, job: String) -> float:
 		_:            key = ""
 	if key == "" or not skills.has(key):
 		return 1.0
-	# Skill 0-100 → bonus 0.5x à 2.0x
 	return 0.5 + (float(skills[key]) / 100.0) * 1.5
 
-# ─── Sérialisation (sauvegarde) ───────────────────────────────────────────────
+# ─── Serialization (save) ─────────────────────────────────────────────────────
 
 func to_dict() -> Dictionary:
 	return {
@@ -137,7 +129,7 @@ func from_dict(d: Dictionary) -> void:
 		slaves.append(e)
 	roster_changed.emit()
 
-# ─── Utilitaires ─────────────────────────────────────────────────────────────
+# ─── Utilities ────────────────────────────────────────────────────────────────
 
 func get_all() -> Array[Dictionary]:
 	var all: Array[Dictionary] = []

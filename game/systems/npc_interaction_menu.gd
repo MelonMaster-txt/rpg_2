@@ -28,7 +28,7 @@ var _pending_assign_name: String = ""
 
 func _npc_name() -> String:
 	if _npc.get("data") != null: return _npc.data.npc_name
-	return str(_npc.get("npc_name") if _npc.get("npc_name") != null else "Inconnu")
+	return str(_npc.get("npc_name") if _npc.get("npc_name") != null else "Unknown")
 
 func _npc_gender() -> String:
 	if _npc.get("npc_gender") != null: return str(_npc.get("npc_gender"))
@@ -38,13 +38,13 @@ func _npc_gender() -> String:
 func _npc_archetype() -> String:
 	if _npc.get("data") != null: return _npc.data.get_archetype_name()
 	match _npc_gender():
-		"female":  return "Humaine"
-		"monster": return "Monstre"
-		_:         return "Humain"
+		"female":  return "Human (F)"
+		"monster": return "Monster"
+		_:         return "Human"
 
 func _npc_dialogue() -> String:
 	if _npc.get("data") != null: return _npc.data.get_dialogue_line()
-	var lines := ["...", "Que me veux-tu ?", "Passe ton chemin.", "Hmm."]
+	var lines := ["...", "What do you want?", "Move along.", "Hmm."]
 	return lines[randi() % lines.size()]
 
 func _npc_strength() -> int:
@@ -91,7 +91,7 @@ func _ready() -> void:
 
 func open(npc: Node) -> void:
 	if not npc is CharacterBody2D:
-		push_error("NpcInteractionMenu: npc invalide")
+		push_error("NpcInteractionMenu: invalid npc")
 		return
 	_npc = npc
 	_refresh()
@@ -108,8 +108,8 @@ func _refresh() -> void:
 	if taken:
 		var rel = _get_relation()
 		var worker = _npc.get_node_or_null("WorkerAI")
-		var current_job: String = worker.job if worker != null else "(aucun)"
-		dialogue_label.text = "Allié — Métier : %s" % current_job
+		var current_job: String = worker.job if worker != null else "(none)"
+		dialogue_label.text = "Ally — Job: %s" % current_job
 		btn_recruit.visible = false
 		btn_fight.visible   = false
 		btn_talk.visible    = false
@@ -129,13 +129,13 @@ func _populate_job_option() -> void:
 	if job_option == null: return
 	job_option.clear()
 	for job in CompanionManager.JOBS:
-		job_option.add_item(job if job != "" else "(aucun)")
+		job_option.add_item(job if job != "" else "(none)")
 
 
 func _show_relation_panel(rel: Node) -> void:
 	if relation_panel == null: return
 	if rel != null: relation_label.text = rel.summary()
-	else:           relation_label.text = "Pas encore de lien particulier."
+	else:           relation_label.text = "No special bond yet."
 	relation_panel.visible = true
 	if job_panel != null: job_panel.visible = false
 
@@ -143,9 +143,8 @@ func _show_relation_panel(rel: Node) -> void:
 func _on_rel_talk() -> void:
 	var rel = _get_relation()
 	if rel == null:
-		result_label.text = "(Pas de composant relation)"
+		result_label.text = "(No relation component)"
 		return
-	# FIX: float division explicite
 	var day: int = int(float(Time.get_ticks_msec()) / 86400000.0)
 	var msg: String = rel.talk(day)
 	result_label.text = msg
@@ -155,11 +154,10 @@ func _on_rel_talk() -> void:
 func _on_rel_gift() -> void:
 	var rel = _get_relation()
 	if rel == null: return
-	# FIX: GameManager n'a pas de variable gold — on utilise get_item/remove_item avec la clé "or"
-	if GameManager.get_item("or") < 5:
-		result_label.text = "Pas assez d'or (5 nécessaires)."
+	if GameManager.get_item("gold") < 5:
+		result_label.text = "Not enough gold (5 required)."
 		return
-	GameManager.remove_item("or", 5)
+	GameManager.remove_item("gold", 5)
 	var msg: String = rel.give_gift(5)
 	result_label.text = msg
 	relation_label.text = rel.summary()
@@ -175,13 +173,13 @@ func _on_rel_insult() -> void:
 func _on_rel_change_job() -> void:
 	_pending_assign_name = _npc_name()
 	if relation_panel != null: relation_panel.visible = false
-	_show_job_panel("Changer le métier de %s :" % _pending_assign_name)
+	_show_job_panel("Change job for %s:" % _pending_assign_name)
 
 
 func _on_btn_talk_pressed() -> void:
 	if _npc.get("data") != null:
 		var reveal: String = _npc.data.get_reveal_info()
-		result_label.text = "Vous apprenez : " + reveal if reveal != "" else "Vous le connaissez déjà."
+		result_label.text = "You learn: " + reveal if reveal != "" else "You already know them well."
 	else:
 		result_label.text = _npc_dialogue()
 
@@ -189,21 +187,21 @@ func _on_btn_talk_pressed() -> void:
 func _on_btn_recruit_pressed() -> void:
 	if _can_recruit():
 		if _npc.has_method("recruit"): _npc.recruit()
-		result_label.text = _npc_name() + " rejoint votre groupe !"
+		result_label.text = _npc_name() + " joins your group!"
 		btn_recruit.disabled = true
 		btn_fight.disabled   = true
 		_pending_assign_name = _npc_name()
-		_show_job_panel("Assigner un métier à %s :" % _pending_assign_name)
+		_show_job_panel("Assign a job to %s:" % _pending_assign_name)
 	else:
 		if _npc.get("data") != null:
 			var d = _npc.data
-			var msg := "Refus — "
-			if GameManager.charisma     < d.recruit_min_charisma: msg += "Charisme %d/%d " % [GameManager.charisma,     d.recruit_min_charisma]
+			var msg := "Refused — "
+			if GameManager.charisma     < d.recruit_min_charisma: msg += "Charisma %d/%d " % [GameManager.charisma,     d.recruit_min_charisma]
 			if GameManager.force        < d.recruit_min_force:    msg += "Force %d/%d "    % [GameManager.force,        d.recruit_min_force]
 			if GameManager.intelligence < d.recruit_min_intel:    msg += "Intel %d/%d "    % [GameManager.intelligence, d.recruit_min_intel]
 			result_label.text = msg
 		else:
-			result_label.text = "Ce personnage refuse de vous suivre."
+			result_label.text = "This character refuses to follow you."
 
 
 func _on_btn_fight_pressed() -> void:
@@ -216,28 +214,27 @@ func _on_btn_fight_pressed() -> void:
 	if player_wins:
 		_show_victory_choice()
 	else:
-		# FIX: float division explicite
 		var dmg: int = max(1, int(float(npc_power) / 4.0))
 		GameManager.life = max(0, GameManager.life - dmg)
-		result_label.text = "Vous perdez ! -%d PV." % dmg
+		result_label.text = "You lose! -%d HP." % dmg
 		btn_fight.disabled = true
 
 
 func _show_victory_choice() -> void:
-	result_label.text    = "Victoire ! Tuer ou capturer ?"
+	result_label.text    = "Victory! Kill or capture?"
 	btn_talk.visible     = false
-	btn_fight.text       = "Tuer"
+	btn_fight.text       = "Kill"
 	btn_fight.pressed.disconnect(_on_btn_fight_pressed)
 	btn_fight.pressed.connect(_on_btn_kill_pressed)
 	btn_recruit.visible  = true
-	btn_recruit.text     = "Capturer (Esclave)"
+	btn_recruit.text     = "Capture (Slave)"
 	btn_recruit.disabled = false
 	btn_recruit.pressed.disconnect(_on_btn_recruit_pressed)
 	btn_recruit.pressed.connect(_on_btn_capture_pressed)
 
 
 func _on_btn_kill_pressed() -> void:
-	result_label.text = _npc_name() + " est mort."
+	result_label.text = _npc_name() + " is dead."
 	if _npc.has_method("die"): _npc.die()
 	else: _npc.queue_free()
 	_close()
@@ -245,14 +242,14 @@ func _on_btn_kill_pressed() -> void:
 
 func _on_btn_capture_pressed() -> void:
 	if _npc.has_method("capture"): _npc.capture()
-	result_label.text    = _npc_name() + " est votre esclave."
+	result_label.text    = _npc_name() + " is now your slave."
 	btn_fight.disabled   = true
 	btn_recruit.disabled = true
 	_pending_assign_name = _npc_name()
-	_show_job_panel("Assigner un métier à %s :" % _pending_assign_name)
+	_show_job_panel("Assign a job to %s:" % _pending_assign_name)
 
 
-func _show_job_panel(title: String = "Assigner un métier :") -> void:
+func _show_job_panel(title: String = "Assign a job:") -> void:
 	if job_panel == null: return
 	if job_label != null: job_label.text = title
 	job_panel.visible = true
@@ -264,7 +261,7 @@ func _on_btn_assign_pressed() -> void:
 	var chosen_job: String = CompanionManager.JOBS[idx] if idx >= 0 else ""
 	if _pending_assign_name != "": CompanionManager.assign_job(_pending_assign_name, chosen_job)
 	if _npc != null and _npc.has_method("change_job"): _npc.change_job(chosen_job)
-	result_label.text = "%s → %s" % [_pending_assign_name, chosen_job if chosen_job != "" else "(aucun)"]
+	result_label.text = "%s -> %s" % [_pending_assign_name, chosen_job if chosen_job != "" else "(none)"]
 	job_panel.visible = false
 	if _npc_already_taken(): _show_relation_panel(_get_relation())
 
