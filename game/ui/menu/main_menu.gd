@@ -15,20 +15,23 @@ func _ready() -> void:
 
 func _on_btn_new_game_pressed() -> void:
 	GameState.reset()
-	get_tree().change_scene_to_file(GameState.OVERWORLD)
+	# FIX : change_scene_to_file attend un String, pas une constante via Autoload
+	# GameState.OVERWORLD est bien une const String → on la passe directement
+	var overworld_path: String = GameState.OVERWORLD
+	get_tree().change_scene_to_file(overworld_path)
 
 
 func _on_btn_continue_pressed() -> void:
 	for slot in range(SaveSystem.MAX_SLOTS):
 		if SaveSystem.slot_exists(slot):
 			if SaveSystem.load_game(slot):
-				get_tree().change_scene_to_file(GameState.current_scene)
+				var scene_path: String = GameState.current_scene
+				get_tree().change_scene_to_file(scene_path)
 				return
 
 
 func _on_btn_load_game_pressed() -> void:
-	# Passe en mode LOAD via métadonnée lue par save_menu au _ready()
-	GameState.set_meta("open_save_menu_mode", 0)  # 0 = LOAD
+	GameState.set_meta("open_save_menu_mode", 0)
 	get_tree().change_scene_to_file("res://game/core/save_menu.tscn")
 
 
