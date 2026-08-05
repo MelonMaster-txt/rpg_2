@@ -1,76 +1,87 @@
-# population_manager.gd — Autoload singleton
-# Gère compagnons et esclaves du royaume.
 extends Node
 
-# ─── SIGNALS ──────────────────────────────────────────────────────────────────
+# Autoload enregistré comme "PopulationManager" dans Project > Autoload
+# Si pas encore enregistré, l'ajouter via Project Settings > Autoload
+
 signal companion_added(entry: Dictionary)
 signal slave_added(entry: Dictionary)
-signal population_changed
+signal member_removed(member_name: String)
+signal job_changed(member_name: String, new_job: String)
 
-# ─── DATA ─────────────────────────────────────────────────────────────────────
-var companions: Array = []
-var slaves:     Array = []
+var companions: Array[Dictionary] = []
+var slaves:     Array[Dictionary] = []
 
-# ─── COMPANIONS ───────────────────────────────────────────────────────────────
+
+func _ready() -> void:
+	add_to_group("population_manager")
+
+
 func add_companion(entry: Dictionary) -> void:
 	entry["role"] = "companion"
 	companions.append(entry)
 	companion_added.emit(entry)
-	population_changed.emit()
-	print("[PopulationManager] Compagnon ajouté : ", entry.get("name", "???"))
+	print("[PopulationManager] Compagnon ajouté : ", entry.get("name", "?"))
 
 
-func remove_companion(npc_name: String) -> bool:
-	for i: int in range(companions.size()):
-		if companions[i].get("name", "") == npc_name:
-			companions.remove_at(i)
-			population_changed.emit()
-			return true
-	return false
-
-# ─── SLAVES ───────────────────────────────────────────────────────────────────
 func add_slave(entry: Dictionary) -> void:
 	entry["role"] = "slave"
 	slaves.append(entry)
 	slave_added.emit(entry)
-	population_changed.emit()
-	print("[PopulationManager] Esclave ajouté : ", entry.get("name", "???"))
+	print("[PopulationManager] Esclave ajouté : ", entry.get("name", "?"))
 
 
-func remove_slave(npc_name: String) -> bool:
-	for i: int in range(slaves.size()):
-		if slaves[i].get("name", "") == npc_name:
+func remove_member(member_name: String) -> void:
+	for i: int in range(companions.size() - 1, -1, -1):
+		if companions[i].get("name", "") == member_name:
+			companions.remove_at(i)
+			member_removed.emit(member_name)
+			return
+	for i: int in range(slaves.size() - 1, -1, -1):
+		if slaves[i].get("name", "") == member_name:
 			slaves.remove_at(i)
-			population_changed.emit()
-			return true
-	return false
-
-# ─── JOB ASSIGNMENT ───────────────────────────────────────────────────────────
-func assign_job(npc_name: String, job: String) -> bool:
-	for entry: Dictionary in companions:
-		if entry.get("name", "") == npc_name:
-			entry["job"] = job
-			population_changed.emit()
-			return true
-	for entry: Dictionary in slaves:
-		if entry.get("name", "") == npc_name:
-			entry["job"] = job
-			population_changed.emit()
-			return true
-	return false
-
-# ─── QUERIES ──────────────────────────────────────────────────────────────────
-func get_all() -> Array:
-	return companions + slaves
+			member_removed.emit(member_name)
+			return
 
 
-func get_workers_by_job(job: String) -> Array:
-	var result: Array = []
-	for entry: Dictionary in get_all():
-		if entry.get("job", "") == job:
-			result.append(entry)
+func assign_job(member_name: String, new_job: String) -> void:
+	for member in companions:
+		if member.get("name", "") == member_name:
+			member["job"] = new_job
+			job_changed.emit(member_name, new_job)
+			return
+	for member in slaves:
+		if member.get("name", "") == member_name:
+			member["job"] = new_job
+			job_changed.emit(member_name, new_job)
+			return
+
+
+func get_all_members() -> Array[Dictionary]:
+	var all: Array[Dictionary] = []
+	all.append_array(companions)
+	all.append_array(slaves)
+	return all
+
+
+func get_population_count() -> int:
+	return companions.size() + slaves.size()
+
+
+func get_workers_by_job(job: String) -> Array[Dictionary]:
+	var result: Array[Dictionary] = []
+	for member in get_all_members():
+		if member.get("job", "") == job:
+			result.append(member)
 	return result
 
 
-func get_total_count() -> int:
-	return companions.size() + slaves.size()
+func save_data() -> Dictionary:
+	return {
+		"companions": companions,
+		"slaves":     slaves,
+	}
+
+
+func load_data(d: Dictionary) -> void:
+	companions = d.get("companions", [])
+	slaves     = d.get("slaves",     [])

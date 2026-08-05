@@ -1,4 +1,3 @@
-# random_npc.gd
 extends CharacterBody2D
 
 signal interaction_requested(npc)
@@ -211,12 +210,25 @@ func die() -> void:
 	queue_free()
 
 
+func _get_population_manager() -> Node:
+	# Essaie d'abord comme Autoload enregistré
+	var pm: Node = get_node_or_null("/root/PopulationManager")
+	if pm != null:
+		return pm
+	# Sinon cherche dans le groupe
+	var nodes: Array = get_tree().get_nodes_in_group("population_manager")
+	if nodes.size() > 0:
+		return nodes[0]
+	return null
+
+
 func recruit() -> void:
 	state = 1
 	is_hostile = false
 	var entry: Dictionary = _build_kingdom_entry("companion")
-	if PopulationManager != null:
-		PopulationManager.add_companion(entry)
+	var pm: Node = _get_population_manager()
+	if pm != null and pm.has_method("add_companion"):
+		pm.add_companion(entry)
 	npc_recruited.emit(self)
 	_start_working("woodcutter")
 	_add_relation_component()
@@ -226,8 +238,9 @@ func capture() -> void:
 	state = 2
 	is_hostile = false
 	var entry: Dictionary = _build_kingdom_entry("slave")
-	if PopulationManager != null:
-		PopulationManager.add_slave(entry)
+	var pm: Node = _get_population_manager()
+	if pm != null and pm.has_method("add_slave"):
+		pm.add_slave(entry)
 	npc_captured.emit(self)
 	_start_working("woodcutter")
 	_add_relation_component()
