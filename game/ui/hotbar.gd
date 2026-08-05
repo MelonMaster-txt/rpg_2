@@ -1,4 +1,4 @@
-extends Control
+extends CanvasLayer
 
 # ─── CONSTS ───────────────────────────────────────────────────────────────────
 const SLOT_COUNT: int = 8
