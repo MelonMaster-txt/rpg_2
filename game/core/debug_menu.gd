@@ -1,5 +1,5 @@
 # debug_menu.gd - Autoload
-# Menu de debug accessible avec F3 en jeu
+# Debug menu accessible with F3 in-game
 extends Node
 
 var _visible: bool = false
@@ -38,4 +38,4 @@ func _process(_delta: float) -> void:
 	_label.text = "[b][color=lime]DEBUG[/color][/b]\n" \
 		+ "FPS: %d\n" % fps \
 		+ "Chunks: %d\n" % chunks \
-		+ "NPC actifs: %d\n" % npcs
+		+ "Active NPCs: %d\n" % npcs

@@ -1,4 +1,4 @@
-# WorkbenchUI - branche sur ItemDatabase (autoload) + GameManager
+# WorkbenchUI - uses ItemDatabase (autoload) + GameManager
 extends Control
 
 @onready var item_list: VBoxContainer = $VBoxContainer/ItemList
@@ -31,17 +31,17 @@ func _build_list() -> void:
 		var row := HBoxContainer.new()
 
 		var lbl := Label.new()
-		var keys: Array = data["recette"].keys()
+		var keys: Array = data["recipe"].keys()
 		var parts: Array = []
 		for k in keys:
-			parts.append("%dx %s" % [data["recette"][k], k])
-		var recette_str: String = ", ".join(parts)
-		lbl.text = "%s  [%s]" % [data["nom"], recette_str]
+			parts.append("%dx %s" % [data["recipe"][k], k])
+		var recipe_str: String = ", ".join(parts)
+		lbl.text = "%s  [%s]" % [data["name"], recipe_str]
 		lbl.modulate = Color.WHITE if can else Color(0.5, 0.5, 0.5)
 		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 		var btn := Button.new()
-		btn.text = "Crafter"
+		btn.text = "Craft"
 		btn.disabled = not can
 		btn.process_mode = Node.PROCESS_MODE_ALWAYS
 		btn.pressed.connect(_on_craft_pressed.bind(item_id))
@@ -52,8 +52,8 @@ func _build_list() -> void:
 
 func _on_craft_pressed(item_id: String) -> void:
 	var data: Dictionary = ItemDatabase.get_item(item_id)
-	var resources: Array = data["recette"].keys()
+	var resources: Array = data["recipe"].keys()
 	for resource in resources:
-		GameManager.remove_item(resource, data["recette"][resource])
+		GameManager.remove_item(resource, data["recipe"][resource])
 	GameManager.add_item(item_id, 1)
 	_build_list()

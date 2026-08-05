@@ -1,4 +1,4 @@
-# SaveMenu — 8 slots, utilisable seul ou embarqué dans InGameSaveMenu
+# SaveMenu — 8 slots, usable standalone or embedded in InGameSaveMenu
 extends Control
 
 enum Mode { LOAD = 0, SAVE = 1 }
@@ -31,7 +31,7 @@ func _ready() -> void:
 	_refresh_slots()
 
 
-# ── API publique
+# ── Public API
 func setup(p_mode: int, p_embedded: bool = false) -> void:
 	mode     = p_mode as Mode
 	embedded = p_embedded
@@ -45,8 +45,8 @@ func _apply_embedded() -> void:
 	delete_button.visible = not embedded
 	if not embedded:
 		match mode:
-			Mode.LOAD: title_label.text = "Charger"
-			Mode.SAVE: title_label.text = "Sauvegarder"
+			Mode.LOAD: title_label.text = "Load"
+			Mode.SAVE: title_label.text = "Save"
 
 
 func _refresh_slots() -> void:
@@ -55,7 +55,7 @@ func _refresh_slots() -> void:
 		btn.disabled = false
 		if SaveSystem.slot_exists(i):
 			var info := SaveSystem.get_slot_info(i)
-			btn.text = "Slot %d\n%s • Niv %d\nJour %d • %s" % [
+			btn.text = "Slot %d\n%s • Lv %d\nDay %d • %s" % [
 				i + 1,
 				str(info.get("player_name",  "?")),
 				int(info.get("player_level", 1)),
@@ -63,7 +63,7 @@ func _refresh_slots() -> void:
 				str(info.get("time_string",  "??:??")),
 			]
 		else:
-			btn.text = "Slot %d\n— Vide —" % (i + 1)
+			btn.text = "Slot %d\n— Empty —" % (i + 1)
 			if mode == Mode.LOAD:
 				btn.disabled = true
 
@@ -73,8 +73,8 @@ func _slot_pressed(slot: int) -> void:
 		return
 	_pending_slot = slot
 	if SaveSystem.slot_exists(slot):
-		_pending_action = ("Écraser" if mode == Mode.SAVE else "Charger")
-		confirm_label.text = "%s le slot %d ?" % [_pending_action, slot + 1]
+		_pending_action = ("Overwrite" if mode == Mode.SAVE else "Load")
+		confirm_label.text = "%s slot %d?" % [_pending_action, slot + 1]
 		confirm_panel.show()
 	else:
 		_execute(slot)
@@ -93,21 +93,20 @@ func _execute(slot: int) -> void:
 				get_tree().paused = false
 			get_tree().change_scene_to_file(GameState.current_scene)
 		else:
-			push_error("[SaveMenu] Échec chargement slot %d" % slot)
+			push_error("[SaveMenu] Failed to load slot %d" % slot)
 
 
 func _on_delete_button_pressed() -> void:
-	# Bouton global Supprimer : supprime le slot sélectionné dans le menu principal
 	if _pending_slot < 0:
 		return
 	if not SaveSystem.slot_exists(_pending_slot):
 		return
-	confirm_label.text = "Supprimer le slot %d ?" % (_pending_slot + 1)
-	_pending_action = "Supprimer"
+	confirm_label.text = "Delete slot %d?" % (_pending_slot + 1)
+	_pending_action = "Delete"
 	confirm_panel.show()
 
 
-# Handlers slots
+# Slot handlers
 func _on_slot_1_pressed() -> void: _slot_pressed(0)
 func _on_slot_2_pressed() -> void: _slot_pressed(1)
 func _on_slot_3_pressed() -> void: _slot_pressed(2)
@@ -117,12 +116,12 @@ func _on_slot_6_pressed() -> void: _slot_pressed(5)
 func _on_slot_7_pressed() -> void: _slot_pressed(6)
 func _on_slot_8_pressed() -> void: _slot_pressed(7)
 
-# Handlers confirm
+# Confirm handlers
 func _on_confirm_yes_pressed() -> void:
 	confirm_panel.hide()
 	if _pending_slot < 0:
 		return
-	if _pending_action == "Supprimer":
+	if _pending_action == "Delete":
 		SaveSystem.delete_slot(_pending_slot)
 		_pending_slot = -1
 		_refresh_slots()
@@ -135,6 +134,6 @@ func _on_confirm_no_pressed() -> void:
 	_pending_slot = -1
 	_pending_action = ""
 
-# Back (visible seulement en mode standalone)
+# Back (visible in standalone mode only)
 func _on_back_pressed() -> void:
 	get_tree().change_scene_to_file("res://game/ui/menu/main_menu.tscn")

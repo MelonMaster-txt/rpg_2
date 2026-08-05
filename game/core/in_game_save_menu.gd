@@ -1,4 +1,4 @@
-# InGameSaveMenu — overlay Échap en jeu (CanvasLayer)
+# InGameSaveMenu — Escape overlay in-game (CanvasLayer)
 # Mode SAVE = 1, Mode LOAD = 0  (enum SaveMenu.Mode)
 extends CanvasLayer
 
@@ -11,7 +11,7 @@ var _open: bool = false
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	panel.hide()
-	# _init est réservé en Godot 4 (constructeur) — on utilise _setup à la place
+	# _init is reserved in Godot 4 (constructor) — using _setup instead
 	call_deferred("_setup")
 
 

@@ -10,21 +10,21 @@ extends CharacterBody2D
 var _held_item: String = ""
 signal held_item_changed(item_id: String)
 
-const QUICK_SELECT: Array[String] = ["pioche", "arrosoir", "graine_baie"]
+const QUICK_SELECT: Array[String] = ["hoe", "watering_can", "berry_seed"]
 var _quick_index: int = -1
 
 var _anim_timer: float = 0.0
 const ANIM_STEP: float = 0.12
 var _walk_frame: int = 0
 
-# Cache du farm_placer pour eviter get_first_node_in_group a chaque interact
+# Cache the farm_placer to avoid get_first_node_in_group on every interact
 var _farm_placer: Node = null
 
 func _ready() -> void:
 	add_to_group("player")
 	if camera != null:
 		camera.enabled = true
-	# On cherche le farm_placer une seule fois apres le premier frame
+	# Cache farm_placer after the first frame
 	call_deferred("_cache_farm_placer")
 
 func _cache_farm_placer() -> void:
@@ -67,7 +67,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("ui_cancel"):
 		set_held_item("")
 	elif event.is_action_pressed("interact") and not event.is_echo():
-		if _held_item == "pioche":
+		if _held_item == "hoe":
 			_try_farm_interact()
 	elif event is InputEventKey:
 		var key_event := event as InputEventKey
@@ -75,7 +75,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_cycle_held_item()
 
 func _try_farm_interact() -> void:
-	# Re-cache si la scene a change (transition)
+	# Re-cache if the scene changed (transition)
 	if _farm_placer == null or not is_instance_valid(_farm_placer):
 		_farm_placer = get_tree().get_first_node_in_group("farm_placer")
 	if _farm_placer == null or not _farm_placer.has_method("interact_at"):

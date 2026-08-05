@@ -1,14 +1,14 @@
 # GameManager.gd — Autoload singleton
 extends Node
 
-# ─── INVENTAIRE ───────────────────────────────────────────────────────────────────
+# ─── INVENTORY ────────────────────────────────────────────────────────────────
 var inventory: Dictionary = {
-	"bois":        0,
-	"baies":       0,
-	"pierre":      0,
-	"graine_baie": 0,
-	"pioche":      0,
-	"arrosoir":    0,
+	"wood":        0,
+	"berries":     0,
+	"stone":       0,
+	"berry_seed":  0,
+	"hoe":         0,
+	"watering_can": 0,
 }
 
 signal inventory_changed(item: String, amount: int)
@@ -30,16 +30,16 @@ func remove_item(item: String, amount: int = 1) -> bool:
 func get_item(item: String) -> int:
 	return inventory.get(item, 0)
 
-# ──── GAME STATS ──────────────────────────────────────────────────────────────────
-var life: int = 0
-var force: int = 0
-var stamina: int = 0
-var luck: int = 0
-var intelligence: int = 0
-var charisma: int = 0
-var speed: int = 0
+# ─── GAME STATS ───────────────────────────────────────────────────────────────
+var life: int = 100
+var force: int = 10
+var stamina: int = 10
+var luck: int = 5
+var intelligence: int = 5
+var charisma: int = 5
+var speed: int = 10
 
-# ─── SPAWN POSITION ───────────────────────────────────────────────────────────────
+# ─── SPAWN POSITION ───────────────────────────────────────────────────────────
 var saved_spawn_position: Vector2 = Vector2.ZERO
 var has_saved_position: bool = false
 
@@ -51,7 +51,7 @@ func consume_spawn_position() -> Vector2:
 	has_saved_position = false
 	return saved_spawn_position
 
-# ─── FARM TILES PERSISTANCE ────────────────────────────────────────────────────────
+# ─── FARM TILES PERSISTENCE ───────────────────────────────────────────────────
 var farm_tiles_data: Array = []
 
 func save_farm_tiles(tile_map: Dictionary) -> void:
@@ -74,7 +74,7 @@ func restore_farm_tiles(container: Node, tile_map: Dictionary) -> void:
 func _pos_key(pos: Vector2) -> String:
 	return "%d_%d" % [int(pos.x), int(pos.y)]
 
-# ─── TEMPS ──────────────────────────────────────────────────────────────────────────
+# ─── TIME ─────────────────────────────────────────────────────────────────────
 const DAY_DURATION: float = 240.0
 
 var current_time: float = 0.0
@@ -83,14 +83,14 @@ var hour: int = 6
 var minute: int = 0
 var is_day: bool = true
 
-# Temps total de jeu (incrémenté ici car GameManager tourne toujours, hors pause)
+# Total playtime (incremented here since GameManager always runs, outside pause)
 var play_time: float = 0.0
 
 signal time_changed(hour: int, minute: int, day: int)
 signal day_night_changed(is_day: bool)
 
 func _process(delta: float) -> void:
-	# Temps de jeu réel (ne tourne pas si le jeu est en pause)
+	# Real playtime (does not tick when game is paused)
 	if not get_tree().paused:
 		play_time += delta
 

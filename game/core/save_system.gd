@@ -23,11 +23,11 @@ func save_game(slot: int) -> bool:
 	data["slot"]      = slot
 	var file := FileAccess.open(get_save_path(slot), FileAccess.WRITE)
 	if file == null:
-		push_error("[SaveSystem] Impossible d'écrire slot %d" % slot)
+		push_error("[SaveSystem] Cannot write slot %d" % slot)
 		return false
 	file.store_string(JSON.stringify(data, "\t"))
 	file.close()
-	print("[SaveSystem] Slot %d sauvegardé." % slot)
+	print("[SaveSystem] Slot %d saved." % slot)
 	return true
 
 
@@ -41,7 +41,7 @@ func load_game(slot: int) -> bool:
 	var json := JSON.new()
 	if json.parse(file.get_as_text()) != OK:
 		file.close()
-		push_error("[SaveSystem] JSON invalide slot %d" % slot)
+		push_error("[SaveSystem] Invalid JSON slot %d" % slot)
 		return false
 	file.close()
 	var data = json.get_data()
@@ -50,7 +50,7 @@ func load_game(slot: int) -> bool:
 	GameState.from_dict(data)
 	if has_node("/root/GameManager"):
 		GameState.apply_to_game_manager()
-	print("[SaveSystem] Slot %d chargé." % slot)
+	print("[SaveSystem] Slot %d loaded." % slot)
 	return true
 
 
@@ -58,7 +58,7 @@ func delete_slot(slot: int) -> void:
 	var path := get_save_path(slot)
 	if FileAccess.file_exists(path):
 		DirAccess.remove_absolute(path)
-		print("[SaveSystem] Slot %d supprimé." % slot)
+		print("[SaveSystem] Slot %d deleted." % slot)
 
 
 func slot_exists(slot: int) -> bool:
@@ -80,10 +80,10 @@ func get_slot_info(slot: int) -> Dictionary:
 	var raw_play: float = d.get("play_time", 0.0)
 	var play_sec: int = int(raw_play)
 	return {
-		"save_date":   str(d.get("save_date",   "")),
-		"player_name": str(d.get("player_name", "?")),
+		"save_date":    str(d.get("save_date",    "")),
+		"player_name":  str(d.get("player_name",  "?")),
 		"player_level": int(d.get("player_level", 1)),
-		"play_time":   play_sec,
-		"day_count":   int(d.get("day_count",   1)),
-		"time_string": str(d.get("time_string", "06:00")),
+		"play_time":    play_sec,
+		"day_count":    int(d.get("day_count",    1)),
+		"time_string":  str(d.get("time_string",  "06:00")),
 	}

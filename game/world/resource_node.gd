@@ -1,5 +1,5 @@
 # ResourceNode.gd
-# Structure de la scene :
+# Scene structure:
 #   ResourceNode (Area2D)
 #     ├── CollisionShape2D
 #     ├── Sprite2D
@@ -7,9 +7,9 @@
 #     └── RespawnTimer (Timer)
 extends Area2D
 
-enum ResourceType { BOIS, BAIES, PIERRE }
+enum ResourceType { WOOD, BERRIES, STONE }
 
-@export var resource_type: ResourceType = ResourceType.BOIS
+@export var resource_type: ResourceType = ResourceType.WOOD
 @export var amount_min: int = 1
 @export var amount_max: int = 3
 @export var respawn_time: float = 30.0
@@ -30,13 +30,11 @@ func _ready() -> void:
 	body_exited.connect(_on_body_exited)
 	interact_hint.visible = false
 	match resource_type:
-		ResourceType.BOIS:   interact_hint.text = "[E] Couper le bois"
-		ResourceType.BAIES:  interact_hint.text = "[E] Cueillir des baies"
-		ResourceType.PIERRE: interact_hint.text = "[E] Ramasser de la pierre"
+		ResourceType.WOOD:    interact_hint.text = "[E] Chop wood"
+		ResourceType.BERRIES: interact_hint.text = "[E] Pick berries"
+		ResourceType.STONE:   interact_hint.text = "[E] Gather stone"
 
 func _unhandled_input(event: InputEvent) -> void:
-	# On utilise _unhandled_input pour ne pas entrer en conflit
-	# avec d'autres handlers (workbench, etc.)
 	if player_nearby and not is_depleted and event.is_action_pressed("interact"):
 		get_viewport().set_input_as_handled()
 		harvest()
@@ -57,15 +55,15 @@ func harvest() -> void:
 	var item_key: String = ""
 	var label_text: String = ""
 	match resource_type:
-		ResourceType.BOIS:
-			item_key   = "bois"
-			label_text = "+%d Bois" % amount
-		ResourceType.BAIES:
-			item_key   = "baies"
-			label_text = "+%d Baies" % amount
-		ResourceType.PIERRE:
-			item_key   = "pierre"
-			label_text = "+%d Pierre" % amount
+		ResourceType.WOOD:
+			item_key   = "wood"
+			label_text = "+%d Wood" % amount
+		ResourceType.BERRIES:
+			item_key   = "berries"
+			label_text = "+%d Berries" % amount
+		ResourceType.STONE:
+			item_key   = "stone"
+			label_text = "+%d Stone" % amount
 	if item_key != "":
 		GameManager.add_item(item_key, amount)
 		_show_pickup_text(label_text)

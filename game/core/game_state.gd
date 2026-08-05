@@ -3,7 +3,7 @@ extends Node
 
 const OVERWORLD := "res://game/world/scenes/overworld.tscn"
 
-var player_name: String      = "Barbare"
+var player_name: String      = "Barbarian"
 var player_health: int       = 100
 var player_position: Vector2 = Vector2.ZERO
 var player_gold: int         = 0
@@ -19,7 +19,7 @@ var inventory: Dictionary    = {}
 var current_time: float      = 0.0
 var current_day_gm: int      = 1
 var farm_tiles_data: Array   = []
-var time_string: String      = "06:00"  # heure affichée en jeu au moment de la save
+var time_string: String      = "06:00"  # in-game time at the moment of save
 
 
 func to_dict() -> Dictionary:
@@ -45,7 +45,7 @@ func to_dict() -> Dictionary:
 
 
 func from_dict(data: Dictionary) -> void:
-	player_name     = str(data.get("player_name",   "Barbare"))
+	player_name     = str(data.get("player_name",   "Barbarian"))
 	player_health   = int(data.get("player_health",  100))
 	var pos         = data.get("player_position",   {"x": 0.0, "y": 0.0})
 	player_position = Vector2(float(pos.get("x", 0.0)), float(pos.get("y", 0.0)))
@@ -71,13 +71,13 @@ func reset() -> void:
 	time_string = "06:00"
 
 
-# --- Appelé juste avant save_game() ---
+# --- Called just before save_game() ---
 func sync_from_game_manager() -> void:
 	inventory       = GameManager.inventory.duplicate()
 	current_time    = GameManager.current_time
 	current_day_gm  = GameManager.current_day
 	day_count       = GameManager.current_day
-	play_time       = GameManager.play_time   # durée de jeu totale
+	play_time       = GameManager.play_time
 	player_health   = GameManager.life
 	player_level    = GameManager.force
 	farm_tiles_data = []
@@ -86,11 +86,11 @@ func sync_from_game_manager() -> void:
 	var players := get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
 		player_position = (players[0] as Node2D).global_position
-	# heure affichée en HUD au moment de la save
+	# displayed time in HUD at save moment
 	time_string = GameManager.get_time_string()
 
 
-# --- Appelé juste après load_game() ---
+# --- Called just after load_game() ---
 func apply_to_game_manager() -> void:
 	for key in inventory:
 		GameManager.inventory[key] = inventory[key]
