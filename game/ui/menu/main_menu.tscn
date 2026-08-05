@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cbtayjsodd6b0" path="res://game/ui/menu/main_menu.gd" id="1_d2khq"]
 
-[node name="MainMenu" type="Control" unique_id=1594636078]
+[node name="MainMenu" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,7 +11,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_d2khq")
 
-[node name="Background" type="ColorRect" parent="." unique_id=876020236]
+[node name="Background" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -20,7 +20,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.4117647, 0.5529412, 1, 0.22352941)
 
-[node name="TitleLabel" type="Label" parent="." unique_id=1207446796]
+[node name="TitleLabel" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -32,7 +32,7 @@ text = "ROAD TO KINGDOM"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ButtonContainer" type="VBoxContainer" parent="." unique_id=300016537]
+[node name="ButtonContainer" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -41,31 +41,31 @@ offset_left = 340.0
 offset_top = 218.0
 offset_right = -340.0
 offset_bottom = -218.0
-grow_horizontal = 2
-grow_vertical = 2
+grow_horizontal = 1
+grow_vertical = 1
 theme_override_constants/separation = 30
 
-[node name="BtnNewGame" type="Button" parent="ButtonContainer" unique_id=933306530]
+[node name="BtnNewGame" type="Button" parent="ButtonContainer"]
 custom_minimum_size = Vector2(200, 50)
 layout_mode = 2
 text = "New Game"
 
-[node name="BtnContinue" type="Button" parent="ButtonContainer" unique_id=616624334]
+[node name="BtnContinue" type="Button" parent="ButtonContainer"]
 custom_minimum_size = Vector2(200, 50)
 layout_mode = 2
 text = "Continue Game"
 
-[node name="BtnLoadGame" type="Button" parent="ButtonContainer" unique_id=1886728342]
+[node name="BtnLoadGame" type="Button" parent="ButtonContainer"]
 custom_minimum_size = Vector2(200, 50)
 layout_mode = 2
 text = "Load Game"
 
-[node name="BtnQuit" type="Button" parent="ButtonContainer" unique_id=894055093]
+[node name="BtnQuit" type="Button" parent="ButtonContainer"]
 custom_minimum_size = Vector2(200, 50)
 layout_mode = 2
 text = "Quit"
 
-[node name="VersionLabel" type="Label" parent="." unique_id=1938397784]
+[node name="VersionLabel" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0

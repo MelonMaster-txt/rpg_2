@@ -1,22 +1,63 @@
 extends CanvasLayer
 
-# ─── SIGNALS ──────────────────────────────────────────────────────────────────
+# in_game_save_menu.gd
+# Hiérarchie réelle dans in_game_save_menu.tscn :
+#   InGameSaveMenu (CanvasLayer)
+#     Panel (Control)
+#       Overlay (ColorRect)
+#       CenterBox (VBoxContainer)
+#         ModeButtons > BtnSaveMode, BtnLoadMode
+#         BottomButtons > BtnResume, BtnQuitToMenu
+#       SaveMenu (instance save_menu.tscn)
+
 signal resume_requested
 
-# ─── ONREADY ──────────────────────────────────────────────────────────────────
-@onready var _save_menu: Control = $SaveMenu
+@onready var _save_menu:      Control = $Panel/SaveMenu
+@onready var _btn_save_mode:  Button  = $Panel/CenterBox/ModeButtons/BtnSaveMode
+@onready var _btn_load_mode:  Button  = $Panel/CenterBox/ModeButtons/BtnLoadMode
+@onready var _btn_resume:     Button  = $Panel/CenterBox/BottomButtons/BtnResume
+@onready var _btn_quit:       Button  = $Panel/CenterBox/BottomButtons/BtnQuitToMenu
+
 
 func _ready() -> void:
+	if _save_menu == null:
+		push_error("InGameSaveMenu: $Panel/SaveMenu introuvable")
+		return
 	_save_menu.visible = false
+	# Les signaux BtnSaveMode/BtnLoadMode/BtnResume/BtnQuitToMenu
+	# sont connectés via le .tscn -> on ne reconnecte PAS ici
+
 
 func open() -> void:
-	_save_menu.visible = true
+	if _save_menu:
+		_save_menu.visible = true
 	get_tree().paused = true
 
+
 func close() -> void:
-	_save_menu.visible = false
+	if _save_menu:
+		_save_menu.visible = false
 	get_tree().paused = false
 	emit_signal("resume_requested")
 
-func _on_resume_pressed() -> void:
+
+# Callbacks connectés via .tscn
+func _on_btn_save_mode_pressed() -> void:
+	if _save_menu:
+		_save_menu.set_mode("save")
+		_save_menu.visible = true
+
+
+func _on_btn_load_mode_pressed() -> void:
+	if _save_menu:
+		_save_menu.set_mode("load")
+		_save_menu.visible = true
+
+
+func _on_btn_resume_pressed() -> void:
 	close()
+
+
+func _on_btn_quit_to_menu_pressed() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file.call_deferred("res://game/ui/menu/main_menu.tscn")
