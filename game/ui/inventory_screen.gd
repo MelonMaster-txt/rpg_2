@@ -1,11 +1,10 @@
 # inventory_screen.gd
 # Inventaire complet : grille dynamique depuis ItemDatabase,
 # onglets par catégorie, panneau stats joueur, slots d'équipement,
-# tooltip au survol, bouton Utiliser pour consommables.
+# tooltip au survol (suit la souris), bouton Utiliser pour consommables.
 # Ouverture : touche "inventory" (I par défaut)
 extends Control
 
-# ─── Catégories affichées dans les onglets ──────────────────────────────────
 const TABS: Array = [
 	{"id": "all",         "label": "Tout"},
 	{"id": "ressource",   "label": "Ressources"},
@@ -15,7 +14,6 @@ const TABS: Array = [
 	{"id": "equipement",  "label": "Equipements"},
 ]
 
-# ─── Emojis par item (fallback si pas d'icône) ──────────────────────────────
 const EMOJI: Dictionary = {
 	"wood":             "🪵",
 	"stone":            "🪨",
@@ -47,23 +45,19 @@ const EMOJI: Dictionary = {
 	"amulette_foi":     "💎",
 }
 
-# ─── Nœuds ──────────────────────────────────────────────────────────────────
-@onready var _tab_bar:      HBoxContainer = $BG/Panel/VBox/TopBar/TabBar
-@onready var _close_btn:    Button        = $BG/Panel/VBox/TopBar/CloseBtn
-@onready var _grid:         GridContainer = $BG/Panel/VBox/Content/Left/ScrollContainer/Grid
-@onready var _stats_panel:  VBoxContainer = $BG/Panel/VBox/Content/Right/Stats
-@onready var _equip_panel:  VBoxContainer = $BG/Panel/VBox/Content/Right/Equip
+@onready var _tab_bar:      HBoxContainer  = $BG/Panel/VBox/TopBar/TabBar
+@onready var _close_btn:    Button         = $BG/Panel/VBox/TopBar/CloseBtn
+@onready var _grid:         GridContainer  = $BG/Panel/VBox/Content/Left/ScrollContainer/Grid
+@onready var _stats_panel:  VBoxContainer  = $BG/Panel/VBox/Content/Right/Stats
+@onready var _equip_panel:  VBoxContainer  = $BG/Panel/VBox/Content/Right/Equip
 @onready var _tooltip:      PanelContainer = $Tooltip
-@onready var _tooltip_lbl:  Label         = $Tooltip/Label
+@onready var _tooltip_lbl:  Label          = $Tooltip/Label
 
-# ─── État ───────────────────────────────────────────────────────────────────
-var _is_open:       bool   = false
-var _dirty:         bool   = false
-var _active_tab:    String = "all"
-# Slot actif équipé : { "weapon": item_id||"", "armor": ..., "shield": ..., "amulet": ... }
-var _equipped:      Dictionary = {"weapon": "", "armor": "", "shield": "", "amulet": ""}
+var _is_open:    bool       = false
+var _dirty:      bool       = false
+var _active_tab: String     = "all"
+var _equipped:   Dictionary = {"weapon": "", "armor": "", "shield": "", "amulet": ""}
 
-# ─── Init ───────────────────────────────────────────────────────────────────
 func _ready() -> void:
 	add_to_group("inventory_screen")
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -78,6 +72,15 @@ func _ready() -> void:
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("inventory"):
 		toggle()
+
+func _process(_delta: float) -> void:
+	# BUG FIX : tooltip suit la souris dans _process
+	if _tooltip.visible:
+		_tooltip.global_position = get_global_mouse_position() + Vector2(14, 10)
+	if _dirty and _is_open:
+		_dirty = false
+		_rebuild_grid()
+		_rebuild_equip()
 
 func toggle() -> void:
 	_is_open = not _is_open
@@ -99,13 +102,7 @@ func _on_stats_changed() -> void:
 	if _is_open:
 		_rebuild_stats()
 
-func _process(_delta: float) -> void:
-	if _dirty and _is_open:
-		_dirty = false
-		_rebuild_grid()
-		_rebuild_equip()
-
-# ─── Onglets ─────────────────────────────────────────────────────────────
+# ─── Onglets ───────────────────────────────────────────────────────────
 func _build_tabs() -> void:
 	for c in _tab_bar.get_children():
 		c.queue_free()
@@ -120,12 +117,10 @@ func _on_tab_pressed(tab_id: String) -> void:
 	_active_tab = tab_id
 	_rebuild_grid()
 
-# ─── Grille items ───────────────────────────────────────────────────────────
+# ─── Grille ───────────────────────────────────────────────────────────────
 func _rebuild_grid() -> void:
 	for c in _grid.get_children():
 		c.queue_free()
-
-	# Filtre : items en inventaire (ou onglet = all)
 	var shown: Array = []
 	for item_id in GameManager.inventory:
 		var qty: int = GameManager.get_item(item_id)
@@ -138,14 +133,12 @@ func _rebuild_grid() -> void:
 		if _active_tab != "all" and cat != _active_tab:
 			continue
 		shown.append(item_id)
-
 	if shown.is_empty():
 		var lbl := Label.new()
 		lbl.text = "Aucun item."
 		lbl.modulate = Color(0.5, 0.5, 0.5)
 		_grid.add_child(lbl)
 		return
-
 	for item_id in shown:
 		_grid.add_child(_make_card(item_id))
 
@@ -176,13 +169,11 @@ func _make_card(item_id: String) -> PanelContainer:
 	var vbox := VBoxContainer.new()
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 
-	# Emoji / icône
 	var icon_lbl := Label.new()
 	icon_lbl.text = EMOJI.get(item_id, "?")
 	icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	icon_lbl.add_theme_font_size_override("font_size", 26)
 
-	# Nom
 	var name_lbl := Label.new()
 	name_lbl.text = data.get("name", item_id)
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -191,7 +182,6 @@ func _make_card(item_id: String) -> PanelContainer:
 	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
 	name_lbl.custom_minimum_size = Vector2(72, 0)
 
-	# Quantité
 	var qty_lbl := Label.new()
 	qty_lbl.text = "x%d" % qty
 	qty_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -202,7 +192,6 @@ func _make_card(item_id: String) -> PanelContainer:
 	vbox.add_child(name_lbl)
 	vbox.add_child(qty_lbl)
 
-	# Bouton Utiliser (consommable en inventaire)
 	if data.get("consumable", false) and qty > 0:
 		var btn := Button.new()
 		btn.text = "Utiliser"
@@ -211,7 +200,6 @@ func _make_card(item_id: String) -> PanelContainer:
 		btn.pressed.connect(_on_use_pressed.bind(item_id))
 		vbox.add_child(btn)
 
-	# Bouton Equiper / Désequiper
 	var slot: String = data.get("equip_slot", "")
 	if slot != "" and qty > 0:
 		var eq_btn := Button.new()
@@ -226,35 +214,29 @@ func _make_card(item_id: String) -> PanelContainer:
 		vbox.add_child(eq_btn)
 
 	card.add_child(vbox)
-
-	# Tooltip au survol
 	card.mouse_entered.connect(_show_tooltip.bind(item_id))
 	card.mouse_exited.connect(_hide_tooltip)
-
 	return card
 
-# ─── Panneau stats joueur ─────────────────────────────────────────────────────
+# ─── Stats ───────────────────────────────────────────────────────────────
 func _rebuild_stats() -> void:
 	for c in _stats_panel.get_children():
 		c.queue_free()
-
 	var title := Label.new()
 	title.text = "--- Stats ---"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 13)
 	_stats_panel.add_child(title)
-
 	var gm := GameManager
 	var stats: Array = [
-		["PV",           "%d / %d" % [gm.life, gm.max_life], Color(0.9, 0.3, 0.3)],
-		["Force",        str(gm.force),       Color(1.0, 0.6, 0.3)],
-		["Stamina",      str(gm.stamina),     Color(0.4, 0.8, 0.4)],
-		["Vitesse",      str(gm.speed),       Color(0.5, 0.8, 1.0)],
-		["Armure",       str(gm.armor),       Color(0.7, 0.7, 0.7)],
-		["Charisme",     str(gm.charisma),    Color(1.0, 0.7, 1.0)],
-		["Chance",       str(gm.luck),        Color(1.0, 0.9, 0.3)],
+		["PV",       "%d / %d" % [gm.life, gm.max_life], Color(0.9, 0.3, 0.3)],
+		["Force",    str(gm.force),    Color(1.0, 0.6, 0.3)],
+		["Stamina",  str(gm.stamina),  Color(0.4, 0.8, 0.4)],
+		["Vitesse",  str(gm.speed),    Color(0.5, 0.8, 1.0)],
+		["Armure",   str(gm.armor),    Color(0.7, 0.7, 0.7)],
+		["Charisme", str(gm.charisma), Color(1.0, 0.7, 1.0)],
+		["Chance",   str(gm.luck),     Color(1.0, 0.9, 0.3)],
 	]
-
 	for stat in stats:
 		var row := HBoxContainer.new()
 		var k := Label.new()
@@ -268,16 +250,13 @@ func _rebuild_stats() -> void:
 		row.add_child(k)
 		row.add_child(v)
 		_stats_panel.add_child(row)
-
-	# Buffs actifs
 	if not GameManager._active_buffs.is_empty():
-		var sep := HSeparator.new()
-		_stats_panel.add_child(sep)
-		var buff_title := Label.new()
-		buff_title.text = "Buffs actifs :"
-		buff_title.add_theme_font_size_override("font_size", 11)
-		buff_title.modulate = Color(0.4, 0.8, 1.0)
-		_stats_panel.add_child(buff_title)
+		_stats_panel.add_child(HSeparator.new())
+		var bt := Label.new()
+		bt.text = "Buffs actifs :"
+		bt.add_theme_font_size_override("font_size", 11)
+		bt.modulate = Color(0.4, 0.8, 1.0)
+		_stats_panel.add_child(bt)
 		for stat in GameManager._active_buffs:
 			var b: Dictionary = GameManager._active_buffs[stat]
 			var bl := Label.new()
@@ -286,53 +265,43 @@ func _rebuild_stats() -> void:
 			bl.modulate = Color(0.4, 0.9, 0.5)
 			_stats_panel.add_child(bl)
 
-# ─── Slots d'équipement ─────────────────────────────────────────────────────
+# ─── Equipement ─────────────────────────────────────────────────────────
 func _rebuild_equip() -> void:
 	for c in _equip_panel.get_children():
 		c.queue_free()
-
 	var title := Label.new()
 	title.text = "--- Equipement ---"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 13)
 	_equip_panel.add_child(title)
-
-	var slot_labels: Dictionary = {
-		"weapon": "Arme",
-		"armor":  "Armure",
-		"shield": "Bouclier",
-		"amulet": "Amulette",
-	}
+	var slot_labels: Dictionary = {"weapon": "Arme", "armor": "Armure", "shield": "Bouclier", "amulet": "Amulette"}
 	for slot in slot_labels:
 		var row := HBoxContainer.new()
-		var slot_lbl := Label.new()
-		slot_lbl.text = slot_labels[slot] + " :"
-		slot_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		slot_lbl.add_theme_font_size_override("font_size", 12)
-
-		var val_lbl := Label.new()
+		var sl := Label.new()
+		sl.text = slot_labels[slot] + " :"
+		sl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		sl.add_theme_font_size_override("font_size", 12)
+		var vl := Label.new()
 		var eq_id: String = _equipped.get(slot, "")
 		if eq_id != "":
 			var d: Dictionary = ItemDatabase.get_item(eq_id)
-			val_lbl.text = EMOJI.get(eq_id, "?") + " " + d.get("name", eq_id)
-			val_lbl.modulate = Color(0.4, 1.0, 0.4)
+			vl.text = EMOJI.get(eq_id, "?") + " " + d.get("name", eq_id)
+			vl.modulate = Color(0.4, 1.0, 0.4)
 		else:
-			val_lbl.text = "(vide)"
-			val_lbl.modulate = Color(0.45, 0.45, 0.45)
-		val_lbl.add_theme_font_size_override("font_size", 12)
-
-		row.add_child(slot_lbl)
-		row.add_child(val_lbl)
+			vl.text = "(vide)"
+			vl.modulate = Color(0.45, 0.45, 0.45)
+		vl.add_theme_font_size_override("font_size", 12)
+		row.add_child(sl)
+		row.add_child(vl)
 		_equip_panel.add_child(row)
 
-# ─── Actions ───────────────────────────────────────────────────────────────
+# ─── Actions ────────────────────────────────────────────────────────────
 func _on_use_pressed(item_id: String) -> void:
 	var ok: bool = ItemDatabase.consume_item(item_id)
 	if ok:
 		_spawn_popup("+HP", Color(0.3, 1.0, 0.3))
 
 func _on_equip_pressed(item_id: String, slot: String) -> void:
-	# Désequipe l'item précédent dans ce slot
 	var prev: String = _equipped.get(slot, "")
 	if prev != "":
 		_unapply_equip(prev)
@@ -361,7 +330,7 @@ func _unapply_equip(item_id: String) -> void:
 		GameManager._apply_stat_delta(stat, -data["equip_stats"][stat])
 	GameManager.emit_signal("stats_changed")
 
-# ─── Tooltip ───────────────────────────────────────────────────────────────
+# ─── Tooltip ─────────────────────────────────────────────────────────────
 func _show_tooltip(item_id: String) -> void:
 	var data: Dictionary = ItemDatabase.get_item(item_id)
 	if data.is_empty():
@@ -380,16 +349,11 @@ func _show_tooltip(item_id: String) -> void:
 		lines.append("+%d %s (equipé)" % [data["equip_stats"][stat], stat])
 	_tooltip_lbl.text = "\n".join(lines)
 	_tooltip.visible = true
-	_tooltip.global_position = get_global_mouse_position() + Vector2(12, 8)
 
 func _hide_tooltip() -> void:
 	_tooltip.visible = false
 
-func _process_tooltip() -> void:
-	if _tooltip.visible:
-		_tooltip.global_position = get_global_mouse_position() + Vector2(12, 8)
-
-# ─── Popup flottant ─────────────────────────────────────────────────────────
+# ─── Popup ─────────────────────────────────────────────────────────────
 func _spawn_popup(msg: String, col: Color) -> void:
 	var lbl := Label.new()
 	lbl.text = msg

@@ -1,10 +1,15 @@
-# HUD Inventory - uses ItemDatabase (autoload) + GameManager
+# HUD Inventory — barre rapide en bas de l'écran
+# BUG FIX : retire "food" qui n'existe pas dans ItemDatabase
 extends Control
 
 @onready var slots_container: HBoxContainer = $HBoxContainer
 @onready var held_label: Label = $HeldLabel
 
-const SLOT_ORDER: Array[String] = ["wood", "stone", "berries", "berry_seed", "hoe", "watering_can", "food"]
+# BUG FIX : "food" supprimé, remplacé par les nouvelles ressources brutes
+const SLOT_ORDER: Array[String] = [
+	"wood", "stone", "berries", "mushroom", "flint",
+	"herb", "berry_seed", "hoe", "watering_can"
+]
 
 var _slot_labels: Dictionary = {}
 
@@ -46,8 +51,7 @@ func _refresh_all() -> void:
 		qty_lbl.text = str(qty)
 		var slot: Node = slots_container.get_node_or_null(item_id)
 		if slot:
-			var ci: CanvasItem = slot as CanvasItem
-			ci.modulate = Color.WHITE if qty > 0 else Color(0.5, 0.5, 0.5)
+			(slot as CanvasItem).modulate = Color.WHITE if qty > 0 else Color(0.5, 0.5, 0.5)
 
 func _on_inventory_changed(_item: String, _amount: int) -> void:
 	_refresh_all()
@@ -57,5 +61,4 @@ func _on_held_item_changed(item_id: String) -> void:
 		held_label.text = ""
 	else:
 		var data: Dictionary = ItemDatabase.get_item(item_id)
-		var item_name: String = data.get("name", item_id)
-		held_label.text = "✋ " + item_name
+		held_label.text = "✋ " + data.get("name", item_id)
