@@ -1,12 +1,10 @@
 extends Control
 
-# ─── CONSTS ───────────────────────────────────────────────────────────────────
 const SLOT_COUNT: int = 8
 
-# ─── ONREADY ──────────────────────────────────────────────────────────────────
-@onready var _slots: HBoxContainer = $HBoxContainer
+# FIX : le nœud dans hotbar.tscn s'appelle "SlotsRow", pas "HBoxContainer"
+@onready var _slots: HBoxContainer = $HotbarPanel/SlotsRow
 
-# ─── VARS ─────────────────────────────────────────────────────────────────────
 var _selected_slot: int = 0
 var _slot_nodes: Array[Control] = []
 
@@ -14,6 +12,9 @@ func _ready() -> void:
 	_build_hotbar()
 
 func _build_hotbar() -> void:
+	if _slots == null:
+		push_error("Hotbar: nœud SlotsRow introuvable dans hotbar.tscn")
+		return
 	for i: int in range(SLOT_COUNT):
 		var slot := Panel.new()
 		slot.custom_minimum_size = Vector2(40, 40)
