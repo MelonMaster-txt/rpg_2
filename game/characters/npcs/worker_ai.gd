@@ -1,66 +1,66 @@
 # worker_ai.gd
 extends Node
 
-var job:           String = ""
-var travel_speed:  float  = 55.0
-var inventory_max: int    = 8
+var job: String = ""
+var travel_speed: float = 55.0
+var inventory_max: int = 8
 
 # Ressources déposées dans le coffre.
 # Doivent matcher les clés d'inventory dans chest.gd
 # (wood, stone, food, ore, gold, build_points).
 const JOB_RESOURCE: Dictionary = {
 	"woodcutter": "wood",
-	"farmer":     "food",
-	"miner":      "stone",
-	"guard":      "",
-	"trader":     "gold",
-	"builder":    "build_points",
+	"farmer": "food",
+	"miner": "stone",
+	"guard": "",
+	"trader": "gold",
+	"builder": "build_points",
 }
 
 const JOB_HARVEST_TIME: Dictionary = {
 	"woodcutter": 4.0,
-	"farmer":     6.0,
-	"miner":      5.0,
-	"guard":      999.0,
-	"trader":     8.0,
-	"builder":    5.0,
+	"farmer": 6.0,
+	"miner": 5.0,
+	"guard": 999.0,
+	"trader": 8.0,
+	"builder": 5.0,
 }
 
 const JOB_ICON: Dictionary = {
 	"woodcutter": "🪓",
-	"farmer":     "🌾",
-	"miner":      "⛏️",
-	"guard":      "🛡️",
-	"trader":     "💰",
-	"builder":    "🔨",
-	"":           "💤",
+	"farmer": "🌾",
+	"miner": "⛏️",
+	"guard": "🛡️",
+	"trader": "💰",
+	"builder": "🔨",
+	"": "💤",
 }
 
 const JOB_TARGET_GROUP: Dictionary = {
 	"woodcutter": "tree",
-	"farmer":     "tree",
-	"miner":      "rock",
-	"guard":      "",
-	"trader":     "",
-	"builder":    "tree",
+	"farmer": "tree",
+	"miner": "rock",
+	"guard": "",
+	"trader": "",
+	"builder": "tree",
 }
 
 enum State { IDLE, SEEK_TARGET, HARVEST, RETURN_HOME, DEPOSIT }
 
-var _state:         State           = State.IDLE
-var _target_node:   Node2D          = null
-var _chest_node:    Node2D          = null
-var _harvest_timer: float           = 0.0
-var _inventory:     int             = 0
-var _owner_npc:     CharacterBody2D = null
-var _job_label:     Label           = null
+var _state: State = State.IDLE
+var _target_node: Node2D = null
+var _chest_node: Node2D = null
+var _harvest_timer: float = 0.0
+var _inventory: int = 0
+var _owner_npc: CharacterBody2D = null
+var _job_label: Label = null
 
-var _start_timer:  float = 0.5
-var _retry_timer:  float = 0.0
+var _start_timer: float = 0.5
+var _retry_timer: float = 0.0
 const RETRY_DELAY := 3.0
 
-var _wander_timer: float   = 0.0
-var _wander_dir:   Vector2 = Vector2.ZERO
+var _wander_timer: float = 0.0
+var _wander_dir: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
@@ -78,7 +78,7 @@ func _create_job_label() -> void:
 	if existing:
 		existing.queue_free()
 	_job_label = Label.new()
-	_job_label.name = "JobLabel"
+	_job_label.set_name("JobLabel")
 	_job_label.position = Vector2(-22, -52)
 	_job_label.add_theme_font_size_override("font_size", 11)
 	_update_label()
@@ -133,17 +133,23 @@ func _on_idle(delta: float) -> void:
 	_target_node = _find_nearest_target()
 	if _target_node != null:
 		_state = State.SEEK_TARGET
-		print("[WorkerAI] '%s' → cible '%s' (dist=%.0f)" % [
-			_owner_npc.get("npc_name"),
-			_target_node.name,
-			_owner_npc.global_position.distance_to(_target_node.global_position),
-		])
+		print(
+			"[WorkerAI] '%s' → cible '%s' (dist=%.0f)"
+			% [
+				_owner_npc.get("npc_name"),
+				_target_node.name,
+				_owner_npc.global_position.distance_to(_target_node.global_position),
+			]
+		)
 	else:
-		print("[WorkerAI] '%s' : aucune cible groupe '%s', retry dans %.0fs" % [
-			_owner_npc.get("npc_name"),
-			JOB_TARGET_GROUP.get(job, "?"),
-			RETRY_DELAY,
-		])
+		print(
+			"[WorkerAI] '%s' : aucune cible groupe '%s', retry dans %.0fs"
+			% [
+				_owner_npc.get("npc_name"),
+				JOB_TARGET_GROUP.get(job, "?"),
+				RETRY_DELAY,
+			]
+		)
 		_retry_timer = RETRY_DELAY
 		_pick_wander_dir()
 		_do_wander(delta)
@@ -218,11 +224,10 @@ func _on_deposit() -> void:
 	var resource: String = JOB_RESOURCE.get(job, "")
 	if resource != "" and _chest_node != null and _chest_node.has_method("deposit"):
 		_chest_node.deposit(resource, _inventory)
-		print("[WorkerAI] '%s' dépose %d %s dans le coffre" % [
-			_owner_npc.get("npc_name"),
-			_inventory,
-			resource,
-		])
+		print(
+			"[WorkerAI] '%s' dépose %d %s dans le coffre"
+			% [_owner_npc.get("npc_name"), _inventory, resource]
+		)
 	_inventory = 0
 	_update_label()
 	_state = State.IDLE
@@ -230,7 +235,7 @@ func _on_deposit() -> void:
 
 func _pick_wander_dir() -> void:
 	var angle := randf() * TAU
-	_wander_dir  = Vector2(cos(angle), sin(angle))
+	_wander_dir = Vector2(cos(angle), sin(angle))
 	_wander_timer = 1.0
 
 
@@ -242,7 +247,10 @@ func _do_wander(delta: float) -> void:
 	_owner_npc.move_and_slide()
 
 
-func _move_toward(target: Vector2, _delta: float) -> void:
+func _move_toward(target: Vector2, delta: float) -> void:
+	# delta intentionnellement non utilisé, signature conservée pour cohérence
+	@warning_ignore("unused_parameter")
+	var _d: float = delta
 	var dir: Vector2 = (target - _owner_npc.global_position).normalized()
 	_owner_npc.velocity = dir * travel_speed
 	_owner_npc.move_and_slide()
@@ -286,10 +294,10 @@ func _notify_favor() -> void:
 
 
 func update_job(new_job: String) -> void:
-	job          = new_job
-	_inventory   = 0
+	job = new_job
+	_inventory = 0
 	_target_node = null
 	_retry_timer = 0.0
-	_state       = State.IDLE
+	_state = State.IDLE
 	_update_label()
 	print("[WorkerAI] Nouveau métier : ", new_job)
