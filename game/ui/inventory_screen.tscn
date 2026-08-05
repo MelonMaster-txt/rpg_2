@@ -1,59 +1,70 @@
-[gd_scene format=3 uid="uid://dalxgnyyj4xgw"]
+[gd_scene load_steps=3 format=3 uid="uid://inventory_screen"]
 
-[ext_resource type="Script" uid="uid://tsuxdiwhlk6v" path="res://game/ui/inventory_screen.gd" id="1_inv"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_bg"]
-bg_color = Color(0, 0, 0, 0.6)
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-content_margin_left = 20.0
-content_margin_top = 16.0
-content_margin_right = 20.0
-content_margin_bottom = 16.0
-bg_color = Color(0.08, 0.08, 0.12, 0.97)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(0.5, 0.4, 0.8, 0.6)
-corner_radius_top_left = 12
-corner_radius_top_right = 12
-corner_radius_bottom_right = 12
-corner_radius_bottom_left = 12
-
-[node name="InventoryScreen" type="Control" unique_id=1912342988]
-layout_mode = 3
-anchors_preset = 15
+[node name="InventoryScreen" type="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-script = ExtResource("1_inv")
+mouse_filter = 2
+script = ExtResource("1")
 
-[node name="BG" type="PanelContainer" parent="." unique_id=365900119]
-layout_mode = 0
+[node name="BG" type="ColorRect" parent="."]
 anchor_right = 1.0
 anchor_bottom = 1.0
-theme_override_styles/panel = SubResource("StyleBoxFlat_bg")
+color = Color(0, 0, 0, 0.6)
+mouse_filter = 0
 
-[node name="Panel" type="PanelContainer" parent="BG" unique_id=1572633778]
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+[node name="Panel" type="PanelContainer" parent="BG"]
+anchor_left = 0.05
+anchor_top = 0.05
+anchor_right = 0.95
+anchor_bottom = 0.95
+grow_horizontal = 3
+grow_vertical = 3
 
-[node name="VBox" type="VBoxContainer" parent="BG/Panel" unique_id=991134590]
-layout_mode = 2
-theme_override_constants/separation = 12
+[node name="VBox" type="VBoxContainer" parent="BG/Panel"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 3
+grow_vertical = 3
 
-[node name="Title" type="Label" parent="BG/Panel/VBox" unique_id=2092874511]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.9, 0.85, 1, 1)
-theme_override_font_sizes/font_size = 22
-text = "🎒  Inventaire | Close with [i]"
-horizontal_alignment = 1
+[node name="TopBar" type="HBoxContainer" parent="BG/Panel/VBox"]
 
-[node name="HSep" type="HSeparator" parent="BG/Panel/VBox" unique_id=278894083]
-layout_mode = 2
+[node name="TitleLabel" type="Label" parent="BG/Panel/VBox/TopBar"]
+size_flags_horizontal = 3
+text = "Inventaire"
 
-[node name="Grid" type="GridContainer" parent="BG/Panel/VBox" unique_id=486911015]
-layout_mode = 2
-theme_override_constants/h_separation = 12
-theme_override_constants/v_separation = 12
-columns = 4
+[node name="TabBar" type="HBoxContainer" parent="BG/Panel/VBox/TopBar"]
+size_flags_horizontal = 3
+
+[node name="CloseBtn" type="Button" parent="BG/Panel/VBox/TopBar"]
+text = "X"
+
+[node name="Content" type="HBoxContainer" parent="BG/Panel/VBox"]
+size_flags_vertical = 3
+
+[node name="Left" type="VBoxContainer" parent="BG/Panel/VBox/Content"]
+size_flags_horizontal = 3
+
+[node name="ScrollContainer" type="ScrollContainer" parent="BG/Panel/VBox/Content/Left"]
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Grid" type="GridContainer" parent="BG/Panel/VBox/Content/Left/ScrollContainer"]
+size_flags_horizontal = 3
+columns = 6
+theme_override_constants/h_separation = 6
+theme_override_constants/v_separation = 6
+
+[node name="Right" type="VBoxContainer" parent="BG/Panel/VBox/Content"]
+custom_minimum_size = Vector2(200, 0)
+
+[node name="Stats" type="VBoxContainer" parent="BG/Panel/VBox/Content/Right"]
+size_flags_vertical = 3
+
+[node name="Equip" type="VBoxContainer" parent="BG/Panel/VBox/Content/Right"]
+
+[node name="Tooltip" type="PanelContainer" parent="."]
+visible = false
+z_index = 100
+
+[node name="Label" type="Label" parent="Tooltip"]
+text = ""
