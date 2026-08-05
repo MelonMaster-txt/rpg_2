@@ -10,6 +10,12 @@ var inventory: Dictionary = {
 	"hoe":          0,
 	"watering_can": 0,
 	"gold":         0,
+	# Nouvelles ressources forêt
+	"mushroom":     0,  # Champignon — près des arbres, zones humides
+	"flint":        0,  # Silex — zones rocheuses, craft outils
+	"herb":         0,  # Herbe médicinale — clairières
+	"resin":        0,  # Résine — récoltée sur les arbres
+	"bone":         0,  # Os — laissés par des animaux morts
 }
 
 signal inventory_changed(item: String, amount: int)

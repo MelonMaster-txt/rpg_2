@@ -1,33 +1,46 @@
+# resource_node.gd
+# Nœud de ressource générique. Supporte tous les types de ressources forêt.
+# Respawn dans un rayon aléatoire autour de l'origine (pas au même endroit).
 extends Area2D
 
-@export var resource_name: String = "Ressource"
-@export var resource_type: String = "generic"
-@export var max_health: int = 3
-@export var gather_amount: int = 1
-@export var respawn_time: float = 12.0
+@export var resource_name: String  = "Ressource"
+@export var resource_type: String  = "generic"
+@export var max_health: int        = 3
+@export var gather_amount: int     = 1
+@export var respawn_time: float    = 12.0
+# Rayon de dispersion au respawn (0 = même endroit, >0 = aléatoire)
+@export var respawn_scatter: float = 40.0
 
-# Couleur du carre de placeholder selon le type
+# Couleurs placeholder par type
 const TYPE_COLORS := {
-	"wood":   Color(0.20, 0.50, 0.15),  # vert fonce - arbre
-	"berry":  Color(0.55, 0.10, 0.60),  # violet    - baies
-	"stone":  Color(0.55, 0.55, 0.55),  # gris      - pierre
+	"wood":     Color(0.20, 0.50, 0.15),
+	"berry":    Color(0.55, 0.10, 0.60),
+	"stone":    Color(0.55, 0.55, 0.55),
+	"mushroom": Color(0.65, 0.35, 0.10),
+	"flint":    Color(0.45, 0.45, 0.50),
+	"herb":     Color(0.20, 0.70, 0.30),
+	"resin":    Color(0.75, 0.55, 0.15),
+	"bone":     Color(0.90, 0.88, 0.80),
 }
 const DEFAULT_COLOR := Color(0.6, 0.4, 0.2)
 
-var _visual: Node2D   = null
-var _color_rect: ColorRect = null
-var _label: Label = null
-var _gather_shape: CollisionShape2D = null
+var _visual: Node2D              = null
+var _color_rect: ColorRect       = null
+var _label: Label                = null
+var _gather_shape: CollisionShape2D  = null
 var _blocker_shape: CollisionShape2D = null
-var _respawn_timer: Timer = null
+var _respawn_timer: Timer        = null
 
-var current_health: int = 0
-var is_depleted: bool = false
+var current_health: int  = 0
+var is_depleted: bool    = false
 var player_in_area: bool = false
+# Position d'origine locale dans le chunk (pour le scatter au respawn)
+var _origin_position: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
-	current_health = max_health
+	current_health   = max_health
+	_origin_position = position
 	add_to_group("resource_nodes")
 
 	_visual        = get_node_or_null("Visual")
@@ -36,14 +49,13 @@ func _ready() -> void:
 	_blocker_shape = get_node_or_null("Blocker/BlockerShape") as CollisionShape2D
 	_respawn_timer = get_node_or_null("RespawnTimer") as Timer
 
-	# Cree un ColorRect comme sprite placeholder si pas de texture
 	if _visual != null:
 		var sprite := _visual as Sprite2D
 		if sprite != null and sprite.texture == null:
 			_build_color_rect()
 
 	if _label != null:
-		_label.text = "[E] " + resource_name
+		_label.text    = "[E] " + resource_name
 		_label.visible = false
 
 	if _respawn_timer != null:
@@ -57,16 +69,20 @@ func _ready() -> void:
 
 func _build_color_rect() -> void:
 	var color: Color = TYPE_COLORS.get(resource_type, DEFAULT_COLOR)
-	_color_rect = ColorRect.new()
+	_color_rect      = ColorRect.new()
 	_color_rect.color = color
-	# Taille selon le type
 	var sz: Vector2
 	match resource_type:
-		"wood":  sz = Vector2(20, 28)
-		"berry": sz = Vector2(12, 12)
-		"stone": sz = Vector2(22, 16)
-		_:       sz = Vector2(16, 16)
-	_color_rect.size = sz
+		"wood":     sz = Vector2(20, 28)
+		"berry":    sz = Vector2(12, 12)
+		"stone":    sz = Vector2(22, 16)
+		"mushroom": sz = Vector2(10, 14)
+		"flint":    sz = Vector2(14, 10)
+		"herb":     sz = Vector2(10, 14)
+		"resin":    sz = Vector2(10, 10)
+		"bone":     sz = Vector2(18, 8)
+		_:          sz = Vector2(16, 16)
+	_color_rect.size     = sz
 	_color_rect.position = -sz / 2.0
 	if _visual != null:
 		_visual.add_child(_color_rect)
@@ -94,12 +110,18 @@ func _on_body_exited(body: Node) -> void:
 			_label.visible = false
 
 
+# Normalise tous les types vers la clé inventaire correcte
 func _resource_type_to_key(rtype: String) -> String:
 	match rtype:
-		"wood", "bois":              return "bois"
-		"berry", "baies", "berries": return "baies"
-		"stone", "pierre", "rock":   return "pierre"
-		_:                            return rtype
+		"wood", "bois", "tree":             return "wood"
+		"berry", "baies", "berries":        return "berries"
+		"stone", "pierre", "rock", "rocks": return "stone"
+		"mushroom", "champignon":           return "mushroom"
+		"flint", "silex":                   return "flint"
+		"herb", "herbe":                    return "herb"
+		"resin", "resine":                  return "resin"
+		"bone", "os":                       return "bone"
+		_:                                   return rtype
 
 
 func _do_gather() -> void:
@@ -112,11 +134,11 @@ func _do_gather() -> void:
 
 
 func _deplete() -> void:
-	is_depleted = true
+	is_depleted    = true
 	player_in_area = false
 	if _label != null:
 		_label.visible = false
-	if _gather_shape != null:
+	if _gather_shape  != null:
 		_gather_shape.set_deferred("disabled", true)
 	if _blocker_shape != null:
 		_blocker_shape.set_deferred("disabled", true)
@@ -125,15 +147,23 @@ func _deplete() -> void:
 	elif _visual != null and _visual is CanvasItem:
 		(_visual as CanvasItem).modulate.a = 0.3
 	if _respawn_timer != null:
-		_respawn_timer.start(respawn_time)
+		# Temps de respawn légèrement aléatoire : ±30 %
+		var variation: float = respawn_time * randf_range(0.7, 1.3)
+		_respawn_timer.start(variation)
 	else:
 		queue_free()
 
 
 func _on_respawn() -> void:
-	is_depleted = false
+	# Décale la position de respawn aléatoirement autour de l'origine
+	if respawn_scatter > 0.0:
+		var angle: float  = randf() * TAU
+		var dist: float   = randf_range(0.0, respawn_scatter)
+		position = _origin_position + Vector2(cos(angle), sin(angle)) * dist
+
+	is_depleted    = false
 	current_health = max_health
-	if _gather_shape != null:
+	if _gather_shape  != null:
 		_gather_shape.set_deferred("disabled", false)
 	if _blocker_shape != null:
 		_blocker_shape.set_deferred("disabled", false)
@@ -145,7 +175,7 @@ func _on_respawn() -> void:
 
 func _spawn_gather_feedback() -> void:
 	var lbl := Label.new()
-	lbl.text = "+%d %s" % [gather_amount, resource_name]
+	lbl.text     = "+%d %s" % [gather_amount, resource_name]
 	lbl.position = Vector2(-20, -50)
 	add_child(lbl)
 	var tw := create_tween()
