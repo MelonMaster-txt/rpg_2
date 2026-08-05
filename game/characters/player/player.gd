@@ -1,110 +1,93 @@
 extends CharacterBody2D
 
-signal held_item_changed(item_id: String)
+# ─── SIGNALS ──────────────────────────────────────────────────────────────────
+signal interacted_with_npc(npc: Node)
+signal player_died
 
-const QUICK_SELECT: Array[String] = ["hoe", "watering_can", "berry_seed"]
-const ANIM_STEP: float = 0.12
+# ─── CONSTS ───────────────────────────────────────────────────────────────────
+const SPEED: float = 120.0
+const SPRINT_MULT: float = 1.6
+const ROLL_SPEED: float = 200.0
+const ROLL_DURATION: float = 0.35
+const INTERACT_RADIUS: float = 40.0
 
-@export var move_speed: float = 120.0
-@export var zoom_in_factor: float = 1.2
-@export var zoom_out_factor: float = 0.8
+# ─── EXPORTS ──────────────────────────────────────────────────────────────────
+@export var interact_area: Area2D = null
 
-@onready var camera: Camera2D = $Camera2D
-@onready var appearance: Node = $CharacterAppearance
+# ─── ONREADY ──────────────────────────────────────────────────────────────────
+@onready var _anim: AnimatedSprite2D = $AnimatedSprite2D
+@onready var _interact_hint: Label = $InteractHint
 
-var _held_item: String = ""
-var _quick_index: int = -1
-var _anim_timer: float = 0.0
-var _walk_frame: int = 0
-var _farm_placer: Node = null
-
+# ─── VARS ─────────────────────────────────────────────────────────────────────
+var _roll_timer: float = 0.0
+var _is_rolling: bool = false
+var _roll_dir: Vector2 = Vector2.ZERO
+var _nearby_npc: Node = null
+var _facing: Vector2 = Vector2.DOWN
 
 func _ready() -> void:
-	add_to_group("player")
-	if camera != null:
-		camera.enabled = true
-	call_deferred("_cache_farm_placer")
-
-func _cache_farm_placer() -> void:
-	_farm_placer = get_tree().get_first_node_in_group("farm_placer")
+	if _interact_hint:
+		_interact_hint.visible = false
+	if GameManager.has_saved_position:
+		global_position = GameManager.consume_spawn_position()
 
 func _physics_process(delta: float) -> void:
-	var dir := Vector2(
-		Input.get_action_strength("ui_right") - Input.get_action_strength("ui_left"),
-		Input.get_action_strength("ui_down") - Input.get_action_strength("ui_up")
-	).normalized()
-	velocity = dir * move_speed
+	if _is_rolling:
+		_process_roll(delta)
+		return
+	_process_move(delta)
+	_process_interact()
+
+func _process_move(delta: float) -> void:
+	var dir: Vector2 = Input.get_vector(
+			"move_left", "move_right", "move_up", "move_down"
+	)
+	if dir == Vector2.ZERO:
+		velocity = Vector2.ZERO
+		_play_anim("idle")
+		return
+	_facing = dir
+	var spd: float = SPEED
+	if Input.is_action_pressed("sprint"):
+		spd *= SPRINT_MULT
+	velocity = dir * spd
+	_play_anim("walk")
 	move_and_slide()
-	_update_animation(dir, delta)
+	if Input.is_action_just_pressed("roll"):
+		_start_roll(dir)
 
-func _update_animation(dir: Vector2, delta: float) -> void:
-	if appearance == null:
+func _start_roll(dir: Vector2) -> void:
+	_is_rolling = true
+	_roll_timer = ROLL_DURATION
+	_roll_dir = dir.normalized()
+	_play_anim("roll")
+
+func _process_roll(delta: float) -> void:
+	_roll_timer -= delta
+	if _roll_timer <= 0.0:
+		_is_rolling = false
 		return
-	if dir != Vector2.ZERO:
-		if abs(dir.x) > abs(dir.y):
-			appearance.set_direction("right" if dir.x > 0 else "left")
-		else:
-			appearance.set_direction("down" if dir.y > 0 else "up")
-		_anim_timer += delta
-		if _anim_timer >= ANIM_STEP:
-			_anim_timer = 0.0
-			_walk_frame = (_walk_frame + 1) % 8
-			appearance.set_walk_frame(_walk_frame)
-	else:
-		_walk_frame = 0
-		_anim_timer = 0.0
-		appearance.set_walk_frame(0)
+	velocity = _roll_dir * ROLL_SPEED
+	move_and_slide()
 
-func _unhandled_input(event: InputEvent) -> void:
-	if camera == null:
+func _process_interact() -> void:
+	if _nearby_npc == null:
 		return
-	if event.is_action_pressed("zoom_in"):
-		camera.zoom *= zoom_in_factor
-		return
-	if event.is_action_pressed("zoom_out"):
-		camera.zoom *= zoom_out_factor
-		return
-	if event.is_action_pressed("ui_cancel"):
-		set_held_item("")
-		return
-	if event.is_action_pressed("interact") and not event.is_echo():
-		if _held_item == "hoe":
-			_try_farm_interact()
-		return
-	if event is InputEventKey:
-		var key_event := event as InputEventKey
-		if key_event.pressed and key_event.keycode == KEY_TAB:
-			_cycle_held_item()
+	if Input.is_action_just_pressed("interact"):
+		emit_signal("interacted_with_npc", _nearby_npc)
 
-func _try_farm_interact() -> void:
-	if _farm_placer == null or not is_instance_valid(_farm_placer):
-		_farm_placer = get_tree().get_first_node_in_group("farm_placer")
-	if _farm_placer == null or not _farm_placer.has_method("interact_at"):
-		return
-	var handled: bool = _farm_placer.interact_at(global_position)
-	if handled:
-		get_viewport().set_input_as_handled()
+func _play_anim(anim: String) -> void:
+	if _anim and _anim.sprite_frames and _anim.sprite_frames.has_animation(anim):
+		if _anim.animation != anim:
+			_anim.play(anim)
 
-func get_inventory() -> Dictionary:
-	return GameManager.inventory
+func set_nearby_npc(npc: Node) -> void:
+	_nearby_npc = npc
+	if _interact_hint:
+		_interact_hint.visible = npc != null
 
-func add_item(item_id: String, amount: int = 1) -> void:
-	GameManager.add_item(item_id, amount)
-
-func remove_item(item_id: String, amount: int = 1) -> bool:
-	return GameManager.remove_item(item_id, amount)
-
-func get_held_item() -> String:
-	return _held_item
-
-func set_held_item(item_id: String) -> void:
-	_held_item = item_id
-	held_item_changed.emit(item_id)
-
-func _cycle_held_item() -> void:
-	_quick_index = (_quick_index + 1) % QUICK_SELECT.size()
-	var candidate: String = QUICK_SELECT[_quick_index]
-	if GameManager.get_item(candidate) > 0:
-		set_held_item(candidate)
-	else:
-		set_held_item("")
+func take_damage(amount: int) -> void:
+	GameManager.life -= amount
+	if GameManager.life <= 0:
+		GameManager.life = 0
+		emit_signal("player_died")

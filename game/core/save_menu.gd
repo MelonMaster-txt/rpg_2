@@ -1,139 +1,46 @@
-# SaveMenu — 8 slots, usable standalone or embedded in InGameSaveMenu
 extends Control
 
-enum Mode { LOAD = 0, SAVE = 1 }
+# ─── SIGNALS ──────────────────────────────────────────────────────────────────
+signal save_requested(slot_index: int)
+signal load_requested(slot_index: int)
 
-var mode: Mode     = Mode.SAVE
-var embedded: bool = false
+# ─── CONSTS ───────────────────────────────────────────────────────────────────
+const MAX_SLOTS: int = 5
 
-@onready var title_label:   Label  = $TitleLabel
-@onready var back_btn:      Button = $GridContainer/Back
-@onready var confirm_panel: Panel  = $ConfirmPanel
-@onready var confirm_label: Label  = $ConfirmPanel/VBox/ConfirmLabel
-@onready var slots: Array[Button]  = [
-	$GridContainer/Slot1, $GridContainer/Slot2,
-	$GridContainer/Slot3, $GridContainer/Slot4,
-	$GridContainer/Slot5, $GridContainer/Slot6,
-	$GridContainer/Slot7, $GridContainer/Slot8,
-]
-@onready var delete_button: Button = $DeleteButton
+# ─── ONREADY ──────────────────────────────────────────────────────────────────
+@onready var _slots_container: VBoxContainer = $VBoxContainer/SlotsContainer
+@onready var _close_btn: Button = $VBoxContainer/CloseButton
 
-var _pending_slot: int  = -1
-var _pending_action: String = ""
-
+# ─── VARS ─────────────────────────────────────────────────────────────────────
+var _save_system: Node = null
 
 func _ready() -> void:
-	confirm_panel.hide()
-	if GameState.has_meta("open_save_menu_mode"):
-		mode = GameState.get_meta("open_save_menu_mode") as Mode
-		GameState.remove_meta("open_save_menu_mode")
-	_apply_embedded()
-	_refresh_slots()
+	_save_system = get_node_or_null("/root/SaveSystem")
+	_close_btn.pressed.connect(_on_close_pressed)
+	_build_slots()
 
+func _build_slots() -> void:
+	for i: int in range(MAX_SLOTS):
+		var hbox := HBoxContainer.new()
+		var lbl := Label.new()
+		lbl.text = "Slot %d" % (i + 1)
+		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var save_btn := Button.new()
+		save_btn.text = "Sauvegarder"
+		save_btn.pressed.connect(_on_save_pressed.bind(i))
+		var load_btn := Button.new()
+		load_btn.text = "Charger"
+		load_btn.pressed.connect(_on_load_pressed.bind(i))
+		hbox.add_child(lbl)
+		hbox.add_child(save_btn)
+		hbox.add_child(load_btn)
+		_slots_container.add_child(hbox)
 
-# ── Public API
-func setup(p_mode: int, p_embedded: bool = false) -> void:
-	mode     = p_mode as Mode
-	embedded = p_embedded
-	_apply_embedded()
-	_refresh_slots()
+func _on_save_pressed(slot_index: int) -> void:
+	emit_signal("save_requested", slot_index)
 
+func _on_load_pressed(slot_index: int) -> void:
+	emit_signal("load_requested", slot_index)
 
-func _apply_embedded() -> void:
-	title_label.visible = not embedded
-	back_btn.visible    = not embedded
-	delete_button.visible = not embedded
-	if not embedded:
-		match mode:
-			Mode.LOAD: title_label.text = "Load"
-			Mode.SAVE: title_label.text = "Save"
-
-
-func _refresh_slots() -> void:
-	for i in range(slots.size()):
-		var btn := slots[i]
-		btn.disabled = false
-		if SaveSystem.slot_exists(i):
-			var info := SaveSystem.get_slot_info(i)
-			btn.text = "Slot %d\n%s • Lv %d\nDay %d • %s" % [
-				i + 1,
-				str(info.get("player_name",  "?")),
-				int(info.get("player_level", 1)),
-				int(info.get("day_count",    1)),
-				str(info.get("time_string",  "??:??")),
-			]
-		else:
-			btn.text = "Slot %d\n— Empty —" % (i + 1)
-			if mode == Mode.LOAD:
-				btn.disabled = true
-
-
-func _slot_pressed(slot: int) -> void:
-	if mode == Mode.LOAD and not SaveSystem.slot_exists(slot):
-		return
-	_pending_slot = slot
-	if SaveSystem.slot_exists(slot):
-		_pending_action = ("Overwrite" if mode == Mode.SAVE else "Load")
-		confirm_label.text = "%s slot %d?" % [_pending_action, slot + 1]
-		confirm_panel.show()
-	else:
-		_execute(slot)
-
-
-func _execute(slot: int) -> void:
-	if mode == Mode.SAVE:
-		SaveSystem.save_game(slot)
-		_refresh_slots()
-	else:
-		if SaveSystem.load_game(slot):
-			var parent = get_parent()
-			if parent != null and parent.has_method("hide_menu"):
-				parent.hide_menu()
-			else:
-				get_tree().paused = false
-			get_tree().change_scene_to_file(GameState.current_scene)
-		else:
-			push_error("[SaveMenu] Failed to load slot %d" % slot)
-
-
-func _on_delete_button_pressed() -> void:
-	if _pending_slot < 0:
-		return
-	if not SaveSystem.slot_exists(_pending_slot):
-		return
-	confirm_label.text = "Delete slot %d?" % (_pending_slot + 1)
-	_pending_action = "Delete"
-	confirm_panel.show()
-
-
-# Slot handlers
-func _on_slot_1_pressed() -> void: _slot_pressed(0)
-func _on_slot_2_pressed() -> void: _slot_pressed(1)
-func _on_slot_3_pressed() -> void: _slot_pressed(2)
-func _on_slot_4_pressed() -> void: _slot_pressed(3)
-func _on_slot_5_pressed() -> void: _slot_pressed(4)
-func _on_slot_6_pressed() -> void: _slot_pressed(5)
-func _on_slot_7_pressed() -> void: _slot_pressed(6)
-func _on_slot_8_pressed() -> void: _slot_pressed(7)
-
-# Confirm handlers
-func _on_confirm_yes_pressed() -> void:
-	confirm_panel.hide()
-	if _pending_slot < 0:
-		return
-	if _pending_action == "Delete":
-		SaveSystem.delete_slot(_pending_slot)
-		_pending_slot = -1
-		_refresh_slots()
-		return
-	_execute(_pending_slot)
-	_pending_slot = -1
-
-func _on_confirm_no_pressed() -> void:
-	confirm_panel.hide()
-	_pending_slot = -1
-	_pending_action = ""
-
-# Back (visible in standalone mode only)
-func _on_back_pressed() -> void:
-	get_tree().change_scene_to_file("res://game/ui/menu/main_menu.tscn")
+func _on_close_pressed() -> void:
+	hide()

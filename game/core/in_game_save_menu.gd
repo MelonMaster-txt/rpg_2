@@ -1,57 +1,22 @@
-# InGameSaveMenu — Escape overlay in-game (CanvasLayer)
-# Mode SAVE = 1, Mode LOAD = 0  (enum SaveMenu.Mode)
 extends CanvasLayer
 
-@onready var panel:     Control = $Panel
-@onready var save_menu          = $Panel/SaveMenu
+# ─── SIGNALS ──────────────────────────────────────────────────────────────────
+signal resume_requested
 
-var _open: bool = false
-
+# ─── ONREADY ──────────────────────────────────────────────────────────────────
+@onready var _save_menu: Control = $SaveMenu
 
 func _ready() -> void:
-	process_mode = Node.PROCESS_MODE_ALWAYS
-	panel.hide()
-	# _init is reserved in Godot 4 (constructor) — using _setup instead
-	call_deferred("_setup")
+	_save_menu.visible = false
 
+func open() -> void:
+	_save_menu.visible = true
+	get_tree().paused = true
 
-func _setup() -> void:
-	if is_instance_valid(save_menu) and save_menu.has_method("setup"):
-		save_menu.setup(1, true)  # 1 = SAVE, embedded
-
-
-func _input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel"):
-		get_viewport().set_input_as_handled()
-		toggle()
-
-
-func toggle() -> void:
-	_open = not _open
-	panel.visible = _open
-	get_tree().paused = _open
-
-
-func hide_menu() -> void:
-	_open = false
-	panel.hide()
+func close() -> void:
+	_save_menu.visible = false
 	get_tree().paused = false
+	emit_signal("resume_requested")
 
-
-func _on_btn_save_mode_pressed() -> void:
-	if is_instance_valid(save_menu):
-		save_menu.setup(1, true)  # SAVE
-
-
-func _on_btn_load_mode_pressed() -> void:
-	if is_instance_valid(save_menu):
-		save_menu.setup(0, true)  # LOAD
-
-
-func _on_btn_resume_pressed() -> void:
-	hide_menu()
-
-
-func _on_btn_quit_to_menu_pressed() -> void:
-	get_tree().paused = false
-	get_tree().change_scene_to_file("res://game/ui/menu/main_menu.tscn")
+func _on_resume_pressed() -> void:
+	close()

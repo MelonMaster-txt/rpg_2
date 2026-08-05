@@ -1,144 +1,81 @@
-# npc_base.gd
-# Living NPC: wandering, states, interaction with the player
-class_name NpcBase
 extends CharacterBody2D
+class_name NpcBase
 
-enum State { FREE, COMPANION, SLAVE }
-enum Behaviour { WANDERING, IDLE, WORKING, FOLLOWING }
+# ─── SIGNALS ──────────────────────────────────────────────────────────────────
+signal npc_died(npc: NpcBase)
+signal npc_captured(npc: NpcBase)
 
-const INTERACTION_MENU_SCENE := "res://game/systems/npc_interaction_menu.tscn"
-const COLOR_MALE    := Color(0.25, 0.50, 1.00)
-const COLOR_FEMALE  := Color(1.00, 0.45, 0.70)
-const COLOR_MONSTER := Color(0.10, 0.75, 0.20)
-const COLOR_DEAD    := Color(0.30, 0.30, 0.30)
-const WANDER_RADIUS   := 200.0
-const WANDER_INTERVAL := 4.0
-const IDLE_DURATION   := 2.0
+# ─── ENUMS ────────────────────────────────────────────────────────────────────
+enum State { IDLE, WANDER, FLEE, WORK, FOLLOW, COMBAT }
 
-@export var npc_gender: String = "male"
-@export var data: NpcData = null
+# ─── EXPORTS ──────────────────────────────────────────────────────────────────
+@export var npc_name: String = "NPC"
+@export var max_health: int = 50
+@export var move_speed: float = 60.0
+@export var detection_range: float = 150.0
+@export var npc_data: Resource = null
 
-@onready var name_label: Label     = $NameLabel
-@onready var interact_area: Area2D = $InteractArea
-@onready var color_rect: ColorRect = $ColorRect
+# ─── ONREADY ──────────────────────────────────────────────────────────────────
+@onready var _anim: AnimatedSprite2D = $AnimatedSprite2D
+@onready var _nav: NavigationAgent2D = $NavigationAgent2D
 
-var state: State         = State.FREE
-var behaviour: Behaviour = Behaviour.WANDERING
+# ─── VARS ─────────────────────────────────────────────────────────────────────
+var current_health: int = 50
+var current_state: State = State.IDLE
+var _wander_timer: float = 0.0
 var _wander_target: Vector2 = Vector2.ZERO
-var _wander_timer: float    = 0.0
-var _idle_timer: float      = 0.0
-var _move_speed: float      = 50.0
-var _player_near: bool      = false
-
 
 func _ready() -> void:
-	add_to_group("npc")
-	if data == null:
-		data = NpcData.generate_random()
-	_setup_visuals()
-	_pick_wander_target()
-	if interact_area:
-		interact_area.body_entered.connect(_on_player_enter)
-		interact_area.body_exited.connect(_on_player_exit)
+	current_health = max_health
 
-func _setup_visuals() -> void:
-	if name_label:
-		name_label.text = data.npc_name
-	_update_color_rect()
-
-func _update_color_rect() -> void:
-	if color_rect == null:
-		return
-	match npc_gender:
-		"female":  color_rect.color = COLOR_FEMALE
-		"monster": color_rect.color = COLOR_MONSTER
-		_:         color_rect.color = COLOR_MALE
-
-func _physics_process(delta: float) -> void:
-	match behaviour:
-		Behaviour.WANDERING: _process_wander(delta)
-		Behaviour.IDLE:      _process_idle(delta)
-		Behaviour.FOLLOWING: _process_follow(delta)
-		Behaviour.WORKING:   pass
-
-func _process_wander(delta: float) -> void:
-	_wander_timer -= delta
-	var dir := (_wander_target - global_position)
-	if dir.length() < 8.0 or _wander_timer <= 0.0:
-		behaviour = Behaviour.IDLE
-		_idle_timer = IDLE_DURATION
-		velocity = Vector2.ZERO
-		return
-	velocity = dir.normalized() * _move_speed
-	move_and_slide()
-
-func _process_idle(delta: float) -> void:
-	_idle_timer -= delta
-	velocity = Vector2.ZERO
-	if _idle_timer <= 0.0:
-		_pick_wander_target()
-		behaviour = Behaviour.WANDERING
-
-func _process_follow(_delta: float) -> void:
-	var players := get_tree().get_nodes_in_group("player")
-	if players.is_empty():
-		return
-	var player: Node2D = players[0]
-	var dir := (player.global_position - global_position)
-	if dir.length() > 80.0:
-		velocity = dir.normalized() * _move_speed * 1.2
-		move_and_slide()
-	else:
-		velocity = Vector2.ZERO
-
-func _pick_wander_target() -> void:
-	var angle := randf() * TAU
-	var dist  := randf_range(40.0, WANDER_RADIUS)
-	_wander_target = global_position + Vector2(cos(angle), sin(angle)) * dist
-	_wander_timer  = WANDER_INTERVAL
-
-func _unhandled_input(event: InputEvent) -> void:
-	if _player_near and event.is_action_pressed("interact"):
-		get_viewport().set_input_as_handled()
-		_open_interaction_menu()
-
-func _on_player_enter(body: Node) -> void:
-	if body.is_in_group("player"):
-		_player_near = true
-
-func _on_player_exit(body: Node) -> void:
-	if body.is_in_group("player"):
-		_player_near = false
-
-func _open_interaction_menu() -> void:
-	var menu_scene := load(INTERACTION_MENU_SCENE)
-	if menu_scene == null:
-		push_error("NpcBase: npc_interaction_menu.tscn not found")
-		return
-	var menu: Node = menu_scene.instantiate()
-	get_tree().current_scene.add_child(menu)
-	menu.open(self)
-
-func set_state(new_state: State) -> void:
-	state = new_state
-	match state:
-		State.COMPANION:
-			behaviour = Behaviour.FOLLOWING
-			_move_speed = 60.0
-		State.SLAVE:
-			behaviour = Behaviour.WORKING
-		State.FREE:
-			behaviour = Behaviour.WANDERING
-			_pick_wander_target()
+func take_damage(amount: int) -> void:
+	current_health -= amount
+	if current_health <= 0:
+		die()
 
 func die() -> void:
-	if color_rect:
-		color_rect.color = COLOR_DEAD
-	var spawners: Array = get_tree().get_nodes_in_group("npc_spawner")
-	for s in spawners:
-		if s.has_method("_on_npc_defeated"):
-			s._on_npc_defeated(self)
+	emit_signal("npc_died", self)
+	for spawner in get_tree().get_nodes_in_group("npc_spawner"):
+		if spawner.has_method("_on_npc_defeated"):
+			spawner._on_npc_defeated(self)
 	queue_free()
 
 func capture() -> void:
-	set_state(State.SLAVE)
+	emit_signal("npc_captured", self)
+	queue_free()
+
+func set_state(new_state: State) -> void:
+	current_state = new_state
+
+func _physics_process(delta: float) -> void:
+	match current_state:
+		State.WANDER:
+			_process_wander(delta)
+		State.FOLLOW:
+			_process_follow()
+		_:
+			pass
+
+func _process_wander(delta: float) -> void:
+	_wander_timer -= delta
+	if _wander_timer <= 0.0:
+		_wander_timer = randf_range(2.0, 5.0)
+		_wander_target = global_position + Vector2(
+				randf_range(-80.0, 80.0),
+				randf_range(-80.0, 80.0)
+		)
+		_nav.target_position = _wander_target
+	if not _nav.is_navigation_finished():
+		var dir: Vector2 = _nav.get_next_path_position() - global_position
+		velocity = dir.normalized() * move_speed
+		move_and_slide()
+
+func _process_follow() -> void:
+	var player: Node = get_tree().get_first_node_in_group("player")
+	if player == null:
+		return
+	_nav.target_position = player.global_position
+	if not _nav.is_navigation_finished():
+		var dir: Vector2 = _nav.get_next_path_position() - global_position
+		velocity = dir.normalized() * move_speed
+		move_and_slide()
