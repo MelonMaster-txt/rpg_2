@@ -16,11 +16,12 @@ extends CharacterBody2D
 signal interaction_requested(npc)
 signal npc_defeated(npc)
 signal npc_captured(npc)
-@export var npc_name:    String = ""
-@export var max_hp:      int    = 30
-@export var strength:    int    = 5
-@export var speed:       float  = 60.0
-@export var is_hostile:  bool   = false
+
+@export var npc_name:   String = ""
+@export var max_hp:     int    = 30
+@export var strength:   int    = 5
+@export var speed:      float  = 60.0
+@export var is_hostile: bool   = false
 
 var current_hp:   int
 var _appearance:  Node
@@ -31,19 +32,18 @@ var _state:       String = "idle"
 const NAMES_MALE   := ["Bjorn","Ulf","Ragnar","Gunnar","Leif","Sigurd","Erik","Ivar"]
 const NAMES_FEMALE := ["Astrid","Freya","Sigrid","Hilde","Runa","Ylva","Ingrid","Solveig"]
 
-var _wander_timer: float  = 2.0
+var _wander_timer: float   = 2.0
 var _wander_dir:   Vector2 = Vector2.ZERO
 
 var _pending_randomize: bool = false
 var _pending_seed:      int  = -1
 
+
 func _ready() -> void:
 	current_hp  = max_hp
 	_appearance = $CharacterAppearance
 	_name_label = $NameLabel
-	$InteractionArea.body_entered.connect(_on_player_enter)
-	$InteractionArea.body_exited.connect(_on_player_exit)
-	_name_label = $NameLabel
+	# FIX : connexions faites une seule fois (étaient doublées avant)
 	$InteractionArea.body_entered.connect(_on_player_enter)
 	$InteractionArea.body_exited.connect(_on_player_exit)
 	if _pending_randomize:

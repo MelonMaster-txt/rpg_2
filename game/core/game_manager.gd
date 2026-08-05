@@ -3,12 +3,13 @@ extends Node
 
 # ─── INVENTORY ────────────────────────────────────────────────────────────────
 var inventory: Dictionary = {
-	"wood":        0,
-	"berries":     0,
-	"stone":       0,
-	"berry_seed":  0,
-	"hoe":         0,
+	"wood":         0,
+	"berries":      0,
+	"stone":        0,
+	"berry_seed":   0,
+	"hoe":          0,
 	"watering_can": 0,
+	"gold":         0,
 }
 
 signal inventory_changed(item: String, amount: int)
@@ -31,13 +32,13 @@ func get_item(item: String) -> int:
 	return inventory.get(item, 0)
 
 # ─── GAME STATS ───────────────────────────────────────────────────────────────
-var life: int = 100
-var force: int = 10
-var stamina: int = 10
-var luck: int = 5
+var life: int         = 100
+var force: int        = 10
+var stamina: int      = 10
+var luck: int         = 5
 var intelligence: int = 5
-var charisma: int = 5
-var speed: int = 10
+var charisma: int     = 5
+var speed: int        = 10
 
 # ─── SPAWN POSITION ───────────────────────────────────────────────────────────
 var saved_spawn_position: Vector2 = Vector2.ZERO
@@ -78,10 +79,10 @@ func _pos_key(pos: Vector2) -> String:
 const DAY_DURATION: float = 240.0
 
 var current_time: float = 0.0
-var current_day: int = 1
-var hour: int = 6
-var minute: int = 0
-var is_day: bool = true
+var current_day: int    = 1
+var hour: int           = 6
+var minute: int         = 0
+var is_day: bool        = true
 
 # Total playtime (incremented here since GameManager always runs, outside pause)
 var play_time: float = 0.0
@@ -99,13 +100,13 @@ func _process(delta: float) -> void:
 		current_time = 0.0
 		current_day += 1
 
-	var progress: float = current_time / DAY_DURATION
+	var progress: float       = current_time / DAY_DURATION
 	var game_hour_float: float = 6.0 + progress * 24.0
-	var real_hour: int = int(game_hour_float) % 24
-	var real_minute: int = int((game_hour_float - int(game_hour_float)) * 60)
+	var real_hour: int         = int(game_hour_float) % 24
+	var real_minute: int       = int((game_hour_float - int(game_hour_float)) * 60)
 
 	if real_hour != hour or real_minute != minute:
-		hour = real_hour
+		hour   = real_hour
 		minute = real_minute
 		emit_signal("time_changed", hour, minute, current_day)
 
