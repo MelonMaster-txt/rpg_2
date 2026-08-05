@@ -87,7 +87,11 @@ func set_nearby_npc(npc: Node) -> void:
 		_interact_hint.visible = npc != null
 
 func take_damage(amount: int) -> void:
+	# BUG FIX : émettre stats_changed pour que le HUD se mette à jour
 	GameManager.life -= amount
 	if GameManager.life <= 0:
 		GameManager.life = 0
+		GameManager.emit_signal("stats_changed")
 		emit_signal("player_died")
+		return
+	GameManager.emit_signal("stats_changed")

@@ -38,10 +38,8 @@ func take_damage(amount: int) -> void:
 
 func die() -> void:
 	npc_died.emit(self)
-	# Notifie le spawner via le groupe (méthode correcte : _on_npc_removed)
-	for spawner in get_tree().get_nodes_in_group("npc_spawner"):
-		if spawner.has_method("_on_npc_removed"):
-			spawner._on_npc_removed(self)
+	# BUG FIX : on ne notifie plus manuellement le spawner ici.
+	# Le signal tree_exited connecté dans npc_spawner.spawn_at() s'en charge.
 	queue_free()
 
 
