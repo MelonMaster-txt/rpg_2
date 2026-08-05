@@ -15,24 +15,22 @@ func _ready() -> void:
 
 func _on_btn_new_game_pressed() -> void:
 	GameState.reset()
-	# FIX : change_scene_to_file attend un String, pas une constante via Autoload
-	# GameState.OVERWORLD est bien une const String → on la passe directement
-	var overworld_path: String = GameState.OVERWORLD
-	get_tree().change_scene_to_file(overworld_path)
+	# FIX : call_deferred évite le crash "grow_direction out of bounds"
+	# qui survient quand change_scene est appelé depuis un signal Button.pressed
+	get_tree().change_scene_to_file.call_deferred(GameState.OVERWORLD)
 
 
 func _on_btn_continue_pressed() -> void:
 	for slot in range(SaveSystem.MAX_SLOTS):
 		if SaveSystem.slot_exists(slot):
 			if SaveSystem.load_game(slot):
-				var scene_path: String = GameState.current_scene
-				get_tree().change_scene_to_file(scene_path)
+				get_tree().change_scene_to_file.call_deferred(GameState.current_scene)
 				return
 
 
 func _on_btn_load_game_pressed() -> void:
 	GameState.set_meta("open_save_menu_mode", 0)
-	get_tree().change_scene_to_file("res://game/core/save_menu.tscn")
+	get_tree().change_scene_to_file.call_deferred("res://game/core/save_menu.tscn")
 
 
 func _on_btn_quit_pressed() -> void:
