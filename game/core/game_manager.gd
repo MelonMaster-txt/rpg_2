@@ -3,19 +3,43 @@ extends Node
 
 # ─── INVENTORY ────────────────────────────────────────────────────────────────
 var inventory: Dictionary = {
+	# ─ Ressources brutes ────────────────────────────────────────────────
 	"wood":         0,
 	"berries":      0,
 	"stone":        0,
-	"berry_seed":   0,
+	"mushroom":     0,
+	"flint":        0,
+	"herb":         0,
+	"resin":        0,
+	"bone":         0,
+	# ─ Ressources craftées intermédiaires ──────────────────────────────
+	"corde":        0,
+	"colle_resine": 0,
+	"cuir":         0,
+	# ─ Outils agricoles ─────────────────────────────────────────────
 	"hoe":          0,
 	"watering_can": 0,
-	"gold":         0,
-	# Nouvelles ressources forêt
-	"mushroom":     0,  # Champignon — près des arbres, zones humides
-	"flint":        0,  # Silex — zones rocheuses, craft outils
-	"herb":         0,  # Herbe médicinale — clairières
-	"resin":        0,  # Résine — récoltée sur les arbres
-	"bone":         0,  # Os — laissés par des animaux morts
+	"berry_seed":   0,
+	# ─ Outils T1 ──────────────────────────────────────────────────
+	"couteau_silex": 0,
+	"hache_silex":   0,
+	"pioche_silex":  0,
+	"arc_primitif":  0,
+	"torche":        0,
+	# ─ Outils T2 ──────────────────────────────────────────────────
+	"hache_pierre":  0,
+	"pioche_pierre": 0,
+	# ─ Consommables ──────────────────────────────────────────────
+	"bandage":          0,
+	"potion_soin":      0,
+	"soupe_champignon": 0,
+	"the_herbal":       0,
+	# ─ Équipements T3 ────────────────────────────────────────────
+	"armure_cuir":   0,
+	"bouclier_os":   0,
+	"amulette_foi":  0,
+	# ─ Divers ────────────────────────────────────────────────────
+	"gold":          0,
 }
 
 signal inventory_changed(item: String, amount: int)
@@ -39,12 +63,78 @@ func get_item(item: String) -> int:
 
 # ─── GAME STATS ───────────────────────────────────────────────────────────────
 var life: int         = 100
+var max_life: int     = 100
 var force: int        = 10
 var stamina: int      = 10
 var luck: int         = 5
 var intelligence: int = 5
 var charisma: int     = 5
 var speed: int        = 10
+var armor: int        = 0
+
+# Buffs temporaires actifs { "stat": { "amount": int, "timer": float } }
+var _active_buffs: Dictionary = {}
+
+signal stats_changed
+signal buff_applied(stat: String, amount: int, duration: float)
+
+# Applique un buff temporaire sur une stat
+func apply_buff(stat: String, amount: int, duration: float) -> void:
+	_active_buffs[stat] = {"amount": amount, "timer": duration}
+	_apply_stat_delta(stat, amount)
+	emit_signal("buff_applied", stat, amount, duration)
+	emit_signal("stats_changed")
+
+func _apply_stat_delta(stat: String, delta: int) -> void:
+	match stat:
+		"life":         life    = clampi(life    + delta, 0, max_life)
+		"force":        force   = maxi(1, force   + delta)
+		"stamina":      stamina = maxi(1, stamina + delta)
+		"luck":         luck    = maxi(0, luck    + delta)
+		"speed":        speed   = maxi(1, speed   + delta)
+		"charisma":     charisma = maxi(0, charisma + delta)
+		"armor":        armor   = maxi(0, armor   + delta)
+
+# Restaure des HP directement (consommable)
+func heal(amount: int) -> void:
+	life = clampi(life + amount, 0, max_life)
+	emit_signal("stats_changed")
+
+func _process(delta: float) -> void:
+	# Tick buffs
+	var expired: Array = []
+	for stat in _active_buffs:
+		_active_buffs[stat]["timer"] -= delta
+		if _active_buffs[stat]["timer"] <= 0.0:
+			# Retire le buff
+			_apply_stat_delta(stat, -_active_buffs[stat]["amount"])
+			expired.append(stat)
+			emit_signal("stats_changed")
+	for stat in expired:
+		_active_buffs.erase(stat)
+
+	# Real playtime
+	if not get_tree().paused:
+		play_time += delta
+
+	current_time += delta
+	if current_time >= DAY_DURATION:
+		current_time = 0.0
+		current_day += 1
+
+	var progress: float       = current_time / DAY_DURATION
+	var game_hour_float: float = 6.0 + progress * 24.0
+	var real_hour: int         = int(game_hour_float) % 24
+	var real_minute: int       = int((game_hour_float - int(game_hour_float)) * 60)
+
+	if real_hour != hour or real_minute != minute:
+		hour   = real_hour
+		minute = real_minute
+		emit_signal("time_changed", hour, minute, current_day)
+		var new_is_day: bool = (hour >= 6 and hour < 20)
+		if new_is_day != is_day:
+			is_day = new_is_day
+			emit_signal("day_night_changed", is_day)
 
 # ─── SPAWN POSITION ───────────────────────────────────────────────────────────
 var saved_spawn_position: Vector2 = Vector2.ZERO
@@ -89,37 +179,10 @@ var current_day: int    = 1
 var hour: int           = 6
 var minute: int         = 0
 var is_day: bool        = true
-
-# Total playtime (incremented here since GameManager always runs, outside pause)
-var play_time: float = 0.0
+var play_time: float    = 0.0
 
 signal time_changed(hour: int, minute: int, day: int)
 signal day_night_changed(is_day: bool)
-
-func _process(delta: float) -> void:
-	# Real playtime (does not tick when game is paused)
-	if not get_tree().paused:
-		play_time += delta
-
-	current_time += delta
-	if current_time >= DAY_DURATION:
-		current_time = 0.0
-		current_day += 1
-
-	var progress: float       = current_time / DAY_DURATION
-	var game_hour_float: float = 6.0 + progress * 24.0
-	var real_hour: int         = int(game_hour_float) % 24
-	var real_minute: int       = int((game_hour_float - int(game_hour_float)) * 60)
-
-	if real_hour != hour or real_minute != minute:
-		hour   = real_hour
-		minute = real_minute
-		emit_signal("time_changed", hour, minute, current_day)
-
-		var new_is_day: bool = (hour >= 6 and hour < 20)
-		if new_is_day != is_day:
-			is_day = new_is_day
-			emit_signal("day_night_changed", is_day)
 
 func get_time_string() -> String:
 	return "%02d:%02d" % [hour, minute]
