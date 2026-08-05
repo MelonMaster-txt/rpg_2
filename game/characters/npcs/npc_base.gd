@@ -41,12 +41,10 @@ func _ready() -> void:
 		interact_area.body_entered.connect(_on_player_enter)
 		interact_area.body_exited.connect(_on_player_exit)
 
-
 func _setup_visuals() -> void:
 	if name_label:
 		name_label.text = data.npc_name
 	_update_color_rect()
-
 
 func _update_color_rect() -> void:
 	if color_rect == null:
@@ -56,14 +54,12 @@ func _update_color_rect() -> void:
 		"monster": color_rect.color = COLOR_MONSTER
 		_:         color_rect.color = COLOR_MALE
 
-
 func _physics_process(delta: float) -> void:
 	match behaviour:
 		Behaviour.WANDERING: _process_wander(delta)
 		Behaviour.IDLE:      _process_idle(delta)
 		Behaviour.FOLLOWING: _process_follow(delta)
 		Behaviour.WORKING:   pass
-
 
 func _process_wander(delta: float) -> void:
 	_wander_timer -= delta
@@ -76,14 +72,12 @@ func _process_wander(delta: float) -> void:
 	velocity = dir.normalized() * _move_speed
 	move_and_slide()
 
-
 func _process_idle(delta: float) -> void:
 	_idle_timer -= delta
 	velocity = Vector2.ZERO
 	if _idle_timer <= 0.0:
 		_pick_wander_target()
 		behaviour = Behaviour.WANDERING
-
 
 func _process_follow(_delta: float) -> void:
 	var players := get_tree().get_nodes_in_group("player")
@@ -97,29 +91,24 @@ func _process_follow(_delta: float) -> void:
 	else:
 		velocity = Vector2.ZERO
 
-
 func _pick_wander_target() -> void:
 	var angle := randf() * TAU
 	var dist  := randf_range(40.0, WANDER_RADIUS)
 	_wander_target = global_position + Vector2(cos(angle), sin(angle)) * dist
 	_wander_timer  = WANDER_INTERVAL
 
-
 func _unhandled_input(event: InputEvent) -> void:
 	if _player_near and event.is_action_pressed("interact"):
 		get_viewport().set_input_as_handled()
 		_open_interaction_menu()
 
-
 func _on_player_enter(body: Node) -> void:
 	if body.is_in_group("player"):
 		_player_near = true
 
-
 func _on_player_exit(body: Node) -> void:
 	if body.is_in_group("player"):
 		_player_near = false
-
 
 func _open_interaction_menu() -> void:
 	var menu_scene := load(INTERACTION_MENU_SCENE)
@@ -129,9 +118,6 @@ func _open_interaction_menu() -> void:
 	var menu: Node = menu_scene.instantiate()
 	get_tree().current_scene.add_child(menu)
 	menu.open(self)
-
-
-# ── Public API ────────────────────────────────────────────────────────────────
 
 func set_state(new_state: State) -> void:
 	state = new_state
@@ -145,7 +131,6 @@ func set_state(new_state: State) -> void:
 			behaviour = Behaviour.WANDERING
 			_pick_wander_target()
 
-
 func die() -> void:
 	if color_rect:
 		color_rect.color = COLOR_DEAD
@@ -154,7 +139,6 @@ func die() -> void:
 		if s.has_method("_on_npc_defeated"):
 			s._on_npc_defeated(self)
 	queue_free()
-
 
 func capture() -> void:
 	set_state(State.SLAVE)

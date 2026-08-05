@@ -3,15 +3,6 @@
 # Respawn dans un rayon aléatoire autour de l'origine (pas au même endroit).
 extends Area2D
 
-@export var resource_name: String  = "Ressource"
-@export var resource_type: String  = "generic"
-@export var max_health: int        = 3
-@export var gather_amount: int     = 1
-@export var respawn_time: float    = 12.0
-# Rayon de dispersion au respawn (0 = même endroit, >0 = aléatoire)
-@export var respawn_scatter: float = 40.0
-
-# Couleurs placeholder par type
 const TYPE_COLORS := {
 	"wood":     Color(0.20, 0.50, 0.15),
 	"berry":    Color(0.55, 0.10, 0.60),
@@ -23,6 +14,25 @@ const TYPE_COLORS := {
 	"bone":     Color(0.90, 0.88, 0.80),
 }
 const DEFAULT_COLOR := Color(0.6, 0.4, 0.2)
+# Correspondances type -> clef inventaire
+const TYPE_TO_KEY := {
+	"wood": "wood",     "bois": "wood",     "tree": "wood",
+	"berry": "berries", "baies": "berries", "berries": "berries",
+	"stone": "stone",   "pierre": "stone",  "rock": "stone",
+	"rocks": "stone",
+	"mushroom": "mushroom", "champignon": "mushroom",
+	"flint": "flint",   "silex": "flint",
+	"herb": "herb",     "herbe": "herb",
+	"resin": "resin",   "resine": "resin",
+	"bone": "bone",     "os": "bone",
+}
+
+@export var resource_name: String  = "Ressource"
+@export var resource_type: String  = "generic"
+@export var max_health: int        = 3
+@export var gather_amount: int     = 1
+@export var respawn_time: float    = 12.0
+@export var respawn_scatter: float = 40.0
 
 var _visual: Node2D              = null
 var _color_rect: ColorRect       = null
@@ -34,7 +44,6 @@ var _respawn_timer: Timer        = null
 var current_health: int  = 0
 var is_depleted: bool    = false
 var player_in_area: bool = false
-# Position d'origine locale dans le chunk (pour le scatter au respawn)
 var _origin_position: Vector2 = Vector2.ZERO
 
 
@@ -69,7 +78,7 @@ func _ready() -> void:
 
 func _build_color_rect() -> void:
 	var color: Color = TYPE_COLORS.get(resource_type, DEFAULT_COLOR)
-	_color_rect      = ColorRect.new()
+	_color_rect       = ColorRect.new()
 	_color_rect.color = color
 	var sz: Vector2
 	match resource_type:
@@ -110,18 +119,8 @@ func _on_body_exited(body: Node) -> void:
 			_label.visible = false
 
 
-# Normalise tous les types vers la clé inventaire correcte
 func _resource_type_to_key(rtype: String) -> String:
-	match rtype:
-		"wood", "bois", "tree":             return "wood"
-		"berry", "baies", "berries":        return "berries"
-		"stone", "pierre", "rock", "rocks": return "stone"
-		"mushroom", "champignon":           return "mushroom"
-		"flint", "silex":                   return "flint"
-		"herb", "herbe":                    return "herb"
-		"resin", "resine":                  return "resin"
-		"bone", "os":                       return "bone"
-		_:                                   return rtype
+	return TYPE_TO_KEY.get(rtype, rtype)
 
 
 func _do_gather() -> void:
@@ -147,7 +146,6 @@ func _deplete() -> void:
 	elif _visual != null and _visual is CanvasItem:
 		(_visual as CanvasItem).modulate.a = 0.3
 	if _respawn_timer != null:
-		# Temps de respawn légèrement aléatoire : ±30 %
 		var variation: float = respawn_time * randf_range(0.7, 1.3)
 		_respawn_timer.start(variation)
 	else:
@@ -155,10 +153,9 @@ func _deplete() -> void:
 
 
 func _on_respawn() -> void:
-	# Décale la position de respawn aléatoirement autour de l'origine
 	if respawn_scatter > 0.0:
-		var angle: float  = randf() * TAU
-		var dist: float   = randf_range(0.0, respawn_scatter)
+		var angle: float = randf() * TAU
+		var dist: float  = randf_range(0.0, respawn_scatter)
 		position = _origin_position + Vector2(cos(angle), sin(angle)) * dist
 
 	is_depleted    = false

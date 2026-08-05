@@ -1,6 +1,13 @@
 # random_npc.gd
 extends CharacterBody2D
 
+signal interaction_requested(npc)
+signal npc_defeated(npc)
+signal npc_captured(npc)
+signal npc_recruited(npc)
+
+enum AiState { IDLE, WANDER, FLEE, CHASE, DEAD, WORKING }
+
 const COLOR_MALE    := Color(0.25, 0.50, 1.00)
 const COLOR_FEMALE  := Color(1.00, 0.45, 0.70)
 const COLOR_MONSTER := Color(0.10, 0.75, 0.20)
@@ -10,13 +17,6 @@ const COLOR_WORKER  := Color(0.90, 0.75, 0.20)
 const DETECT_RANGE    := 120.0
 const ATTACK_RANGE    := 32.0
 const ATTACK_COOLDOWN := 1.5
-
-signal interaction_requested(npc)
-signal npc_defeated(npc)
-signal npc_captured(npc)
-signal npc_recruited(npc)
-
-enum AiState { IDLE, WANDER, FLEE, CHASE, DEAD, WORKING }
 
 var data: NpcData = null
 var npc_name:   String = ""
@@ -146,13 +146,17 @@ func _update_ai(delta: float) -> void:
 				velocity = Vector2.ZERO
 		AiState.FLEE:
 			if _target != null:
-				var dir: Vector2 = (global_position - _target.global_position).normalized()
+				var dir: Vector2 = (
+					global_position - _target.global_position
+				).normalized()
 				velocity = dir * speed * 1.3
 				_update_facing()
 				move_and_slide()
 		AiState.CHASE:
 			if _target != null:
-				var dir: Vector2 = (_target.global_position - global_position).normalized()
+				var dir: Vector2 = (
+					_target.global_position - global_position
+				).normalized()
 				velocity = dir * speed * 1.1
 				_update_facing()
 				move_and_slide()
@@ -175,7 +179,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _open_interaction_menu() -> void:
-	var menu_scene: PackedScene = load("res://game/systems/npc_interaction_menu.tscn")
+	var menu_scene: PackedScene = load(
+		"res://game/systems/npc_interaction_menu.tscn"
+	)
 	if menu_scene == null:
 		push_error("RandomNpc: npc_interaction_menu.tscn introuvable")
 		return
@@ -231,7 +237,9 @@ func _add_relation_component() -> void:
 	var existing = get_node_or_null("RelationComponent")
 	if existing:
 		return
-	var rel_script: Script = load("res://game/characters/npcs/npc_relation.gd")
+	var rel_script: Script = load(
+		"res://game/characters/npcs/npc_relation.gd"
+	)
 	if rel_script == null:
 		push_error("random_npc: npc_relation.gd introuvable")
 		return
@@ -245,7 +253,9 @@ func _add_relation_component() -> void:
 func _start_working(initial_job: String) -> void:
 	_ai = AiState.WORKING
 	_update_color_rect()
-	var worker_script: Script = load("res://game/characters/npcs/worker_ai.gd")
+	var worker_script: Script = load(
+		"res://game/characters/npcs/worker_ai.gd"
+	)
 	if worker_script == null:
 		push_error("RandomNpc: worker_ai.gd introuvable")
 		return
