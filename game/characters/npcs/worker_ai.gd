@@ -1,41 +1,53 @@
-extends NpcBase
-class_name WorkerAI
+extends Node
+# WorkerAI — composant enfant d'un RandomNpc recruté ou capturé.
+# Attaché dynamiquement via random_npc._start_working()
 
-# ─── EXPORTS ──────────────────────────────────────────────────────────────────
-@export var job_id: String = ""
-@export var work_radius: float = 200.0
-
-# ─── VARS ─────────────────────────────────────────────────────────────────────
-var _work_target: Node = null
+var job: String = ""
 var _work_timer: float = 0.0
 const WORK_INTERVAL: float = 5.0
 
+
 func _ready() -> void:
-	super._ready()
-	current_state = State.WORK
+	pass
 
-func _physics_process(delta: float) -> void:
-	if current_state == State.WORK:
-		_process_work(delta)
-		return
-	super._physics_process(delta)
 
-func _process_work(delta: float) -> void:
+func _process(delta: float) -> void:
 	_work_timer -= delta
-	if _work_timer > 0.0:
-		return
-	_work_timer = WORK_INTERVAL
-	_do_work()
+	if _work_timer <= 0.0:
+		_work_timer = WORK_INTERVAL
+		_do_work()
+
 
 func _do_work() -> void:
-	if job_id == "farmer":
-		GameManager.add_item("berries", 1)
-	elif job_id == "lumberjack":
-		GameManager.add_item("wood", 2)
-	elif job_id == "miner":
-		GameManager.add_item("stone", 1)
-	elif job_id == "blacksmith":
-		GameManager.add_item("flint", 1)
-	elif job_id == "priest":
-		if Engine.has_singleton("ReligionManager"):
-			ReligionManager.add_faith(2)
+	match job:
+		"farmer":
+			GameManager.add_item("berries", 1)
+			print("[WorkerAI] ", _get_owner_name(), " produit 1 baie")
+		"woodcutter", "lumberjack":
+			GameManager.add_item("wood", 2)
+			print("[WorkerAI] ", _get_owner_name(), " produit 2 bois")
+		"miner":
+			GameManager.add_item("stone", 1)
+			print("[WorkerAI] ", _get_owner_name(), " produit 1 pierre")
+		"blacksmith":
+			GameManager.add_item("flint", 1)
+			print("[WorkerAI] ", _get_owner_name(), " produit 1 silex")
+		"priest":
+			var rm: Node = get_node_or_null("/root/ReligionManager")
+			if rm != null and rm.has_method("add_faith"):
+				rm.add_faith(2)
+				print("[WorkerAI] ", _get_owner_name(), " génère 2 foi")
+		"guard":
+			pass
+
+
+func update_job(new_job: String) -> void:
+	job = new_job
+	print("[WorkerAI] ", _get_owner_name(), " change de metier -> ", new_job)
+
+
+func _get_owner_name() -> String:
+	var p: Node = get_parent()
+	if p != null and p.get("npc_name") != null:
+		return p.npc_name
+	return "NPC"

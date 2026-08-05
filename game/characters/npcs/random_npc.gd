@@ -211,11 +211,9 @@ func die() -> void:
 
 
 func _get_population_manager() -> Node:
-	# Essaie d'abord comme Autoload enregistré
 	var pm: Node = get_node_or_null("/root/PopulationManager")
 	if pm != null:
 		return pm
-	# Sinon cherche dans le groupe
 	var nodes: Array = get_tree().get_nodes_in_group("population_manager")
 	if nodes.size() > 0:
 		return nodes[0]
@@ -278,9 +276,10 @@ func _start_working(initial_job: String) -> void:
 	var worker: Node = Node.new()
 	worker.set_script(worker_script)
 	worker.set_name("WorkerAI")
-	worker.job = initial_job
 	add_child(worker)
-	print("[RandomNpc] WorkerAI cree pour ", npc_name, " avec job=", initial_job)
+	# Assigner le job après add_child pour que _ready() soit passé
+	worker.job = initial_job
+	print("[RandomNpc] WorkerAI créé pour ", npc_name, " avec job=", initial_job)
 
 
 func get_worker_ai() -> Node:
@@ -291,19 +290,21 @@ func change_job(new_job: String) -> void:
 	var w = get_worker_ai()
 	if w != null:
 		w.update_job(new_job)
+	else:
+		_start_working(new_job)
 	print("[RandomNpc] %s -> metier : %s" % [npc_name, new_job])
 
 
 func _build_kingdom_entry(role: String) -> Dictionary:
 	var entry: Dictionary = {
-		"name": npc_name,
-		"gender": npc_gender,
-		"role": role,
-		"job": "",
+		"name":     npc_name,
+		"gender":   npc_gender,
+		"role":     role,
+		"job":      "",
 		"strength": strength,
-		"max_hp": max_hp,
+		"max_hp":   max_hp,
 		"archetype": "",
-		"skills": {},
+		"skills":   {},
 		"happiness": 100,
 	}
 	if data != null:

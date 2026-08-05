@@ -25,27 +25,34 @@ var current_state: State = State.IDLE
 var _wander_timer: float = 0.0
 var _wander_target: Vector2 = Vector2.ZERO
 
+
 func _ready() -> void:
 	current_health = max_health
+
 
 func take_damage(amount: int) -> void:
 	current_health -= amount
 	if current_health <= 0:
 		die()
 
+
 func die() -> void:
-	emit_signal("npc_died", self)
+	npc_died.emit(self)
+	# Notifie le spawner via le groupe (méthode correcte : _on_npc_removed)
 	for spawner in get_tree().get_nodes_in_group("npc_spawner"):
-		if spawner.has_method("_on_npc_defeated"):
-			spawner._on_npc_defeated(self)
+		if spawner.has_method("_on_npc_removed"):
+			spawner._on_npc_removed(self)
 	queue_free()
 
+
 func capture() -> void:
-	emit_signal("npc_captured", self)
+	npc_captured.emit(self)
 	queue_free()
+
 
 func set_state(new_state: State) -> void:
 	current_state = new_state
+
 
 func _physics_process(delta: float) -> void:
 	match current_state:
@@ -55,6 +62,7 @@ func _physics_process(delta: float) -> void:
 			_process_follow()
 		_:
 			pass
+
 
 func _process_wander(delta: float) -> void:
 	_wander_timer -= delta
@@ -69,6 +77,7 @@ func _process_wander(delta: float) -> void:
 		var dir: Vector2 = _nav.get_next_path_position() - global_position
 		velocity = dir.normalized() * move_speed
 		move_and_slide()
+
 
 func _process_follow() -> void:
 	var player: Node = get_tree().get_first_node_in_group("player")
