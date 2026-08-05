@@ -144,10 +144,6 @@ func die() -> void:
 	NpcSpawner.unregister(self)
 	queue_free()
 
+
 func capture() -> void:
 	set_state(State.ESCLAVE)
-	NpcSpawner.register_kingdom_npc(self)
-
-func recruit() -> void:
-	set_state(State.COMPAGNON)
-	NpcSpawner.register_kingdom_npc(self)
