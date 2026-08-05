@@ -1,28 +1,22 @@
 ## ChunkManager — Pipeline asynchrone inspiré de Minecraft
-##
-## Architecture en 3 couches :
-##   1. TICKETS  : chaque chunk a un niveau de priorité (ACTIVE / LAZY / SLEEP)
-##   2. THREAD   : tout le calcul de génération se fait hors main thread
-##   3. POOL     : les nodes chunk sont recyclés, jamais détruits/recréés
 extends Node2D
 
 const CHUNK_NODE_SCENE: PackedScene = preload("res://game/world/chunk_node.tscn")
 
 signal initial_load_completed
 
-# --- Niveaux de ticket (inspiré Minecraft) ---
 enum TicketLevel {
-	ACTIVE = 0,   # Chunk visible, pleinement actif (rendu + process)
-	LAZY   = 1,   # Chunk en mémoire, invisible, process désactivé
-	SLEEP  = 2,   # Chunk dans le pool, non attaché à la scène
+	ACTIVE = 0,
+	LAZY   = 1,
+	SLEEP  = 2,
 }
 
-@export var chunk_size:         int  = 512
-@export var load_radius:        int  = 1
-@export var lazy_radius:        int  = 2
-@export var spawn_chunk_radius: int  = 1
-@export var debug_draw_chunks:  bool = false
-@export var max_chunks_per_frame: int = 1
+@export var chunk_size:           int  = 512
+@export var load_radius:          int  = 1
+@export var lazy_radius:          int  = 2
+@export var spawn_chunk_radius:   int  = 1
+@export var debug_draw_chunks:    bool = false
+@export var max_chunks_per_frame: int  = 1
 
 var _loaded_chunks:  Dictionary = {}
 var _ticket_levels:  Dictionary = {}
@@ -38,7 +32,6 @@ var _last_player_chunk: Vector2i = Vector2i(999999, 999999)
 var _find_player_cd:    int      = 0
 var _spawn_center:      Vector2i = Vector2i(0, 0)
 var _initial_load_done: bool     = false
-# Nombre de chunks appliqués depuis le démarrage — doit être > 0 avant d'émettre
 var _chunks_applied:    int      = 0
 
 
@@ -61,11 +54,6 @@ func _deferred_init() -> void:
 
 func _process(_delta: float) -> void:
 	_flush_ready_queue()
-
-	# N'émet le signal que si :
-	# 1) pas encore émis
-	# 2) au moins un chunk a été appliqué (évite le faux positif au 1er frame)
-	# 3) les deux queues sont vides (thread fini + main thread fini)
 	if not _initial_load_done and _chunks_applied > 0:
 		var gen_empty: bool = false
 		_thread_mutex.lock()
@@ -74,7 +62,6 @@ func _process(_delta: float) -> void:
 		if gen_empty:
 			_initial_load_done = true
 			initial_load_completed.emit()
-
 	if _player == null or not is_instance_valid(_player):
 		_find_player_cd -= 1
 		if _find_player_cd <= 0:
@@ -100,13 +87,10 @@ func _generation_thread_loop() -> void:
 		if _gen_queue.size() > 0:
 			coords = _gen_queue.pop_front()
 		_thread_mutex.unlock()
-
 		if coords == null:
 			OS.delay_msec(4)
 			continue
-
 		var data: Dictionary = _compute_chunk_data(coords as Vector2i)
-
 		_thread_mutex.lock()
 		_ready_queue.append({"coords": coords, "data": data})
 		_thread_mutex.unlock()
@@ -121,17 +105,15 @@ func _flush_ready_queue() -> void:
 	_thread_mutex.lock()
 	var available: int = _ready_queue.size()
 	_thread_mutex.unlock()
-	if available == 0:
-		return
+	if available == 0: return
 	var to_apply: int = mini(available, max_chunks_per_frame)
 	for _i: int in to_apply:
 		_thread_mutex.lock()
 		var item: Dictionary = _ready_queue.pop_front()
 		_thread_mutex.unlock()
 		var coords: Vector2i = item["coords"]
-		var data: Dictionary  = item["data"]
-		if not _loaded_chunks.has(coords):
-			continue
+		var data:   Dictionary = item["data"]
+		if not _loaded_chunks.has(coords): continue
 		var chunk: Node2D = _loaded_chunks[coords]
 		if is_instance_valid(chunk):
 			chunk.setup(coords, chunk_size, data["type"])
@@ -140,32 +122,32 @@ func _flush_ready_queue() -> void:
 
 
 func _apply_ticket(coords: Vector2i) -> void:
-	if not _loaded_chunks.has(coords) or not _ticket_levels.has(coords):
-		return
+	if not _loaded_chunks.has(coords) or not _ticket_levels.has(coords): return
 	var chunk: Node2D = _loaded_chunks[coords]
-	if not is_instance_valid(chunk):
-		return
+	if not is_instance_valid(chunk): return
 	match _ticket_levels[coords]:
 		TicketLevel.ACTIVE:
-			chunk.visible = true
+			chunk.visible      = true
+			# ACTIVE : process + physique normaux
 			chunk.process_mode = Node.PROCESS_MODE_INHERIT
 		TicketLevel.LAZY:
-			chunk.visible = false
-			chunk.process_mode = Node.PROCESS_MODE_DISABLED
+			# LAZY : invisible mais PROCESS_MODE_INHERIT pour que
+			# les ResourceNode enfants exécutent bien _ready()
+			# et appellent add_to_group() → visible par WorkerAI
+			chunk.visible      = false
+			chunk.process_mode = Node.PROCESS_MODE_INHERIT
 		_:
 			pass
 
 
 func _get_chunk_from_pool() -> Node2D:
-	if _chunk_pool.size() > 0:
-		return _chunk_pool.pop_back() as Node2D
+	if _chunk_pool.size() > 0: return _chunk_pool.pop_back() as Node2D
 	return CHUNK_NODE_SCENE.instantiate() as Node2D
 
 
 func _return_chunk_to_pool(chunk: Node2D) -> void:
-	if not is_instance_valid(chunk):
-		return
-	chunk.visible = false
+	if not is_instance_valid(chunk): return
+	chunk.visible      = false
 	chunk.process_mode = Node.PROCESS_MODE_DISABLED
 	if chunk.get_parent() != null:
 		chunk.get_parent().remove_child(chunk)
@@ -181,11 +163,9 @@ func _load_chunks_around(center: Vector2i, radius: int) -> void:
 
 
 func _update_chunks() -> void:
-	if _player == null or not is_instance_valid(_player):
-		return
+	if _player == null or not is_instance_valid(_player): return
 	var current: Vector2i = _world_to_chunk(_player.global_position)
-	if current == _last_player_chunk:
-		return
+	if current == _last_player_chunk: return
 	_last_player_chunk = current
 
 	var active_set: Dictionary = {}
@@ -202,30 +182,23 @@ func _update_chunks() -> void:
 	for x: int in range(current.x - lazy_radius, current.x + lazy_radius + 1):
 		for y: int in range(current.y - lazy_radius, current.y + lazy_radius + 1):
 			var c := Vector2i(x, y)
-			if not active_set.has(c):
-				lazy_set[c] = true
+			if not active_set.has(c): lazy_set[c] = true
 
 	for c: Vector2i in active_set:
-		if not _loaded_chunks.has(c):
-			_queue_load_chunk(c, TicketLevel.ACTIVE)
-		else:
-			_set_ticket(c, TicketLevel.ACTIVE)
+		if not _loaded_chunks.has(c): _queue_load_chunk(c, TicketLevel.ACTIVE)
+		else: _set_ticket(c, TicketLevel.ACTIVE)
 
 	for c: Vector2i in lazy_set:
-		if not _loaded_chunks.has(c):
-			_queue_load_chunk(c, TicketLevel.LAZY)
-		else:
-			_set_ticket(c, TicketLevel.LAZY)
+		if not _loaded_chunks.has(c): _queue_load_chunk(c, TicketLevel.LAZY)
+		else: _set_ticket(c, TicketLevel.LAZY)
 
 	var to_unload: Array = []
 	for c: Vector2i in _loaded_chunks.keys():
-		if not active_set.has(c) and not lazy_set.has(c):
-			to_unload.append(c)
+		if not active_set.has(c) and not lazy_set.has(c): to_unload.append(c)
 	for c: Vector2i in to_unload:
 		_unload_chunk(c)
 
-	if debug_draw_chunks:
-		queue_redraw()
+	if debug_draw_chunks: queue_redraw()
 
 
 func _queue_load_chunk(coords: Vector2i, level: TicketLevel) -> void:
@@ -240,8 +213,7 @@ func _queue_load_chunk(coords: Vector2i, level: TicketLevel) -> void:
 
 
 func _set_ticket(coords: Vector2i, level: TicketLevel) -> void:
-	if _ticket_levels.get(coords) == level:
-		return
+	if _ticket_levels.get(coords) == level: return
 	_ticket_levels[coords] = level
 	_apply_ticket(coords)
 
@@ -249,8 +221,7 @@ func _set_ticket(coords: Vector2i, level: TicketLevel) -> void:
 func _unload_chunk(coords: Vector2i) -> void:
 	var dx: int = absi(coords.x - _spawn_center.x)
 	var dy: int = absi(coords.y - _spawn_center.y)
-	if dx <= spawn_chunk_radius and dy <= spawn_chunk_radius:
-		return
+	if dx <= spawn_chunk_radius and dy <= spawn_chunk_radius: return
 	if _loaded_chunks.has(coords):
 		var chunk: Node2D = _loaded_chunks[coords]
 		_return_chunk_to_pool(chunk)
@@ -260,11 +231,9 @@ func _unload_chunk(coords: Vector2i) -> void:
 
 func _find_player() -> Node2D:
 	var direct: Node = get_node_or_null("../PlayerContainer/Player")
-	if direct is Node2D:
-		return direct as Node2D
+	if direct is Node2D: return direct as Node2D
 	var group: Array = get_tree().get_nodes_in_group("player")
-	if group.size() > 0 and group[0] is Node2D:
-		return group[0] as Node2D
+	if group.size() > 0 and group[0] is Node2D: return group[0] as Node2D
 	return null
 
 
@@ -276,10 +245,9 @@ func _world_to_chunk(world_pos: Vector2) -> Vector2i:
 
 
 func _draw() -> void:
-	if not debug_draw_chunks:
-		return
+	if not debug_draw_chunks: return
 	for coords: Vector2i in _loaded_chunks.keys():
-		var tl: Vector2  = Vector2(coords.x * chunk_size, coords.y * chunk_size)
+		var tl: Vector2 = Vector2(coords.x * chunk_size, coords.y * chunk_size)
 		var col: Color
 		match _ticket_levels.get(coords, TicketLevel.SLEEP):
 			TicketLevel.ACTIVE: col = Color(0, 1, 0, 0.15)
