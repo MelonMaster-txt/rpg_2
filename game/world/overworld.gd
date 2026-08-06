@@ -1,6 +1,6 @@
 # overworld.gd
-# Le joueur est instancié depuis game/characters/player/player.tscn
-# et ajouté dans PlayerContainer au _ready.
+# Le joueur est instancie depuis game/characters/player/player.tscn
+# et ajoute dans PlayerContainer au _ready.
 extends Node2D
 
 const PLAYER_SCENE: String = "res://game/characters/player/player.tscn"

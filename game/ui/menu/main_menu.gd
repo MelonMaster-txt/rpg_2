@@ -5,8 +5,8 @@ extends Control
 
 
 func _ready() -> void:
-	var any_save := false
-	for slot in range(SaveSystem.MAX_SLOTS):
+	var any_save: bool = false
+	for slot: int in range(SaveSystem.MAX_SLOTS):
 		if SaveSystem.slot_exists(slot):
 			any_save = true
 			break
@@ -15,13 +15,11 @@ func _ready() -> void:
 
 func _on_btn_new_game_pressed() -> void:
 	GameState.reset()
-	# FIX : call_deferred évite le crash "grow_direction out of bounds"
-	# qui survient quand change_scene est appelé depuis un signal Button.pressed
 	get_tree().change_scene_to_file.call_deferred(GameState.OVERWORLD)
 
 
 func _on_btn_continue_pressed() -> void:
-	for slot in range(SaveSystem.MAX_SLOTS):
+	for slot: int in range(SaveSystem.MAX_SLOTS):
 		if SaveSystem.slot_exists(slot):
 			if SaveSystem.load_game(slot):
 				get_tree().change_scene_to_file.call_deferred(GameState.current_scene)

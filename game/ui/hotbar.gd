@@ -14,10 +14,10 @@ func _ready() -> void:
 
 func _build_hotbar() -> void:
 	if _slots == null:
-		push_error("Hotbar: nœud SlotsRow introuvable dans hotbar.tscn")
+		push_error("Hotbar: noeud SlotsRow introuvable dans hotbar.tscn")
 		return
 	for i: int in range(SLOT_COUNT):
-		var slot := Panel.new()
+		var slot: Panel = Panel.new()
 		slot.custom_minimum_size = Vector2(40, 40)
 		_slots.add_child(slot)
 		_slot_nodes.append(slot)
@@ -25,8 +25,6 @@ func _build_hotbar() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	# FIX: is_action_just_pressed n'existe pas sur InputEventMouseMotion
-	# On filtre uniquement les évènements clavier / manette
 	if not (event is InputEventKey or event is InputEventJoypadButton):
 		return
 	for i: int in range(SLOT_COUNT):
