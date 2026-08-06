@@ -275,7 +275,7 @@ func _start_working(initial_job: String) -> void:
 	worker.set_name("WorkerAI")
 	add_child(worker)
 	worker.job = initial_job
-	print("[RandomNpc] WorkerAI créé pour ", npc_name, " avec job=", initial_job)
+	push_warning("[RandomNpc] WorkerAI créé pour %s avec job=%s" % [npc_name, initial_job])
 
 
 func get_worker_ai() -> Node:
@@ -288,7 +288,7 @@ func change_job(new_job: String) -> void:
 		w.update_job(new_job)
 	else:
 		_start_working(new_job)
-	print("[RandomNpc] %s -> metier : %s" % [npc_name, new_job])
+	push_warning("[RandomNpc] %s -> metier : %s" % [npc_name, new_job])
 
 
 func _build_kingdom_entry(role: String) -> Dictionary:

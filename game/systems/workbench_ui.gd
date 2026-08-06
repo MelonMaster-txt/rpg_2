@@ -11,18 +11,21 @@ signal crafted(recipe_id: String)
 @onready var _close_btn: Button = $MarginContainer/VBox/CloseButton
 @onready var _info_label: Label = $MarginContainer/VBox/InfoLabel
 
+
 func _ready() -> void:
 	_close_btn.pressed.connect(hide)
 	_build_list()
+
 
 func _build_list() -> void:
 	for recipe: Resource in recipes:
 		if recipe == null:
 			continue
-		var btn := Button.new()
+		var btn: Button = Button.new()
 		btn.text = recipe.get("recipe_name") if recipe.get("recipe_name") else "?"
 		btn.pressed.connect(_on_recipe_pressed.bind(recipe))
 		_list.add_child(btn)
+
 
 func _on_recipe_pressed(recipe: Resource) -> void:
 	var recipe_id: String = recipe.get("recipe_id") if recipe.get("recipe_id") else ""

@@ -1,9 +1,9 @@
-extends CanvasLayer
 # in_game_save_menu.gd
 # Hiérarchie réelle dans in_game_save_menu.tscn :
 #   InGameSaveMenu (CanvasLayer)
 #     Panel
 #       SaveMenu (instance save_menu.tscn)
+extends CanvasLayer
 
 signal resume_requested
 

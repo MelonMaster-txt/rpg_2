@@ -35,7 +35,7 @@ func _build_grid() -> void:
 		child.queue_free()
 	_slot_nodes.clear()
 	for key: String in GameManager.inventory:
-		var btn := Button.new()
+		var btn: Button = Button.new()
 		btn.text = "%s\n%d" % [key, GameManager.inventory[key]]
 		btn.custom_minimum_size = Vector2(80, 60)
 		btn.pressed.connect(_on_slot_pressed.bind(key))
