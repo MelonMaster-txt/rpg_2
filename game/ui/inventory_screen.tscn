@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://inventory_screen"]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://game/ui/inventory_screen.gd" id="1"]
 
@@ -19,14 +19,14 @@ anchor_left = 0.05
 anchor_top = 0.05
 anchor_right = 0.95
 anchor_bottom = 0.95
-grow_horizontal = 3
-grow_vertical = 3
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="VBox" type="VBoxContainer" parent="BG/Panel"]
 anchor_right = 1.0
 anchor_bottom = 1.0
-grow_horizontal = 3
-grow_vertical = 3
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="TopBar" type="HBoxContainer" parent="BG/Panel/VBox"]
 
