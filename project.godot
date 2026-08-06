@@ -23,20 +23,14 @@ Dialogic="*uid://ds2q0uclmolvu"
 ChunkGenerator="*res://game/world/chunk_generator.gd"
 GameManager="*res://game/core/game_manager.gd"
 ItemDatabase="*res://game/systems/item_database.gd"
-<<<<<<< HEAD
-NpcSpawner="*res://game/systems/npc_spawner.gd"
-DebugMenu="*res://game/core/debug_menu.gd"
-GameState="*uid://yblsmcdayhxt"
-SaveSystem="*uid://bvitjw1moqcug"
-CompanionManager="*res://game/systems/companion_manager.gd"
-=======
 DebugMenu="*res://game/core/debug_menu.gd"
 GameState="*uid://yblsmcdayhxt"
 SaveSystem="*uid://bvitjw1moqcug"
 PopulationManager="*res://game/systems/kingdom/population_manager.gd"
 KingdomManager="*res://game/systems/kingdom/kingdom_manager.gd"
 NpcSpawner="*res://game/characters/npcs/npc_spawner.gd"
->>>>>>> origin/test_recover
+<<<<<<<HEADNpcSpawner="*res://game/systems/npc_spawner.gd"
+CompanionManager="*res://game/systems/companion_manager.gd"
 
 [dialogic]
 
