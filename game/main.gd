@@ -32,3 +32,20 @@ func _hide_loading() -> void:
 
 func _on_chunk_manager_initial_load_completed() -> void:
 	_hide_loading()
+
+# ── Debug : spawn d'un NPC autour du joueur ────────────────────────
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed:
+		# Touche F9 pour debug NPC
+		if event.keycode == Key.F9:
+			_spawn_debug_npc()
+
+func _spawn_debug_npc() -> void:
+	var players := get_tree().get_nodes_in_group("player")
+	if players.is_empty():
+		return
+	var player := players[0] as Node2D
+	var origin := player.global_position
+	# rayon petit pour debug
+	NpcSpawner.spawn_random_around(origin, 200.0, 1)

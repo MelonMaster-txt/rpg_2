@@ -1,15 +1,22 @@
-[gd_scene load_steps=5 format=3 uid="uid://dlkfxxooxugt0"]
+[gd_scene load_steps=10 format=3 uid="uid://dlkfxxooxugt0"]
 
 [ext_resource type="Script" uid="uid://dwxh8sy4xhcpb" path="res://game/world/hut.gd" id="1_734ri"]
 [ext_resource type="Script" uid="uid://g4wxvpoyb0lo" path="res://game/world/hut_exit.gd" id="2_kblvs"]
 [ext_resource type="Script" path="res://game/systems/workbench.gd" id="3_wb"]
 [ext_resource type="Script" path="res://game/systems/workbench_ui.gd" id="4_wbui"]
+[ext_resource type="Script" path="res://game/world/chest.gd" id="5_chest"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_exit"]
 size = Vector2(64, 32)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wb"]
 size = Vector2(48, 32)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_chest"]
+size = Vector2(24, 20)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_detect"]
+radius = 48.0
 
 [node name="Hut" type="Node2D" unique_id=634328892]
 script = ExtResource("1_734ri")
@@ -106,6 +113,102 @@ theme_override_constants/separation = 6
 
 [node name="CloseButton" type="Button" parent="Furniture/Workbench/WorkbenchUILayer/WorkbenchUI/VBoxContainer" unique_id=555000012]
 text = "Fermer"
+
+[node name="Chest" type="Node2D" parent="Furniture" unique_id=666000001]
+position = Vector2(80, -60)
+script = ExtResource("5_chest")
+
+[node name="ColorRect" type="ColorRect" parent="Furniture/Chest" unique_id=666000002]
+offset_left = -12.0
+offset_top = -10.0
+offset_right = 12.0
+offset_bottom = 10.0
+color = Color(0.55, 0.35, 0.1, 1.0)
+
+[node name="LidRect" type="ColorRect" parent="Furniture/Chest" unique_id=666000003]
+offset_left = -12.0
+offset_top = -14.0
+offset_right = 12.0
+offset_bottom = -8.0
+color = Color(0.45, 0.27, 0.07, 1.0)
+
+[node name="LockRect" type="ColorRect" parent="Furniture/Chest" unique_id=666000004]
+offset_left = -3.0
+offset_top = -5.0
+offset_right = 3.0
+offset_bottom = 2.0
+color = Color(0.85, 0.72, 0.1, 1.0)
+
+[node name="Label" type="Label" parent="Furniture/Chest" unique_id=666000005]
+offset_left = -50.0
+offset_top = -70.0
+offset_right = 80.0
+offset_bottom = -16.0
+theme_override_font_sizes/font_size = 10
+text = "📦 Coffre"
+
+[node name="HintLabel" type="Label" parent="Furniture/Chest" unique_id=666000008]
+offset_left = -40.0
+offset_top = 14.0
+offset_right = 60.0
+offset_bottom = 26.0
+theme_override_font_sizes/font_size = 10
+text = "[E] Ouvrir"
+modulate = Color(1, 1, 0.4, 1)
+visible = false
+
+[node name="StaticBody2D" type="StaticBody2D" parent="Furniture/Chest" unique_id=666000006]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Furniture/Chest/StaticBody2D" unique_id=666000007]
+shape = SubResource("RectangleShape2D_chest")
+
+[node name="DetectionArea" type="Area2D" parent="Furniture/Chest" unique_id=666000009]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Furniture/Chest/DetectionArea" unique_id=666000010]
+shape = SubResource("CircleShape2D_detect")
+
+[node name="ChestUILayer" type="CanvasLayer" parent="Furniture/Chest" unique_id=666000011]
+layer = 25
+
+[node name="ChestUI" type="Control" parent="Furniture/Chest/ChestUILayer" unique_id=666000012]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -140.0
+offset_top = -180.0
+offset_right = 140.0
+offset_bottom = 180.0
+visible = false
+
+[node name="Panel" type="PanelContainer" parent="Furniture/Chest/ChestUILayer/ChestUI" unique_id=666000013]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBox" type="VBoxContainer" parent="Furniture/Chest/ChestUILayer/ChestUI/Panel" unique_id=666000014]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Furniture/Chest/ChestUILayer/ChestUI/Panel/VBox" unique_id=666000015]
+text = "📦 Coffre"
+horizontal_alignment = 1
+
+[node name="HSep" type="HSeparator" parent="Furniture/Chest/ChestUILayer/ChestUI/Panel/VBox" unique_id=666000016]
+
+[node name="Content" type="VBoxContainer" parent="Furniture/Chest/ChestUILayer/ChestUI/Panel/VBox" unique_id=666000017]
+size_flags_vertical = 3
+theme_override_constants/separation = 6
+
+[node name="BtnClose" type="Button" parent="Furniture/Chest/ChestUILayer/ChestUI/Panel/VBox" unique_id=666000018]
+text = "Fermer [E]"
 
 [node name="Family" type="Node2D" parent="." unique_id=977361465]
 

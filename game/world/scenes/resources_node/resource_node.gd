@@ -14,21 +14,24 @@ const TYPE_COLORS := {
 }
 const DEFAULT_COLOR := Color(0.6, 0.4, 0.2)
 
-var _visual: Node2D   = null
-var _color_rect: ColorRect = null
-var _label: Label = null
-var _gather_shape: CollisionShape2D = null
+var _visual: Node2D           = null
+var _color_rect: ColorRect    = null
+var _label: Label             = null
+var _gather_shape: CollisionShape2D  = null
 var _blocker_shape: CollisionShape2D = null
-var _respawn_timer: Timer = null
+var _respawn_timer: Timer     = null
 
 var current_health: int = 0
-var is_depleted: bool = false
+var is_depleted: bool   = false
 var player_in_area: bool = false
 
 
 func _ready() -> void:
 	current_health = max_health
+	# Groupe générique pour debug / selection
 	add_to_group("resource_nodes")
+	# Groupes de travail pour WorkerAI
+	_match_job_groups()
 
 	_visual        = get_node_or_null("Visual")
 	_label         = get_node_or_null("Label") as Label
@@ -55,11 +58,28 @@ func _ready() -> void:
 		body_exited.connect(_on_body_exited)
 
 
+# Assigne les groupes "tree" / "rock" utilisés par WorkerAI
+func _match_job_groups() -> void:
+	var r := resource_type.to_lower()
+	var group := ""
+	match r:
+		"wood", "bois":
+			group = "tree"
+		"berry", "baies", "berries":
+			group = "tree"
+		"stone", "pierre", "rock":
+			group = "rock"
+		_:
+			group = ""
+	if group != "":
+		add_to_group(group)
+		print("[ResourceNode]", resource_name, "type=", resource_type, "→ groupe", group)
+
+
 func _build_color_rect() -> void:
 	var color: Color = TYPE_COLORS.get(resource_type, DEFAULT_COLOR)
 	_color_rect = ColorRect.new()
 	_color_rect.color = color
-	# Taille selon le type
 	var sz: Vector2
 	match resource_type:
 		"wood":  sz = Vector2(20, 28)
@@ -99,7 +119,7 @@ func _resource_type_to_key(rtype: String) -> String:
 		"wood", "bois":              return "bois"
 		"berry", "baies", "berries": return "baies"
 		"stone", "pierre", "rock":   return "pierre"
-		_:                            return rtype
+		_:                              return rtype
 
 
 func _do_gather() -> void:
