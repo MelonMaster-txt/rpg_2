@@ -1,4 +1,5 @@
 # random_npc.gd
+class_name RandomNpc
 extends CharacterBody2D
 
 const COLOR_MALE    := Color(0.25, 0.50, 1.00)
@@ -11,10 +12,10 @@ const DETECT_RANGE    := 120.0
 const ATTACK_RANGE    := 32.0
 const ATTACK_COOLDOWN := 1.5
 
-signal interaction_requested(npc)
-signal npc_defeated(npc)
-signal npc_captured(npc)
-signal npc_recruited(npc)
+signal interaction_requested(npc: Node)
+signal npc_defeated(npc: Node)
+signal npc_captured(npc: Node)
+signal npc_recruited(npc: Node)
 
 enum AiState { IDLE, WANDER, FLEE, CHASE, DEAD, WORKING }
 
@@ -26,7 +27,7 @@ var max_hp:     int    = 30
 var current_hp: int    = 30
 var is_hostile: bool   = false
 var speed:      float  = 60.0
-var state:      int    = 0
+var _npc_state:     int    = 0
 var _ai: AiState = AiState.IDLE
 var _wander_timer: float   = 2.0
 var _wander_dir:   Vector2 = Vector2.ZERO
@@ -206,27 +207,29 @@ func die() -> void:
 
 
 func recruit() -> void:
-	state = 1
+	_npc_state = 1
 	is_hostile = false
 	var entry: Dictionary = _build_kingdom_entry("companion")
-	CompanionManager.add_companion(entry)
+	if Engine.has_singleton("CompanionManager"):
+		Engine.get_singleton("CompanionManager").call("add_companion", entry)
 	npc_recruited.emit(self)
 	_start_working("woodcutter")
 	_add_relation_component()
 
 
 func capture() -> void:
-	state = 2
+	_npc_state = 2
 	is_hostile = false
 	var entry: Dictionary = _build_kingdom_entry("slave")
-	CompanionManager.add_slave(entry)
+	if Engine.has_singleton("CompanionManager"):
+		Engine.get_singleton("CompanionManager").call("add_slave", entry)
 	npc_captured.emit(self)
 	_start_working("woodcutter")
 	_add_relation_component()
 
 
 func _add_relation_component() -> void:
-	var existing = get_node_or_null("RelationComponent")
+	var existing: Node = get_node_or_null("RelationComponent")
 	if existing:
 		return
 	var rel_script: Script = load("res://game/characters/npcs/npc_relation.gd")
@@ -247,7 +250,7 @@ func _start_working(initial_job: String) -> void:
 	if worker_script == null:
 		push_error("RandomNpc: worker_ai.gd introuvable")
 		return
-	var old = get_node_or_null("WorkerAI")
+	var old: Node = get_node_or_null("WorkerAI")
 	if old:
 		old.queue_free()
 	var worker: Node = Node.new()
@@ -263,7 +266,7 @@ func get_worker_ai() -> Node:
 
 
 func change_job(new_job: String) -> void:
-	var w = get_worker_ai()
+	var w: Node = get_worker_ai()
 	if w != null:
 		w.update_job(new_job)
 	print("[RandomNpc] %s -> metier : %s" % [npc_name, new_job])

@@ -149,8 +149,8 @@ func set_state(new_state: State) -> void:
 func die() -> void:
 	if color_rect:
 		color_rect.color = COLOR_DEAD
-	if NpcSpawner != null:
-		NpcSpawner._on_npc_defeated(self)
+	if Engine.has_singleton("NpcSpawner"):
+		Engine.get_singleton("NpcSpawner").call("_on_npc_defeated", self)
 	queue_free()
 
 

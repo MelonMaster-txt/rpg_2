@@ -67,7 +67,7 @@ func _ready() -> void:
 
 
 func _create_job_label() -> void:
-	var existing = _owner_npc.get_node_or_null("JobLabel")
+	var existing: Node = _owner_npc.get_node_or_null("JobLabel")
 	if existing:
 		existing.queue_free()
 	_job_label = Label.new()
@@ -237,7 +237,7 @@ func _find_nearest_target(exclude: Node2D = null) -> Node2D:
 		return null
 	var best: Node2D = null
 	var best_dist: float = INF
-	for n in nodes:
+	for n: Node in nodes:
 		if n == exclude:
 			continue
 		if not is_instance_valid(n):

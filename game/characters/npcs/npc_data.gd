@@ -109,10 +109,13 @@ func get_archetype_name() -> String:
 
 
 func can_be_recruited_by_player() -> bool:
+	if not Engine.has_singleton("GameData"):
+		return false
+	var gd: Node = Engine.get_singleton("GameData")
 	return (
-		GameManager.charisma >= recruit_min_charisma
-		and GameManager.force >= recruit_min_force
-		and GameManager.intelligence >= recruit_min_intel
+		gd.get("charisma") >= recruit_min_charisma
+		and gd.get("force") >= recruit_min_force
+		and gd.get("intelligence") >= recruit_min_intel
 	)
 
 
@@ -122,13 +125,13 @@ func get_reveal_info() -> String:
 		"skill_farming", "skill_woodcutting", "skill_mining",
 		"skill_crafting", "skill_combat", "skill_trading"
 	]
-	var hidden := []
-	for s in all_revealable:
+	var hidden: Array = []
+	for s: String in all_revealable:
 		if not s in revealed_stats:
 			hidden.append(s)
 	if hidden.is_empty():
 		return ""
 	var chosen: String = hidden[randi() % hidden.size()]
 	revealed_stats.append(chosen)
-	var val: int = stats.get(chosen)
+	var val: int = int(stats.get(chosen))
 	return "%s: %d" % [chosen.replace("skill_", "").capitalize(), val]
