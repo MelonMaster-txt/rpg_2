@@ -40,7 +40,7 @@ func _physics_process(delta: float) -> void:
 	_process_interact()
 
 
-func _process_move(delta: float) -> void:
+func _process_move(_delta: float) -> void:
 	var dir: Vector2 = Input.get_vector(
 		"move_left",
 		"move_right",
