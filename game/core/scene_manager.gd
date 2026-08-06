@@ -1,4 +1,7 @@
+# SceneManager — gère les transitions de scène dans le nœud CurrentScene.
 extends Node
+
+const MAIN_MENU: String = "res://game/ui/menu/main_menu.tscn"
 
 var current_scene: Node = null
 var _is_changing: bool = false
@@ -12,7 +15,7 @@ func change_scene(scene_path: String) -> void:
 
 
 func load_start_scene() -> void:
-	change_scene("res://game/world/scenes/overworld.tscn")
+	change_scene(MAIN_MENU)
 
 
 func _do_change_scene(scene_path: String) -> void:
@@ -21,15 +24,15 @@ func _do_change_scene(scene_path: String) -> void:
 		await get_tree().process_frame
 		current_scene = null
 
-	var container: Node = get_tree().current_scene
+	var container: Node = get_node_or_null("/root/Main/CurrentScene")
 	if container == null:
-		push_error("SceneManager: root scene not found")
+		push_error("SceneManager: /root/Main/CurrentScene introuvable")
 		_is_changing = false
 		return
 
 	var res: Resource = load(scene_path)
 	if res == null:
-		push_error("SceneManager: cannot load " + scene_path)
+		push_error("SceneManager: impossible de charger " + scene_path)
 		_is_changing = false
 		return
 

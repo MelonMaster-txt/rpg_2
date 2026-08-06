@@ -156,6 +156,10 @@ func get_time_string() -> String:
 
 
 func _process(delta: float) -> void:
+	# Buffs et temps ne tournent pas en pause
+	if get_tree().paused:
+		return
+
 	var expired: Array[String] = []
 	for stat: String in _active_buffs:
 		_active_buffs[stat]["timer"] -= delta
@@ -166,9 +170,7 @@ func _process(delta: float) -> void:
 	for stat: String in expired:
 		_active_buffs.erase(stat)
 
-	if not get_tree().paused:
-		play_time += delta
-
+	play_time += delta
 	current_time += delta
 	if current_time >= DAY_DURATION:
 		current_time = 0.0
@@ -177,7 +179,7 @@ func _process(delta: float) -> void:
 	var progress: float = current_time / DAY_DURATION
 	var game_hour_float: float = 6.0 + progress * 24.0
 	var real_hour: int = int(game_hour_float) % 24
-	var real_minute: int = int((game_hour_float - int(game_hour_float)) * 60)
+	var real_minute: int = int((game_hour_float - int(game_hour_float)) * 60.0)
 
 	if real_hour != hour or real_minute != minute:
 		hour = real_hour

@@ -12,6 +12,7 @@ extends CanvasLayer
 @onready var charisma_label: Label = $HUDPanel/HUDContainer/CharismaLabel
 
 @onready var inventory_screen: Control = $InventoryScreen
+@onready var save_menu: CanvasLayer = $InGameSaveMenu
 
 
 func _ready() -> void:
@@ -24,9 +25,21 @@ func _ready() -> void:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if event.is_action_pressed("inventory"):
+	if event.is_action_pressed("open_inventory"):
 		get_viewport().set_input_as_handled()
 		inventory_screen.toggle()
+	elif event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+		if save_menu and save_menu.has_method("open") and save_menu.has_method("close"):
+			var panel: Node = save_menu.get_node_or_null("Panel")
+			if panel and panel.visible:
+				save_menu.close()
+			else:
+				save_menu.open()
+
+
+func set_player(_player: Node) -> void:
+	pass
 
 
 func _refresh_all() -> void:
