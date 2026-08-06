@@ -1,6 +1,6 @@
-extends Node
 # WorkerAI — composant enfant d'un RandomNpc recruté ou capturé.
 # Attaché dynamiquement via random_npc._start_working()
+extends Node
 
 var job: String = ""
 var _work_timer: float = 0.0
@@ -26,28 +26,22 @@ func _do_work() -> void:
 	match job:
 		"farmer":
 			gm.add_item("berries", 1)
-			print("[WorkerAI] ", _get_owner_name(), " produit 1 baie")
 		"woodcutter", "lumberjack":
 			gm.add_item("wood", 2)
-			print("[WorkerAI] ", _get_owner_name(), " produit 2 bois")
 		"miner":
 			gm.add_item("stone", 1)
-			print("[WorkerAI] ", _get_owner_name(), " produit 1 pierre")
 		"blacksmith":
 			gm.add_item("flint", 1)
-			print("[WorkerAI] ", _get_owner_name(), " produit 1 silex")
 		"priest":
 			var rm: Node = get_node_or_null("/root/ReligionManager")
 			if rm != null and rm.has_method("add_faith"):
 				rm.add_faith(2)
-				print("[WorkerAI] ", _get_owner_name(), " génère 2 foi")
 		"guard":
 			pass
 
 
 func update_job(new_job: String) -> void:
 	job = new_job
-	print("[WorkerAI] ", _get_owner_name(), " change de metier -> ", new_job)
 
 
 func _get_owner_name() -> String:

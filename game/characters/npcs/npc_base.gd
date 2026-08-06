@@ -1,21 +1,17 @@
 extends CharacterBody2D
 class_name NpcBase
 
-# ─── SIGNALS ──────────────────────────────────────────────────────────────────
 signal npc_died(npc: NpcBase)
 signal npc_captured(npc: NpcBase)
 
-# ─── ENUMS ────────────────────────────────────────────────────────────────────
 enum State { IDLE, WANDER, FLEE, WORK, FOLLOW, COMBAT }
 
-# ─── EXPORTS ──────────────────────────────────────────────────────────────────
 @export var npc_name: String = "NPC"
 @export var max_health: int = 50
 @export var move_speed: float = 60.0
 @export var detection_range: float = 150.0
 @export var npc_data: Resource = null
 
-# ─── VARS ─────────────────────────────────────────────────────────────────────
 var current_health: int = 50
 var current_state: State = State.IDLE
 var _wander_timer: float = 0.0
@@ -61,8 +57,8 @@ func _process_wander(delta: float) -> void:
 	if _wander_timer <= 0.0:
 		_wander_timer = randf_range(2.0, 5.0)
 		_wander_target = global_position + Vector2(
-				randf_range(-80.0, 80.0),
-				randf_range(-80.0, 80.0)
+			randf_range(-80.0, 80.0),
+			randf_range(-80.0, 80.0)
 		)
 	var nav: NavigationAgent2D = get_node_or_null("NavigationAgent2D")
 	if nav != null:

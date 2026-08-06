@@ -1,15 +1,12 @@
 extends Node
 
-# Autoload enregistré comme "PopulationManager" dans Project > Autoload
-# Si pas encore enregistré, l'ajouter via Project Settings > Autoload
-
 signal companion_added(entry: Dictionary)
 signal slave_added(entry: Dictionary)
 signal member_removed(member_name: String)
 signal job_changed(member_name: String, new_job: String)
 
 var companions: Array[Dictionary] = []
-var slaves:     Array[Dictionary] = []
+var slaves: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -20,14 +17,12 @@ func add_companion(entry: Dictionary) -> void:
 	entry["role"] = "companion"
 	companions.append(entry)
 	companion_added.emit(entry)
-	print("[PopulationManager] Compagnon ajouté : ", entry.get("name", "?"))
 
 
 func add_slave(entry: Dictionary) -> void:
 	entry["role"] = "slave"
 	slaves.append(entry)
 	slave_added.emit(entry)
-	print("[PopulationManager] Esclave ajouté : ", entry.get("name", "?"))
 
 
 func remove_member(member_name: String) -> void:
@@ -78,7 +73,7 @@ func get_workers_by_job(job: String) -> Array[Dictionary]:
 func save_data() -> Dictionary:
 	return {
 		"companions": companions,
-		"slaves":     slaves,
+		"slaves": slaves,
 	}
 
 
