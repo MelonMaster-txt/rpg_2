@@ -39,8 +39,8 @@ func spawn_at(pos: Vector2, appearance_data: Dictionary = {}) -> Node:
 
 func spawn_group(positions: Array) -> Array:
 	var spawned: Array = []
-	for pos in positions:
-		var n := spawn_at(pos)
+	for pos: Vector2 in positions:
+		var n: Node = spawn_at(pos)
 		if n:
 			spawned.append(n)
 	return spawned
@@ -48,7 +48,7 @@ func spawn_group(positions: Array) -> Array:
 
 func spawn_random_around(center: Vector2, radius: float, count: int) -> Array:
 	var positions: Array = []
-	for i in count:
+	for i: int in count:
 		var angle: float = randf() * TAU
 		var dist: float = randf() * radius
 		positions.append(center + Vector2(cos(angle), sin(angle)) * dist)
@@ -56,7 +56,7 @@ func spawn_random_around(center: Vector2, radius: float, count: int) -> Array:
 
 
 func despawn_all() -> void:
-	for npc in _active_npcs.duplicate():
+	for npc: Node in _active_npcs.duplicate():
 		if is_instance_valid(npc):
 			npc.queue_free()
 	_active_npcs.clear()
@@ -70,9 +70,13 @@ func _on_npc_removed(npc: Node) -> void:
 	_active_npcs.erase(npc)
 
 
+func _on_npc_defeated(npc: Node) -> void:
+	_active_npcs.erase(npc)
+
+
 func _get_parent_node() -> Node:
 	if spawn_parent != NodePath(""):
-		var n := get_node_or_null(spawn_parent)
+		var n: Node = get_node_or_null(spawn_parent)
 		if n:
 			return n
 	return get_tree().current_scene
