@@ -1,14 +1,11 @@
-# WorkerAI — composant enfant d'un RandomNpc recruté ou capturé.
-# Attaché dynamiquement via random_npc._start_working()
+# WorkerAI — composant enfant d'un RandomNpc recrute ou capture.
+# Attache dynamiquement via random_npc._start_working()
 extends Node
+
+const WORK_INTERVAL: float = 5.0
 
 var job: String = ""
 var _work_timer: float = 0.0
-const WORK_INTERVAL: float = 5.0
-
-
-func _ready() -> void:
-	pass
 
 
 func _process(delta: float) -> void:
@@ -36,8 +33,6 @@ func _do_work() -> void:
 			var rm: Node = get_node_or_null("/root/ReligionManager")
 			if rm != null and rm.has_method("add_faith"):
 				rm.add_faith(2)
-		"guard":
-			pass
 
 
 func update_job(new_job: String) -> void:

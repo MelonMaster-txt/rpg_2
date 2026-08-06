@@ -1,19 +1,16 @@
 extends Node2D
 
-# ─── SIGNALS ──────────────────────────────────────────────────────────────────
 signal harvested(item: String, amount: int)
 
-# ─── ENUMS ────────────────────────────────────────────────────────────────────
 enum TileState { EMPTY, SEEDED, GROWING, READY }
 
-# ─── CONSTS ───────────────────────────────────────────────────────────────────
 const GROW_TIME: float = 60.0
 
-# ─── VARS ─────────────────────────────────────────────────────────────────────
 var state: TileState = TileState.EMPTY
 var seed_type: String = ""
 var grow_timer: float = 0.0
 var _is_watered: bool = false
+
 
 func plant(seed: String) -> void:
 	if state != TileState.EMPTY:
@@ -22,8 +19,10 @@ func plant(seed: String) -> void:
 	state = TileState.SEEDED
 	grow_timer = 0.0
 
+
 func water() -> void:
 	_is_watered = true
+
 
 func _process(delta: float) -> void:
 	if state != TileState.GROWING and state != TileState.SEEDED:
@@ -36,6 +35,7 @@ func _process(delta: float) -> void:
 	if grow_timer >= GROW_TIME:
 		state = TileState.READY
 
+
 func harvest() -> void:
 	if state != TileState.READY:
 		return
@@ -46,6 +46,7 @@ func harvest() -> void:
 	grow_timer = 0.0
 	_is_watered = false
 
+
 func get_save_data() -> Dictionary:
 	return {
 		"pos": global_position,
@@ -54,6 +55,7 @@ func get_save_data() -> Dictionary:
 		"timer": grow_timer,
 		"watered": _is_watered,
 	}
+
 
 func load_save_data(data: Dictionary) -> void:
 	state = data.get("state", TileState.EMPTY)
