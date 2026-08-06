@@ -48,8 +48,6 @@ func _physics_process(delta: float) -> void:
 			_process_wander(delta)
 		State.FOLLOW:
 			_process_follow()
-		_:
-			pass
 
 
 func _process_wander(delta: float) -> void:

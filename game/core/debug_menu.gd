@@ -1,13 +1,14 @@
-# DebugMenu — Autoload *script-only* (pas de .tscn associée).
-# Les nœuds UI sont créés dynamiquement dans _ready().
-# Touche : F9 (ne dépend pas de l'InputMap).
+# DebugMenu — Autoload *script-only* (pas de .tscn associee).
+# Les noeuds UI sont crees dynamiquement dans _ready().
+# Touche : F9 (ne depend pas de l'InputMap).
 extends CanvasLayer
+
+const UPDATE_INTERVAL: float = 0.5
 
 var _panel: Panel = null
 var _label: RichTextLabel = null
 var _visible_flag: bool = false
 var _update_timer: float = 0.0
-const UPDATE_INTERVAL: float = 0.5
 
 
 func _ready() -> void:

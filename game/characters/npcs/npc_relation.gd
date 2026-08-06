@@ -4,12 +4,12 @@ extends Node
 
 enum Mood { CONTENT, NEUTRAL, UNHAPPY, REBELLIOUS }
 
+const DECAY_INTERVAL: float = 30.0
+const DECAY_AMOUNT: int = 1
+
 var mood: Mood = Mood.NEUTRAL
 var happiness: int = 100
 var _decay_timer: float = 0.0
-
-const DECAY_INTERVAL: float = 30.0
-const DECAY_AMOUNT: int = 1
 
 
 func _ready() -> void:
@@ -58,8 +58,12 @@ func _update_mood() -> void:
 
 func get_mood_string() -> String:
 	match mood:
-		Mood.CONTENT: return "Content"
-		Mood.NEUTRAL: return "Neutre"
-		Mood.UNHAPPY: return "Malheureux"
-		Mood.REBELLIOUS: return "Rebelle"
+		Mood.CONTENT:
+			return "Content"
+		Mood.NEUTRAL:
+			return "Neutre"
+		Mood.UNHAPPY:
+			return "Malheureux"
+		Mood.REBELLIOUS:
+			return "Rebelle"
 	return "Inconnu"
