@@ -95,9 +95,12 @@ func _update_color_rect() -> void:
 		_color_rect.color = COLOR_WORKER
 		return
 	match npc_gender:
-		"female": _color_rect.color = COLOR_FEMALE
-		"monster": _color_rect.color = COLOR_MONSTER
-		_: _color_rect.color = COLOR_MALE
+		"female":
+			_color_rect.color = COLOR_FEMALE
+		"monster":
+			_color_rect.color = COLOR_MONSTER
+		_:
+			_color_rect.color = COLOR_MALE
 
 
 func _physics_process(delta: float) -> void:
@@ -144,18 +147,18 @@ func _update_ai(delta: float) -> void:
 				velocity = Vector2.ZERO
 		AiState.FLEE:
 			if _target != null:
-				var dir: Vector2 = (
+				var flee_dir: Vector2 = (
 					global_position - _target.global_position
 				).normalized()
-				velocity = dir * speed * 1.3
+				velocity = flee_dir * speed * 1.3
 				_update_facing()
 				move_and_slide()
 		AiState.CHASE:
 			if _target != null:
-				var dir: Vector2 = (
+				var chase_dir: Vector2 = (
 					_target.global_position - global_position
 				).normalized()
-				velocity = dir * speed * 1.1
+				velocity = chase_dir * speed * 1.1
 				_update_facing()
 				move_and_slide()
 				if dist < ATTACK_RANGE and _attack_timer <= 0.0:

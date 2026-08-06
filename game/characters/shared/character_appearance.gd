@@ -1,18 +1,18 @@
 # character_appearance.gd
-# Rendu procédural LPC-style — pas de sprites PNG requis.
-# Chaque layer est un Node2D avec des draw calls (corps, tête, yeux, cheveux, tenue)
+# Rendu procedural LPC-style - pas de sprites PNG requis.
+# Chaque layer est un Node2D avec des draw calls (corps, tete, yeux, cheveux, tenue)
 # Les couleurs sont fully customisables via l'API publique.
 extends Node
 
 const HFRAMES: int = 9
 const VFRAMES: int = 4
 
-const DIR_ROW: Dictionary = { "down": 0, "left": 1, "right": 2, "up": 3 }
+const DIR_ROW: Dictionary = {"down": 0, "left": 1, "right": 2, "up": 3}
 
-const GENDERS: Array = ["male", "female"]
-const OUTFITS: Array = ["peasant", "guard", "mage", "farmer"]
-const HAIRS: Array = ["short", "medium", "long", "bald"]
-const EYE_STYLES: Array = ["normal", "closed", "angry", "sad"]
+const GENDERS: Array[String] = ["male", "female"]
+const OUTFITS: Array[String] = ["peasant", "guard", "mage", "farmer"]
+const HAIRS: Array[String] = ["short", "medium", "long", "bald"]
+const EYE_STYLES: Array[String] = ["normal", "closed", "angry", "sad"]
 
 var _gender: String = "male"
 var _outfit: String = "peasant"
@@ -116,10 +116,18 @@ func randomize_appearance() -> void:
 		"hair": HAIRS.pick_random(),
 		"outfit": OUTFITS.pick_random(),
 		"eye_style": EYE_STYLES.pick_random(),
-		"skin_color": Color(randf_range(0.5, 1.0), randf_range(0.35, 0.8), randf_range(0.2, 0.6)),
-		"hair_color": Color(randf_range(0.1, 0.9), randf_range(0.05, 0.6), randf_range(0.0, 0.3)),
-		"eyes_color": Color(randf_range(0.1, 1.0), randf_range(0.2, 1.0), randf_range(0.2, 1.0)),
-		"outfit_color": Color(randf_range(0.2, 0.9), randf_range(0.2, 0.9), randf_range(0.2, 0.9)),
+		"skin_color": Color(
+			randf_range(0.5, 1.0), randf_range(0.35, 0.8), randf_range(0.2, 0.6)
+		),
+		"hair_color": Color(
+			randf_range(0.1, 0.9), randf_range(0.05, 0.6), randf_range(0.0, 0.3)
+		),
+		"eyes_color": Color(
+			randf_range(0.1, 1.0), randf_range(0.2, 1.0), randf_range(0.2, 1.0)
+		),
+		"outfit_color": Color(
+			randf_range(0.2, 0.9), randf_range(0.2, 0.9), randf_range(0.2, 0.9)
+		),
 	}
 	if not _layers_ready:
 		_pending_data = data
