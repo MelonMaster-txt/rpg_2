@@ -26,10 +26,15 @@ var _nearby_npc: Node = null
 var _facing: Vector2 = Vector2.DOWN
 
 func _ready() -> void:
+	add_to_group("player")
 	if _interact_hint:
 		_interact_hint.visible = false
 	if GameManager.has_saved_position:
 		global_position = GameManager.consume_spawn_position()
+	# Connecte l'InteractionArea si elle est assignée en export
+	if interact_area != null:
+		interact_area.body_entered.connect(_on_interact_area_entered)
+		interact_area.body_exited.connect(_on_interact_area_exited)
 
 func _physics_process(delta: float) -> void:
 	if _is_rolling:
@@ -85,6 +90,15 @@ func set_nearby_npc(npc: Node) -> void:
 	_nearby_npc = npc
 	if _interact_hint:
 		_interact_hint.visible = npc != null
+
+# Appelé par l'InteractionArea (si configurée via export)
+func _on_interact_area_entered(body: Node) -> void:
+	if body.is_in_group("npc"):
+		set_nearby_npc(body)
+
+func _on_interact_area_exited(body: Node) -> void:
+	if body.is_in_group("npc") and _nearby_npc == body:
+		set_nearby_npc(null)
 
 func take_damage(amount: int) -> void:
 	GameManager.life -= amount

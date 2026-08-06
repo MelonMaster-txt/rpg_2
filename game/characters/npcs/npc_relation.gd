@@ -1,33 +1,65 @@
+# npc_relation.gd — Composant de relation/humeur d'un NPC recruté ou capturé.
+# Ajouté dynamiquement via random_npc._add_relation_component()
 extends Node
-class_name NpcRelation
 
-# ─── SIGNALS ──────────────────────────────────────────────────────────────────
-signal relation_changed(new_value: int)
+enum Mood { CONTENT, NEUTRAL, UNHAPPY, REBELLIOUS }
 
-# ─── CONSTS ───────────────────────────────────────────────────────────────────
-const MIN_RELATION: int = -100
-const MAX_RELATION: int = 100
-
-# ─── VARS ─────────────────────────────────────────────────────────────────────
-var _value: int = 0
+var mood: Mood = Mood.NEUTRAL
+var happiness: int = 100
+var _decay_timer: float = 0.0
+const DECAY_INTERVAL: float = 30.0
+const DECAY_AMOUNT: int = 1
 
 
-func get_value() -> int:
-	return _value
+func _ready() -> void:
+	pass
 
 
-func modify(amount: int) -> void:
-	_value = clampi(_value + amount, MIN_RELATION, MAX_RELATION)
-	relation_changed.emit(_value)
+func _process(delta: float) -> void:
+	_decay_timer += delta
+	if _decay_timer >= DECAY_INTERVAL:
+		_decay_timer = 0.0
+		_tick_happiness()
 
 
-func reset() -> void:
-	_value = 0
-	relation_changed.emit(_value)
-
-
-# Appelée depuis random_npc._add_relation_component()
-# Initialise la relation avec une valeur aléatoire neutre à légèrement positive
 func randomize_mood() -> void:
-	_value = randi_range(-10, 20)
-	relation_changed.emit(_value)
+	happiness = randi_range(40, 100)
+	_update_mood()
+
+
+func add_happiness(amount: int) -> void:
+	happiness = clampi(happiness + amount, 0, 100)
+	_update_mood()
+
+
+func _tick_happiness() -> void:
+	# Les esclaves perdent plus de bonheur que les compagnons
+	var parent: Node = get_parent()
+	var role: String = ""
+	if parent != null:
+		var worker: Node = parent.get_node_or_null("WorkerAI")
+		if worker != null:
+			role = worker.get("role") if worker.get("role") != null else ""
+	var decay: int = DECAY_AMOUNT * (2 if role == "slave" else 1)
+	happiness = clampi(happiness - decay, 0, 100)
+	_update_mood()
+
+
+func _update_mood() -> void:
+	if happiness >= 70:
+		mood = Mood.CONTENT
+	elif happiness >= 40:
+		mood = Mood.NEUTRAL
+	elif happiness >= 20:
+		mood = Mood.UNHAPPY
+	else:
+		mood = Mood.REBELLIOUS
+
+
+func get_mood_string() -> String:
+	match mood:
+		Mood.CONTENT:    return "Content"
+		Mood.NEUTRAL:    return "Neutre"
+		Mood.UNHAPPY:    return "Malheureux"
+		Mood.REBELLIOUS: return "Rebelle"
+	_: return "Inconnu"
