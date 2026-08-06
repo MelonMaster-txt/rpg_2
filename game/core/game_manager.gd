@@ -1,17 +1,17 @@
 # GameManager.gd — Autoload singleton
 extends Node
 
-# ─── SIGNALS ──────────────────────────────────────────────────────────────────
+# ─── SIGNALS ───────────────────────────────────────────────────────────────────
 signal inventory_changed(item: String, amount: int)
 signal stats_changed
 signal buff_applied(stat: String, amount: int, duration: float)
 signal time_changed(hour: int, minute: int, day: int)
 signal day_night_changed(is_day: bool)
 
-# ─── CONSTANTES ───────────────────────────────────────────────────────────────
+# ─── CONSTANTES ──────────────────────────────────────────────────────────────────
 const DAY_DURATION: float = 240.0
 
-# ─── INVENTORY ────────────────────────────────────────────────────────────────
+# ─── INVENTORY ──────────────────────────────────────────────────────────────────
 var inventory: Dictionary = {
 	"wood":         0,
 	"berries":      0,
@@ -44,7 +44,7 @@ var inventory: Dictionary = {
 	"gold":          0,
 }
 
-# ─── GAME STATS ───────────────────────────────────────────────────────────────
+# ─── GAME STATS ─────────────────────────────────────────────────────────────────
 var life: int         = 100
 var max_life: int     = 100
 var force: int        = 10
@@ -57,7 +57,7 @@ var armor: int        = 0
 
 var _active_buffs: Dictionary = {}
 
-# ─── TIME ─────────────────────────────────────────────────────────────────────
+# ─── TIME ───────────────────────────────────────────────────────────────────────
 var current_time: float = 0.0
 var current_day: int    = 1
 var hour: int           = 6
@@ -65,14 +65,14 @@ var minute: int         = 0
 var is_day: bool        = true
 var play_time: float    = 0.0
 
-# ─── SPAWN POSITION ───────────────────────────────────────────────────────────
+# ─── SPAWN POSITION ───────────────────────────────────────────────────────────────
 var saved_spawn_position: Vector2 = Vector2.ZERO
 var has_saved_position: bool = false
 
-# ─── FARM TILES ───────────────────────────────────────────────────────────────
-var farm_tiles_data: Array = []
+# ─── FARM TILES ──────────────────────────────────────────────────────────────────
+var farm_tiles_data: Array[Dictionary] = []
 
-# ─── INVENTORY METHODS ────────────────────────────────────────────────────────
+# ─── INVENTORY METHODS ───────────────────────────────────────────────────────────
 func add_item(item: String, amount: int = 1) -> void:
 	if inventory.has(item):
 		inventory[item] += amount
@@ -90,7 +90,7 @@ func remove_item(item: String, amount: int = 1) -> bool:
 func get_item(item: String) -> int:
 	return inventory.get(item, 0)
 
-# ─── STATS METHODS ────────────────────────────────────────────────────────────
+# ─── STATS METHODS ────────────────────────────────────────────────────────────────
 func apply_buff(stat: String, amount: int, duration: float) -> void:
 	_active_buffs[stat] = {"amount": amount, "timer": duration}
 	_apply_stat_delta(stat, amount)
@@ -111,7 +111,7 @@ func heal(amount: int) -> void:
 	life = clampi(life + amount, 0, max_life)
 	stats_changed.emit()
 
-# ─── SPAWN METHODS ────────────────────────────────────────────────────────────
+# ─── SPAWN METHODS ─────────────────────────────────────────────────────────────────
 func save_spawn_position(pos: Vector2) -> void:
 	saved_spawn_position = pos
 	has_saved_position = true
@@ -120,10 +120,10 @@ func consume_spawn_position() -> Vector2:
 	has_saved_position = false
 	return saved_spawn_position
 
-# ─── FARM TILES METHODS ───────────────────────────────────────────────────────
+# ─── FARM TILES METHODS ──────────────────────────────────────────────────────────────
 func save_farm_tiles(tile_map: Dictionary) -> void:
 	farm_tiles_data.clear()
-	for tile: Variant in tile_map.values():
+	for tile: Node in tile_map.values():
 		if is_instance_valid(tile) and tile.has_method("get_save_data"):
 			farm_tiles_data.append(tile.get_save_data())
 
@@ -133,7 +133,7 @@ func restore_farm_tiles(container: Node, tile_map: Dictionary) -> void:
 	var scene: Resource = load("res://game/world/farm_tile.tscn")
 	if scene == null:
 		return
-	for data: Variant in farm_tiles_data:
+	for data: Dictionary in farm_tiles_data:
 		var tile: Node2D = scene.instantiate()
 		tile.global_position = data["pos"]
 		container.add_child(tile)
@@ -146,9 +146,9 @@ func _pos_key(pos: Vector2) -> String:
 func get_time_string() -> String:
 	return "%02d:%02d" % [hour, minute]
 
-# ─── PROCESS ──────────────────────────────────────────────────────────────────
+# ─── PROCESS ─────────────────────────────────────────────────────────────────────
 func _process(delta: float) -> void:
-	var expired: Array = []
+	var expired: Array[String] = []
 	for stat: String in _active_buffs:
 		_active_buffs[stat]["timer"] -= delta
 		if _active_buffs[stat]["timer"] <= 0.0:

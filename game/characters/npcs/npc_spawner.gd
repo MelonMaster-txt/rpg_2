@@ -10,7 +10,7 @@
 #   NpcSpawner.despawn_all()                → vide la scene
 extends Node
 
-const NPC_SCENE := preload("res://game/characters/npcs/random_npc.tscn")
+const NPC_SCENE: PackedScene = preload("res://game/characters/npcs/random_npc.tscn")
 
 @export var max_npcs: int = 20
 @export var spawn_parent: NodePath = NodePath()
@@ -37,17 +37,17 @@ func spawn_at(pos: Vector2, appearance_data: Dictionary = {}) -> Node:
 	return npc
 
 
-func spawn_group(positions: Array) -> Array:
-	var spawned: Array = []
-	for pos: Variant in positions:
+func spawn_group(positions: Array[Vector2]) -> Array[Node]:
+	var spawned: Array[Node] = []
+	for pos: Vector2 in positions:
 		var n: Node = spawn_at(pos)
 		if n:
 			spawned.append(n)
 	return spawned
 
 
-func spawn_random_around(center: Vector2, radius: float, count: int) -> Array:
-	var positions: Array = []
+func spawn_random_around(center: Vector2, radius: float, count: int) -> Array[Node]:
+	var positions: Array[Vector2] = []
 	for i: int in count:
 		var angle: float = randf() * TAU
 		var dist: float = randf() * radius

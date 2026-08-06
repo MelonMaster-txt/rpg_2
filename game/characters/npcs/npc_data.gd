@@ -1,7 +1,7 @@
 extends Resource
 class_name NpcData
 
-# ─── ARCHETYPE ────────────────────────────────────────────────────────────────
+# ─── ARCHETYPE ──────────────────────────────────────────────────────────────────────
 enum Archetype {
 	HUNTER,
 	FARMER,
@@ -12,7 +12,7 @@ enum Archetype {
 	SAGE,
 }
 
-# ─── STATS INNER CLASS ────────────────────────────────────────────────────────
+# ─── STATS INNER CLASS ────────────────────────────────────────────────────────────────
 class NpcStats:
 	var force:           int = 5
 	var max_hp:          int = 30
@@ -22,7 +22,7 @@ class NpcStats:
 	var skill_combat:    int = 0
 	var skill_trading:   int = 0
 
-# ─── EXPORTS ──────────────────────────────────────────────────────────────────
+# ─── EXPORTS ───────────────────────────────────────────────────────────────────
 @export var npc_id:          String   = ""
 @export var npc_name:        String   = "Inconnu"
 @export var npc_type:        String   = "random"
@@ -40,7 +40,7 @@ class NpcStats:
 var archetype: int = Archetype.NOMAD
 var stats:     NpcStats = NpcStats.new()
 
-# ─── MÉTHODES ─────────────────────────────────────────────────────────────────
+# ─── MÉTHODES ────────────────────────────────────────────────────────────────────
 func get_display_name() -> String:
 	if npc_name.is_empty():
 		return "NPC_%s" % npc_id
@@ -52,12 +52,11 @@ func is_hostile_npc() -> bool:
 func can_be_recruited() -> bool:
 	return base_relation >= 0
 
-# ─── GÉNÉRATION ALÉATOIRE ─────────────────────────────────────────────────────
+# ─── GÉNÉRATION ALÉATOIRE ───────────────────────────────────────────────────────────────
 static func generate_random() -> NpcData:
 	var d: NpcData = NpcData.new()
 
-	# Archetype aléatoire
-	var archetypes: Array = [
+	var archetypes: Array[int] = [
 		Archetype.HUNTER,
 		Archetype.FARMER,
 		Archetype.WARRIOR,
@@ -68,7 +67,6 @@ static func generate_random() -> NpcData:
 	]
 	d.archetype = archetypes.pick_random()
 
-	# Noms aléatoires selon genre
 	var noms_masculins: Array[String] = [
 		"Aldric", "Bjorn", "Caius", "Drak", "Erwin",
 		"Fenris", "Gunnar", "Harald", "Ingmar", "Jord",
@@ -79,11 +77,10 @@ static func generate_random() -> NpcData:
 		"Freya", "Gudrun", "Helga", "Ingrid", "Jorunn",
 		"Kara", "Lifa", "Marta", "Norna", "Ragna",
 	]
-	var tous_noms: Array = noms_masculins + noms_feminins
+	var tous_noms: Array[String] = noms_masculins + noms_feminins
 	d.npc_name = tous_noms.pick_random()
 	d.npc_id   = "npc_" + str(randi())
 
-	# Stats selon archetype
 	var s: NpcStats = NpcStats.new()
 	match d.archetype:
 		Archetype.WARRIOR, Archetype.BANDIT:
@@ -113,7 +110,6 @@ static func generate_random() -> NpcData:
 	d.stats      = s
 	d.max_health = s.max_hp
 
-	# Relation de base
 	if d.archetype == Archetype.BANDIT:
 		d.base_relation = randi_range(-50, -20)
 	else:

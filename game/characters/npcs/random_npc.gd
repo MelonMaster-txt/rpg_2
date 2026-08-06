@@ -1,21 +1,21 @@
 extends CharacterBody2D
 
-signal interaction_requested(npc)
-signal npc_defeated(npc)
-signal npc_captured(npc)
-signal npc_recruited(npc)
+signal interaction_requested(npc: Node)
+signal npc_defeated(npc: Node)
+signal npc_captured(npc: Node)
+signal npc_recruited(npc: Node)
 
 enum AiState { IDLE, WANDER, FLEE, CHASE, DEAD, WORKING }
 
-const COLOR_MALE    := Color(0.25, 0.50, 1.00)
-const COLOR_FEMALE  := Color(1.00, 0.45, 0.70)
-const COLOR_MONSTER := Color(0.10, 0.75, 0.20)
-const COLOR_DEAD    := Color(0.30, 0.30, 0.30)
-const COLOR_HOSTILE := Color(0.90, 0.15, 0.10)
-const COLOR_WORKER  := Color(0.90, 0.75, 0.20)
-const DETECT_RANGE    := 120.0
-const ATTACK_RANGE    := 32.0
-const ATTACK_COOLDOWN := 1.5
+const COLOR_MALE:    Color = Color(0.25, 0.50, 1.00)
+const COLOR_FEMALE:  Color = Color(1.00, 0.45, 0.70)
+const COLOR_MONSTER: Color = Color(0.10, 0.75, 0.20)
+const COLOR_DEAD:    Color = Color(0.30, 0.30, 0.30)
+const COLOR_HOSTILE: Color = Color(0.90, 0.15, 0.10)
+const COLOR_WORKER:  Color = Color(0.90, 0.75, 0.20)
+const DETECT_RANGE:    float = 120.0
+const ATTACK_RANGE:    float = 32.0
+const ATTACK_COOLDOWN: float = 1.5
 
 var data: NpcData = null
 var npc_name:   String = ""
@@ -110,7 +110,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _update_ai(delta: float) -> void:
-	var players: Array = get_tree().get_nodes_in_group("player")
+	var players: Array[Node] = get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
 		_target = players[0] as Node2D
 	var dist: float = INF
@@ -169,7 +169,6 @@ func _melee_attack() -> void:
 		_target.take_damage(dmg)
 
 
-# _unhandled_key_input évite le double déclenchement quand le menu NPC est ouvert
 func _unhandled_key_input(event: InputEvent) -> void:
 	if _player_near and _ai != AiState.DEAD and event.is_action_pressed("interact"):
 		get_viewport().set_input_as_handled()
@@ -214,7 +213,7 @@ func _get_population_manager() -> Node:
 	var pm: Node = get_node_or_null("/root/PopulationManager")
 	if pm != null:
 		return pm
-	var nodes: Array = get_tree().get_nodes_in_group("population_manager")
+	var nodes: Array[Node] = get_tree().get_nodes_in_group("population_manager")
 	if nodes.size() > 0:
 		return nodes[0]
 	return null
