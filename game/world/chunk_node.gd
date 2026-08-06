@@ -51,7 +51,7 @@ func _load_content() -> void:
 		push_error("ChunkNode: nœud 'Content' manquant")
 		return
 
-	for child in content.get_children():
+	for child: Node in content.get_children():
 		child.queue_free()
 
 	var scene: PackedScene = HUT_CHUNK_SCENE if chunk_type == "hut" else FOREST_CHUNK_SCENE

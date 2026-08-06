@@ -41,7 +41,7 @@ func harvest() -> void:
 	if _charges <= 0:
 		_depleted = true
 		modulate = Color(0.5, 0.5, 0.5)
-		emit_signal("depleted")
+		depleted.emit()
 
 func _process(delta: float) -> void:
 	if not _depleted:

@@ -1,7 +1,7 @@
 # farm_placer.gd
 extends Node2D
 
-const FARM_TILE_SCENE := preload("res://game/world/farm_tile.tscn")
+const FARM_TILE_SCENE: PackedScene = preload("res://game/world/farm_tile.tscn")
 const GRID:      int   = 32
 const GRID_F:    float = 32.0  # version float pour les divisions sans warning
 
@@ -27,7 +27,7 @@ func interact_at(world_pos: Vector2) -> bool:
 	var grid_pos := _snap(world_pos)
 	var key := _key(grid_pos)
 	if _tile_map.has(key):
-		var existing = _tile_map[key]
+		var existing: Node = _tile_map[key]
 		if is_instance_valid(existing) and existing.has_method("_try_interact"):
 			existing._try_interact()
 		return true

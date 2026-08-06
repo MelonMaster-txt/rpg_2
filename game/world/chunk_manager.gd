@@ -70,7 +70,7 @@ func _spawn_chunk(cpos: Vector2i) -> void:
 	chunk.global_position = Vector2(cpos.x * cell_size, cpos.y * cell_size)
 	add_child(chunk)
 	_loaded_chunks[cpos] = chunk
-	emit_signal("chunk_loaded", cpos)
+	chunk_loaded.emit(cpos)
 
 
 func _despawn_chunk(cpos: Vector2i) -> void:
@@ -78,4 +78,4 @@ func _despawn_chunk(cpos: Vector2i) -> void:
 		return
 	_loaded_chunks[cpos].queue_free()
 	_loaded_chunks.erase(cpos)
-	emit_signal("chunk_unloaded", cpos)
+	chunk_unloaded.emit(cpos)

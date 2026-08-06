@@ -1,9 +1,9 @@
 # SaveSystem — Autoload singleton
 extends Node
 
-const SAVE_DIR       := "user://saves/"
-const SAVE_EXTENSION := ".json"
-const MAX_SLOTS      := 8
+const SAVE_DIR: String       = "user://saves/"
+const SAVE_EXTENSION: String = ".json"
+const MAX_SLOTS: int         = 8
 
 
 func _ready() -> void:

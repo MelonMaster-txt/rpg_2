@@ -59,4 +59,4 @@ func _spawn_npc() -> void:
 		]
 		if npc.has_method("set_npc_data"):
 			npc.set_npc_data(data)
-		emit_signal("npc_encounter_triggered", data)
+		npc_encounter_triggered.emit(data)

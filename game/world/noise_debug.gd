@@ -39,7 +39,7 @@ func _generate(seed_val: int) -> void:
 	_noise.fractal_lacunarity = lacunarity
 	_noise.frequency = 1.0 / noise_scale
 	_build_texture()
-	emit_signal("regenerated")
+	regenerated.emit()
 	_info_label.text = "Seed: %d" % seed_val
 
 func _build_texture() -> void:

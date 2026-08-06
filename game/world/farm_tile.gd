@@ -39,7 +39,7 @@ func _process(delta: float) -> void:
 func harvest() -> void:
 	if state != TileState.READY:
 		return
-	emit_signal("harvested", seed_type, 3)
+	harvested.emit(seed_type, 3)
 	GameManager.add_item(seed_type, 3)
 	state = TileState.EMPTY
 	seed_type = ""

@@ -1,7 +1,7 @@
 @tool
 extends Node2D
 
-const SAVE_PATH := "user://noise_settings.cfg"
+const SAVE_PATH: String = "user://noise_settings.cfg"
 
 @export var tile_size: int = 32
 
@@ -71,7 +71,7 @@ func repaint_with(
 	accent_colors: Array[Color],
 	thr: float
 ) -> void:
-	for child in get_children():
+	for child: Node in get_children():
 		child.queue_free()
 	_do_paint(
 		_chunk_coords, _chunk_size,
@@ -131,7 +131,7 @@ func _build_noises() -> void:
 	_noise_d.fractal_octaves = d_octaves
 
 func _repaint() -> void:
-	for child in get_children():
+	for child: Node in get_children():
 		child.queue_free()
 	var thresholds: Array[float]  = [threshold_1, threshold_2, threshold_3, threshold_4]
 	var grass_colors: Array[Color] = [
@@ -181,5 +181,5 @@ func _noise_to_color(v: float, t: Array[float], c: Array[Color]) -> Color:
 	return c[4]
 
 func clear_chunk() -> void:
-	for child in get_children():
+	for child: Node in get_children():
 		child.queue_free()
