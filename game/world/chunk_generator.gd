@@ -6,11 +6,11 @@ extends Node
 var world_seed: int = 0
 
 # Bruit principal pour les biomes de sol (herbe dense/clairsemée/terre)
-var noise_ground: FastNoiseLite
+var noise_ground: FastNoiseLite = null
 # Bruit secondaire pour la densité des arbres
-var noise_trees: FastNoiseLite
+var noise_trees: FastNoiseLite = null
 # Bruit tertiaire pour les détails (pierres, fleurs)
-var noise_details: FastNoiseLite
+var noise_details: FastNoiseLite = null
 
 func _ready() -> void:
 	# Seed aléatoire à chaque partie
@@ -68,7 +68,7 @@ func get_chunk_type(coords: Vector2i) -> String:
 # Nombre de chunks chargés (pour le debug menu)
 func get_loaded_chunk_count() -> int:
 	if has_node("/root/ChunkManager"):
-		var cm = get_node("/root/ChunkManager")
+		var cm: Node = get_node("/root/ChunkManager")
 		if cm.has_method("get_loaded_count"):
 			return cm.get_loaded_count()
 	return 0

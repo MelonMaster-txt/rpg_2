@@ -41,11 +41,11 @@ const SAVE_PATH := "user://noise_settings.cfg"
 
 var _chunk_coords: Vector2i = Vector2i.ZERO
 var _chunk_size:   int      = 512
-var _noise_g:      FastNoiseLite
-var _noise_d:      FastNoiseLite
+var _noise_g:      FastNoiseLite = null
+var _noise_d:      FastNoiseLite = null
 
-func _validate_property(_property: Dictionary) -> void:
-	if Engine.is_editor_hint():
+func _validate_property(property: Dictionary) -> void:
+	if Engine.is_editor_hint() and not property.is_empty():
 		_build_noises()
 		_repaint()
 
@@ -66,9 +66,9 @@ func paint(chunk_coords: Vector2i, chunk_size: int) -> void:
 func repaint_with(
 	noise: FastNoiseLite,
 	noise_d: FastNoiseLite,
-	thresholds: Array,
-	grass_colors: Array,
-	accent_colors: Array,
+	thresholds: Array[float],
+	grass_colors: Array[Color],
+	accent_colors: Array[Color],
 	thr: float
 ) -> void:
 	for child in get_children():
@@ -133,11 +133,11 @@ func _build_noises() -> void:
 func _repaint() -> void:
 	for child in get_children():
 		child.queue_free()
-	var thresholds: Array    = [threshold_1, threshold_2, threshold_3, threshold_4]
-	var grass_colors: Array  = [
+	var thresholds: Array[float]  = [threshold_1, threshold_2, threshold_3, threshold_4]
+	var grass_colors: Array[Color] = [
 		color_grass_0, color_grass_1, color_grass_2, color_grass_3, color_grass_4
 	]
-	var accent_colors: Array = [color_accent_0, color_accent_1, color_accent_2]
+	var accent_colors: Array[Color] = [color_accent_0, color_accent_1, color_accent_2]
 	_do_paint(
 		_chunk_coords, _chunk_size,
 		_noise_g, _noise_d,
@@ -149,15 +149,15 @@ func _do_paint(
 	chunk_size: int,
 	noise: FastNoiseLite,
 	noise_d: FastNoiseLite,
-	thresholds: Array,
-	grass_colors: Array,
-	accent_colors: Array,
+	thresholds: Array[float],
+	grass_colors: Array[Color],
+	accent_colors: Array[Color],
 	thr: float
 ) -> void:
-	var cols := floori(float(chunk_size) / float(tile_size))
-	var rows := floori(float(chunk_size) / float(tile_size))
-	for row in rows:
-		for col in cols:
+	var cols: int = floori(float(chunk_size) / float(tile_size))
+	var rows: int = floori(float(chunk_size) / float(tile_size))
+	for row: int in rows:
+		for col: int in cols:
 			var wx: int   = chunk_coords.x * cols + col
 			var wy: int   = chunk_coords.y * rows + row
 			var vg: float = noise.get_noise_2d(float(wx), float(wy))
@@ -173,7 +173,7 @@ func _do_paint(
 				rect.color = _noise_to_color(vg, thresholds, grass_colors)
 			add_child(rect)
 
-func _noise_to_color(v: float, t: Array, c: Array) -> Color:
+func _noise_to_color(v: float, t: Array[float], c: Array[Color]) -> Color:
 	if   v > t[0]: return c[0]
 	if   v > t[1]: return c[1]
 	if   v > t[2]: return c[2]

@@ -47,7 +47,7 @@ func to_dict() -> Dictionary:
 func from_dict(data: Dictionary) -> void:
 	player_name     = str(data.get("player_name",   "Barbarian"))
 	player_health   = int(data.get("player_health",  100))
-	var pos         = data.get("player_position",   {"x": 0.0, "y": 0.0})
+	var pos: Dictionary = data.get("player_position", {"x": 0.0, "y": 0.0})
 	player_position = Vector2(float(pos.get("x", 0.0)), float(pos.get("y", 0.0)))
 	player_gold     = int(data.get("player_gold",   0))
 	player_level    = int(data.get("player_level",  1))
@@ -81,9 +81,9 @@ func sync_from_game_manager() -> void:
 	player_health   = GameManager.life
 	player_level    = GameManager.force
 	farm_tiles_data = []
-	for tile in GameManager.farm_tiles_data:
+	for tile: Dictionary in GameManager.farm_tiles_data:
 		farm_tiles_data.append(tile)
-	var players := get_tree().get_nodes_in_group("player")
+	var players: Array[Node] = get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
 		player_position = (players[0] as Node2D).global_position
 	# displayed time in HUD at save moment
@@ -92,7 +92,7 @@ func sync_from_game_manager() -> void:
 
 # --- Called just after load_game() ---
 func apply_to_game_manager() -> void:
-	for key in inventory:
+	for key: String in inventory:
 		GameManager.inventory[key] = inventory[key]
 	GameManager.current_time    = current_time
 	GameManager.current_day     = current_day_gm

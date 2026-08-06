@@ -35,7 +35,7 @@ func harvest() -> void:
 	if _depleted:
 		return
 	var amount: int = randi_range(yield_min, yield_max)
-	var key: String = TYPE_TO_KEY.get(resource_type, "wood")
+	var key: String = TYPE_TO_KEY.get(resource_type, "wood") as String
 	GameManager.add_item(key, amount)
 	_charges -= 1
 	if _charges <= 0:

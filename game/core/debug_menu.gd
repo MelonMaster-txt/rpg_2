@@ -66,10 +66,7 @@ func _process(delta: float) -> void:
 
 
 func _refresh() -> void:
-	var gm: Node = GameManager
-	if gm == null:
-		_label.text = "[b]GameManager introuvable[/b]"
-		return
+	var gm := GameManager
 	var lines: PackedStringArray = [
 		"[b][color=#ffd080]== DEBUG F9 ==[/color][/b]",
 		"Jour : %d  Heure : %s" % [gm.current_day, gm.get_time_string()],
