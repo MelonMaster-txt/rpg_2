@@ -1,7 +1,7 @@
 @tool
 extends Node2D
 
-const HUT_CHUNK_SCENE: PackedScene    = preload("res://game/world/scenes/hut_chunk.tscn")
+const HUT_CHUNK_SCENE: PackedScene = preload("res://game/world/scenes/hut_chunk.tscn")
 const FOREST_CHUNK_SCENE: PackedScene = preload("res://game/world/scenes/forest_chunk.tscn")
 
 @export var chunk_coords: Vector2i = Vector2i.ZERO:
@@ -34,8 +34,8 @@ func _ready() -> void:
 
 func setup(coords: Vector2i, size: int, ctype: String) -> void:
 	chunk_coords = coords
-	chunk_size   = size
-	chunk_type   = ctype
+	chunk_size = size
+	chunk_type = ctype
 	name = "ChunkNode_%d_%d_%s" % [coords.x, coords.y, ctype]
 	_sync_position()
 	_load_content()
@@ -70,10 +70,10 @@ func _load_content() -> void:
 func _draw() -> void:
 	if not debug_draw_chunk_bounds:
 		return
-	var rect := Rect2(Vector2.ZERO, Vector2(chunk_size, chunk_size))
+	var rect: Rect2 = Rect2(Vector2.ZERO, Vector2(chunk_size, chunk_size))
 	draw_rect(rect, Color(1.0, 0.0, 0.0, 0.06), true)
 	draw_rect(rect, Color(1.0, 0.0, 0.0, 0.9), false, 2.0)
-	var center := Vector2(chunk_size * 0.5, chunk_size * 0.5)
+	var center: Vector2 = Vector2(chunk_size * 0.5, chunk_size * 0.5)
 	draw_circle(center, 5.0, Color(1.0, 0.2, 0.2))
 	draw_string(
 		ThemeDB.fallback_font,
