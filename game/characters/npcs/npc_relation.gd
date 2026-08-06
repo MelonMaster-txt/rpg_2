@@ -62,4 +62,4 @@ func get_mood_string() -> String:
 		Mood.NEUTRAL:    return "Neutre"
 		Mood.UNHAPPY:    return "Malheureux"
 		Mood.REBELLIOUS: return "Rebelle"
-	_: return "Inconnu"
+	return "Inconnu"

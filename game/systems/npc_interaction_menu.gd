@@ -18,8 +18,8 @@ var _npc: Node = null
 func open(npc: Node) -> void:
 	_npc = npc
 	if _name_label:
-		var n: String = npc.get("npc_name") if npc.get("npc_name") != null else "Inconnu"
-		_name_label.text = n
+		var display_name: String = npc.get("npc_name") if npc.get("npc_name") != null else "Inconnu"
+		_name_label.text = display_name
 	# Pause le jeu pendant le menu
 	get_tree().paused = true
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -32,8 +32,8 @@ func open(npc: Node) -> void:
 func _on_discuss() -> void:
 	_close()
 	if _npc != null and is_instance_valid(_npc):
-		var npc_name_str: String = _npc.get("npc_name") if _npc.get("npc_name") != null else "???"
-		print("[Interaction] Discussion avec ", npc_name_str)
+		var display_name: String = _npc.get("npc_name") if _npc.get("npc_name") != null else "???"
+		print("[Interaction] Discussion avec ", display_name)
 
 
 func _on_recruit() -> void:

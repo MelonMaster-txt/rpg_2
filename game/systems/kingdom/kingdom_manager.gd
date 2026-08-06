@@ -8,7 +8,7 @@ var kingdom_level: int    = 1
 var buildings:     Array[String] = []
 
 # Seuils de population pour monter de niveau
-const LEVEL_THRESHOLDS: Array = [0, 3, 8, 15, 25, 40]
+const LEVEL_THRESHOLDS: Array[int] = [0, 3, 8, 15, 25, 40]
 
 
 func _ready() -> void:
@@ -44,7 +44,7 @@ func get_job_for_building(building_id: String) -> String:
 func _check_level_up() -> void:
 	var pm: Node = get_node_or_null("/root/PopulationManager")
 	if pm == null:
-		var nodes: Array = get_tree().get_nodes_in_group("population_manager")
+		var nodes: Array[Node] = get_tree().get_nodes_in_group("population_manager")
 		if nodes.size() > 0:
 			pm = nodes[0]
 	if pm == null:

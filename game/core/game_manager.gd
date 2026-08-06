@@ -97,15 +97,15 @@ func apply_buff(stat: String, amount: int, duration: float) -> void:
 	buff_applied.emit(stat, amount, duration)
 	stats_changed.emit()
 
-func _apply_stat_delta(stat: String, delta: int) -> void:
+func _apply_stat_delta(stat: String, amount: int) -> void:
 	match stat:
-		"life":         life     = clampi(life     + delta, 0, max_life)
-		"force":        force    = maxi(1, force    + delta)
-		"stamina":      stamina  = maxi(1, stamina  + delta)
-		"luck":         luck     = maxi(0, luck     + delta)
-		"speed":        speed    = maxi(1, speed    + delta)
-		"charisma":     charisma = maxi(0, charisma + delta)
-		"armor":        armor    = maxi(0, armor    + delta)
+		"life":         life     = clampi(life     + amount, 0, max_life)
+		"force":        force    = maxi(1, force    + amount)
+		"stamina":      stamina  = maxi(1, stamina  + amount)
+		"luck":         luck     = maxi(0, luck     + amount)
+		"speed":        speed    = maxi(1, speed    + amount)
+		"charisma":     charisma = maxi(0, charisma + amount)
+		"armor":        armor    = maxi(0, armor    + amount)
 
 func heal(amount: int) -> void:
 	life = clampi(life + amount, 0, max_life)

@@ -11,14 +11,14 @@ var player_level: int        = 1
 var current_scene: String    = OVERWORLD
 var play_time: float         = 0.0
 var day_count: int           = 1
-var companions: Array        = []
-var workers: Array           = []
+var companions: Array[Dictionary] = []
+var workers: Array[Dictionary]    = []
 var deity: String            = ""
 var faith_points: int        = 0
 var inventory: Dictionary    = {}
 var current_time: float      = 0.0
 var current_day_gm: int      = 1
-var farm_tiles_data: Array   = []
+var farm_tiles_data: Array[Dictionary] = []
 var time_string: String      = "06:00"
 
 
@@ -58,14 +58,24 @@ func from_dict(data: Dictionary) -> void:
 	current_scene   = str(data.get("current_scene", OVERWORLD))
 	play_time       = float(data.get("play_time",   0.0))
 	day_count       = int(float(str(data.get("day_count", 1))))
-	companions      = data.get("companions",        [])
-	workers         = data.get("workers",           [])
+	# Itérateur non typé car Array générique peut contenir des non-Dictionary (ex: JSON chargé)
+	companions.clear()
+	for entry: Variant in data.get("companions", []):
+		if entry is Dictionary:
+			companions.append(entry)
+	workers.clear()
+	for entry: Variant in data.get("workers", []):
+		if entry is Dictionary:
+			workers.append(entry)
 	deity           = str(data.get("deity",         ""))
 	faith_points    = int(data.get("faith_points",  0))
 	inventory       = data.get("inventory",         {})
 	current_time    = float(data.get("current_time", 0.0))
 	current_day_gm  = int(float(str(data.get("current_day_gm", 1))))
-	farm_tiles_data = data.get("farm_tiles_data",   [])
+	farm_tiles_data.clear()
+	for entry: Variant in data.get("farm_tiles_data", []):
+		if entry is Dictionary:
+			farm_tiles_data.append(entry)
 	time_string     = str(data.get("time_string",   "06:00"))
 
 
@@ -84,9 +94,9 @@ func sync_from_game_manager() -> void:
 	play_time       = GameManager.play_time
 	player_health   = GameManager.life
 	player_level    = GameManager.force
-	farm_tiles_data = []
+	farm_tiles_data.clear()
 	# Itérateur non typé car Array générique peut contenir des non-Dictionary (ex: JSON chargé)
-	for tile in GameManager.farm_tiles_data:
+	for tile: Variant in GameManager.farm_tiles_data:
 		if tile is Dictionary:
 			farm_tiles_data.append(tile)
 	var players: Array[Node] = get_tree().get_nodes_in_group("player")
