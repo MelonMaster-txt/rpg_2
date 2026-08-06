@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cpugxecjtue66"]
 
 [ext_resource type="Script" uid="uid://br3g6yh03a3sd" path="res://game/ui/hud.gd" id="1_hud"]
-[ext_resource type="PackedScene" uid="uid://dalxgnyyj4xgw" path="res://game/ui/inventory_screen.tscn" id="2_inv"]
+[ext_resource type="PackedScene" path="res://game/ui/inventory_screen.tscn" id="2_inv"]
 [ext_resource type="PackedScene" path="res://game/ui/hotbar.tscn" id="3_hotbar"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud"]
