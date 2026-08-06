@@ -1,5 +1,5 @@
-extends Resource
 class_name NpcData
+extends Resource
 
 enum Archetype {
 	HUNTER,

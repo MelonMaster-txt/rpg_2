@@ -3,11 +3,11 @@ extends Node
 signal building_built(building_id: String)
 signal kingdom_level_up(new_level: int)
 
+const LEVEL_THRESHOLDS: Array[int] = [0, 3, 8, 15, 25, 40]
+
 var kingdom_name: String = "Mon Clan"
 var kingdom_level: int = 1
 var buildings: Array[String] = []
-
-const LEVEL_THRESHOLDS: Array[int] = [0, 3, 8, 15, 25, 40]
 
 
 func _ready() -> void:
@@ -16,7 +16,7 @@ func _ready() -> void:
 
 func build(building_id: String) -> void:
 	if buildings.has(building_id):
-		push_warning("[KingdomManager] Bâtiment déjà construit : " + building_id)
+		push_warning("[KingdomManager] Batiment deja construit : " + building_id)
 		return
 	buildings.append(building_id)
 	building_built.emit(building_id)
