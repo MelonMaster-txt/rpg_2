@@ -20,11 +20,11 @@ func close() -> void:
 	get_tree().paused = false
 
 func _build_list() -> void:
-	for child in item_list.get_children():
+	for child: Node in item_list.get_children():
 		child.queue_free()
 
-	var craftable: Array = ItemDatabase.get_craftable_items()
-	for item_id in craftable:
+	var craftable: Array[String] = ItemDatabase.get_craftable_items()
+	for item_id: String in craftable:
 		var data: Dictionary = ItemDatabase.get_item(item_id)
 		var can: bool = ItemDatabase.can_craft(item_id, GameManager.inventory)
 
@@ -32,8 +32,8 @@ func _build_list() -> void:
 
 		var lbl := Label.new()
 		var keys: Array = data["recipe"].keys()
-		var parts: Array = []
-		for k in keys:
+		var parts: Array[String] = []
+		for k: String in keys:
 			parts.append("%dx %s" % [data["recipe"][k], k])
 		var recipe_str: String = ", ".join(parts)
 		lbl.text = "%s  [%s]" % [data["name"], recipe_str]
@@ -53,7 +53,7 @@ func _build_list() -> void:
 func _on_craft_pressed(item_id: String) -> void:
 	var data: Dictionary = ItemDatabase.get_item(item_id)
 	var resources: Array = data["recipe"].keys()
-	for resource in resources:
+	for resource: String in resources:
 		GameManager.remove_item(resource, data["recipe"][resource])
 	GameManager.add_item(item_id, 1)
 	_build_list()

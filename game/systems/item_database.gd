@@ -61,28 +61,25 @@ const ITEMS: Dictionary = {
 	}
 }
 
-# Returns item data, empty dict if not found
 func get_item(id: String) -> Dictionary:
 	if ITEMS.has(id):
 		return ITEMS[id]
 	push_warning("ItemDatabase: unknown item '%s'" % id)
 	return {}
 
-# Returns all craftable items
-func get_craftable_items() -> Array:
-	var result = []
-	for id in ITEMS:
+func get_craftable_items() -> Array[String]:
+	var result: Array[String] = []
+	for id: String in ITEMS:
 		if ITEMS[id].get("craftable", false):
 			result.append(id)
 	return result
 
-# Checks if the inventory has the resources to craft an item
 func can_craft(item_id: String, inventory: Dictionary) -> bool:
-	var data = get_item(item_id)
+	var data: Dictionary = get_item(item_id)
 	if data.is_empty() or not data.get("craftable", false):
 		return false
-	for resource in data["recipe"]:
-		var needed = data["recipe"][resource]
+	for resource: String in data["recipe"]:
+		var needed: int = data["recipe"][resource]
 		if inventory.get(resource, 0) < needed:
 			return false
 	return true

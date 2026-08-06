@@ -19,12 +19,12 @@ func add_item(item: String, amount: int = 1) -> void:
 		inventory[item] += amount
 	else:
 		inventory[item] = amount
-	emit_signal("inventory_changed", item, inventory[item])
+	inventory_changed.emit(item, inventory[item])
 
 func remove_item(item: String, amount: int = 1) -> bool:
 	if inventory.get(item, 0) >= amount:
 		inventory[item] -= amount
-		emit_signal("inventory_changed", item, inventory[item])
+		inventory_changed.emit(item, inventory[item])
 		return true
 	return false
 
@@ -57,15 +57,15 @@ var farm_tiles_data: Array = []
 
 func save_farm_tiles(tile_map: Dictionary) -> void:
 	farm_tiles_data.clear()
-	for tile in tile_map.values():
+	for tile: Node in tile_map.values():
 		if is_instance_valid(tile) and tile.has_method("get_save_data"):
 			farm_tiles_data.append(tile.get_save_data())
 
 func restore_farm_tiles(container: Node, tile_map: Dictionary) -> void:
 	if container == null or farm_tiles_data.is_empty():
 		return
-	var scene := load("res://game/world/farm_tile.tscn")
-	for data in farm_tiles_data:
+	var scene: PackedScene = load("res://game/world/farm_tile.tscn")
+	for data: Dictionary in farm_tiles_data:
 		var tile: Node2D = scene.instantiate()
 		tile.global_position = data["pos"]
 		container.add_child(tile)
@@ -84,14 +84,12 @@ var hour: int           = 6
 var minute: int         = 0
 var is_day: bool        = true
 
-# Total playtime (incremented here since GameManager always runs, outside pause)
 var play_time: float = 0.0
 
 signal time_changed(hour: int, minute: int, day: int)
 signal day_night_changed(is_day: bool)
 
 func _process(delta: float) -> void:
-	# Real playtime (does not tick when game is paused)
 	if not get_tree().paused:
 		play_time += delta
 
@@ -100,7 +98,7 @@ func _process(delta: float) -> void:
 		current_time = 0.0
 		current_day += 1
 
-	var progress: float       = current_time / DAY_DURATION
+	var progress: float        = current_time / DAY_DURATION
 	var game_hour_float: float = 6.0 + progress * 24.0
 	var real_hour: int         = int(game_hour_float) % 24
 	var real_minute: int       = int((game_hour_float - int(game_hour_float)) * 60)
@@ -108,12 +106,12 @@ func _process(delta: float) -> void:
 	if real_hour != hour or real_minute != minute:
 		hour   = real_hour
 		minute = real_minute
-		emit_signal("time_changed", hour, minute, current_day)
+		time_changed.emit(hour, minute, current_day)
 
 		var new_is_day: bool = (hour >= 6 and hour < 20)
 		if new_is_day != is_day:
 			is_day = new_is_day
-			emit_signal("day_night_changed", is_day)
+			day_night_changed.emit(is_day)
 
 func get_time_string() -> String:
 	return "%02d:%02d" % [hour, minute]

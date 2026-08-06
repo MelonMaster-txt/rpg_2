@@ -29,6 +29,6 @@ func _on_body_exited(body: Node2D) -> void:
 		player_in_range.emit(false)
 
 func _open_workbench() -> void:
-	var ui = get_tree().get_first_node_in_group("workbench_ui")
+	var ui: Node = get_tree().get_first_node_in_group("workbench_ui")
 	if ui:
 		ui.open()

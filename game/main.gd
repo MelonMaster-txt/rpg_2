@@ -1,10 +1,10 @@
 extends Node
 
-const HUD_SCENE          = preload("res://game/ui/hud.tscn")
-const LOADING_SCENE      = preload("res://game/ui/loading_screen.tscn")
+const HUD_SCENE:     PackedScene = preload("res://game/ui/hud.tscn")
+const LOADING_SCENE: PackedScene = preload("res://game/ui/loading_screen.tscn")
 
-var _hud: CanvasLayer        = null
-var _loading: CanvasLayer    = null
+var _hud: CanvasLayer     = null
+var _loading: CanvasLayer = null
 
 func _ready() -> void:
 	_spawn_hud()

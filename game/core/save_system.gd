@@ -18,10 +18,10 @@ func save_game(slot: int) -> bool:
 	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
 	if has_node("/root/GameManager"):
 		GameState.sync_from_game_manager()
-	var data := GameState.to_dict()
+	var data: Dictionary = GameState.to_dict()
 	data["save_date"] = Time.get_datetime_string_from_system()
 	data["slot"]      = slot
-	var file := FileAccess.open(get_save_path(slot), FileAccess.WRITE)
+	var file: FileAccess = FileAccess.open(get_save_path(slot), FileAccess.WRITE)
 	if file == null:
 		push_error("[SaveSystem] Cannot write slot %d" % slot)
 		return false
@@ -32,10 +32,10 @@ func save_game(slot: int) -> bool:
 
 
 func load_game(slot: int) -> bool:
-	var path := get_save_path(slot)
+	var path: String = get_save_path(slot)
 	if not FileAccess.file_exists(path):
 		return false
-	var file := FileAccess.open(path, FileAccess.READ)
+	var file: FileAccess = FileAccess.open(path, FileAccess.READ)
 	if file == null:
 		return false
 	var json := JSON.new()
@@ -44,7 +44,7 @@ func load_game(slot: int) -> bool:
 		push_error("[SaveSystem] Invalid JSON slot %d" % slot)
 		return false
 	file.close()
-	var data = json.get_data()
+	var data: Variant = json.get_data()
 	if typeof(data) != TYPE_DICTIONARY:
 		return false
 	GameState.from_dict(data)
@@ -55,7 +55,7 @@ func load_game(slot: int) -> bool:
 
 
 func delete_slot(slot: int) -> void:
-	var path := get_save_path(slot)
+	var path: String = get_save_path(slot)
 	if FileAccess.file_exists(path):
 		DirAccess.remove_absolute(path)
 		print("[SaveSystem] Slot %d deleted." % slot)
@@ -68,7 +68,7 @@ func slot_exists(slot: int) -> bool:
 func get_slot_info(slot: int) -> Dictionary:
 	if not slot_exists(slot):
 		return {}
-	var file := FileAccess.open(get_save_path(slot), FileAccess.READ)
+	var file: FileAccess = FileAccess.open(get_save_path(slot), FileAccess.READ)
 	if file == null:
 		return {}
 	var json := JSON.new()
@@ -76,8 +76,8 @@ func get_slot_info(slot: int) -> Dictionary:
 		file.close()
 		return {}
 	file.close()
-	var d = json.get_data()
-	var raw_play: float = d.get("play_time", 0.0)
+	var d: Variant = json.get_data()
+	var raw_play: float = float(str(d.get("play_time", 0.0)))
 	var play_sec: int = int(raw_play)
 	return {
 		"save_date":    str(d.get("save_date",    "")),

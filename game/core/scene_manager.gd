@@ -21,14 +21,13 @@ func _do_change_scene(scene_path: String) -> void:
 		await get_tree().process_frame
 		current_scene = null
 
-	# Always use the current root scene as the container
 	var container: Node = get_tree().current_scene
 	if container == null:
 		push_error("SceneManager: root scene not found")
 		_is_changing = false
 		return
 
-	var res := load(scene_path)
+	var res: PackedScene = load(scene_path)
 	if res == null:
 		push_error("SceneManager: cannot load " + scene_path)
 		_is_changing = false

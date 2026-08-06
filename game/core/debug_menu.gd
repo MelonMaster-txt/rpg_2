@@ -2,7 +2,6 @@
 # Give items, teleport, vitesse
 extends CanvasLayer
 
-# FIX : clés alignées sur GameManager.inventory (anglais)
 const GIVE_SETS: Array[Dictionary] = [
 	{"label": "Tout x20",    "items": {"wood":20,"stone":20,"berries":20,"berry_seed":10,"hoe":1,"watering_can":1,"gold":50}},
 	{"label": "Outils",      "items": {"hoe":1,"watering_can":1}},
@@ -48,7 +47,7 @@ func _build_ui() -> void:
 
 	_add_separator(vb, "-- Give --")
 
-	for gset in GIVE_SETS:
+	for gset: Dictionary in GIVE_SETS:
 		var btn := Button.new()
 		btn.text = gset["label"]
 		_style_btn(btn, Color(0.2, 0.7, 0.3))
@@ -131,17 +130,17 @@ func _toggle() -> void:
 	_panel.visible = _visible
 
 func _on_give_pressed(items: Dictionary) -> void:
-	for id in items:
+	for id: String in items:
 		GameManager.add_item(id, items[id])
 
 func _on_clear_inventory() -> void:
-	for id in GameManager.inventory.keys():
+	for id: String in GameManager.inventory.keys():
 		GameManager.inventory[id] = 0
 
 func _change_speed(delta: int) -> void:
-	var player = get_tree().get_first_node_in_group("player")
+	var player: Node = get_tree().get_first_node_in_group("player")
 	if player == null:
 		return
-	var new_speed: float = clamp(player.move_speed + delta, 40.0, 400.0)
-	player.move_speed = new_speed
+	var new_speed: float = clamp(float(player.get("move_speed")) + float(delta), 40.0, 400.0)
+	player.set("move_speed", new_speed)
 	_speed_label.text = str(int(new_speed))
