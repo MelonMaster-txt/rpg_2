@@ -9,6 +9,7 @@ layer = 10
 script = ExtResource("1_igsm")
 
 [node name="Panel" type="Control" parent="." unique_id=770337499]
+visible = false
 process_mode = 3
 layout_mode = 3
 anchors_preset = 15
@@ -72,6 +73,7 @@ layout_mode = 2
 text = "Quitter vers menu"
 
 [node name="SaveMenu" parent="Panel" unique_id=1641851183 instance=ExtResource("2_igsm")]
+visible = false
 layout_mode = 0
 anchors_preset = 0
 anchor_right = 0.0

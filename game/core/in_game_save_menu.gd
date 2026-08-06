@@ -1,36 +1,33 @@
 # in_game_save_menu.gd
-# Hiérarchie réelle dans in_game_save_menu.tscn :
-#   InGameSaveMenu (CanvasLayer)
-#     Panel
-#       SaveMenu (instance save_menu.tscn)
 extends CanvasLayer
 
 signal resume_requested
 
+@onready var _panel: Control = $Panel
 @onready var _save_menu: Control = $Panel/SaveMenu
 
 
 func _ready() -> void:
-	if _save_menu == null:
-		push_error("InGameSaveMenu: $Panel/SaveMenu introuvable")
-		return
-	_save_menu.visible = false
+	_panel.visible = false
+	if _save_menu:
+		_save_menu.visible = false
 
 
 func open() -> void:
+	_panel.visible = true
 	if _save_menu:
-		_save_menu.visible = true
+		_save_menu.visible = false
 	get_tree().paused = true
 
 
 func close() -> void:
+	_panel.visible = false
 	if _save_menu:
 		_save_menu.visible = false
 	get_tree().paused = false
 	resume_requested.emit()
 
 
-# Callbacks connectés via .tscn
 func _on_btn_resume_pressed() -> void:
 	close()
 
