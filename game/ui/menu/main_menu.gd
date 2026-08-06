@@ -5,6 +5,8 @@ extends Control
 
 
 func _ready() -> void:
+	# Sécurité : la pause doit toujours être désactivée sur le menu principal
+	get_tree().paused = false
 	var any_save: bool = false
 	for slot: int in range(SaveSystem.MAX_SLOTS):
 		if SaveSystem.slot_exists(slot):

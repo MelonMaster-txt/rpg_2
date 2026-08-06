@@ -15,6 +15,8 @@ var _farm_tiles: Dictionary = {}
 
 
 func _ready() -> void:
+	# Sécurité : s'assurer qu'on n'est jamais en pause en arrivant dans le jeu
+	get_tree().paused = false
 	_spawn_player()
 	_restore_farm()
 

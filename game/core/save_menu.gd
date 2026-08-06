@@ -8,6 +8,7 @@ signal save_requested(slot_index: int)
 signal load_requested(slot_index: int)
 
 const MAX_SLOTS: int = 8
+const MAIN_MENU: String = "res://game/ui/menu/main_menu.tscn"
 
 @onready var _grid:          GridContainer = $GridContainer
 @onready var _confirm_panel: Panel         = $ConfirmPanel
@@ -15,11 +16,19 @@ const MAX_SLOTS: int = 8
 
 var _selected_slot: int = -1
 var _mode: String       = "save"
+# Stocke la scène depuis laquelle save_menu a été ouvert
+# "main_menu" ou "in_game"
+var _origin: String = "main_menu"
 
 
 func _ready() -> void:
 	if _confirm_panel:
 		_confirm_panel.visible = false
+	# Détermine l'origine via le meta posé par l'appelant
+	if GameState.has_meta("open_save_menu_mode"):
+		_origin = "main_menu"
+	else:
+		_origin = "in_game"
 	_refresh_slots()
 
 
@@ -59,7 +68,14 @@ func _handle_slot(slot_idx: int) -> void:
 
 
 func _on_back_pressed() -> void:
-	hide()
+	if _origin == "main_menu":
+		# On est une scène standalone : retour au menu principal
+		if GameState.has_meta("open_save_menu_mode"):
+			GameState.remove_meta("open_save_menu_mode")
+		get_tree().change_scene_to_file.call_deferred(MAIN_MENU)
+	else:
+		# On est instancié dans in_game_save_menu : juste se cacher
+		hide()
 
 
 func _on_delete_button_pressed() -> void:
