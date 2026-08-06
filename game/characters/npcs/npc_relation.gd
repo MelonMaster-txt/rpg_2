@@ -1,5 +1,5 @@
-# npc_relation.gd — Composant de relation/humeur d'un NPC recruté ou capturé.
-# Ajouté dynamiquement via random_npc._add_relation_component()
+# npc_relation.gd -- Composant de relation/humeur d'un NPC recrute ou capture.
+# Ajoute dynamiquement via random_npc._add_relation_component()
 extends Node
 
 enum Mood { CONTENT, NEUTRAL, UNHAPPY, REBELLIOUS }
@@ -7,6 +7,7 @@ enum Mood { CONTENT, NEUTRAL, UNHAPPY, REBELLIOUS }
 var mood: Mood = Mood.NEUTRAL
 var happiness: int = 100
 var _decay_timer: float = 0.0
+
 const DECAY_INTERVAL: float = 30.0
 const DECAY_AMOUNT: int = 1
 
@@ -33,7 +34,6 @@ func add_happiness(amount: int) -> void:
 
 
 func _tick_happiness() -> void:
-	# Les esclaves perdent plus de bonheur que les compagnons
 	var parent: Node = get_parent()
 	var role: String = ""
 	if parent != null:
@@ -58,8 +58,8 @@ func _update_mood() -> void:
 
 func get_mood_string() -> String:
 	match mood:
-		Mood.CONTENT:    return "Content"
-		Mood.NEUTRAL:    return "Neutre"
-		Mood.UNHAPPY:    return "Malheureux"
+		Mood.CONTENT: return "Content"
+		Mood.NEUTRAL: return "Neutre"
+		Mood.UNHAPPY: return "Malheureux"
 		Mood.REBELLIOUS: return "Rebelle"
 	return "Inconnu"

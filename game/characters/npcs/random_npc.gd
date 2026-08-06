@@ -7,37 +7,37 @@ signal npc_recruited(npc: Node)
 
 enum AiState { IDLE, WANDER, FLEE, CHASE, DEAD, WORKING }
 
-const COLOR_MALE:    Color = Color(0.25, 0.50, 1.00)
-const COLOR_FEMALE:  Color = Color(1.00, 0.45, 0.70)
+const COLOR_MALE: Color = Color(0.25, 0.50, 1.00)
+const COLOR_FEMALE: Color = Color(1.00, 0.45, 0.70)
 const COLOR_MONSTER: Color = Color(0.10, 0.75, 0.20)
-const COLOR_DEAD:    Color = Color(0.30, 0.30, 0.30)
+const COLOR_DEAD: Color = Color(0.30, 0.30, 0.30)
 const COLOR_HOSTILE: Color = Color(0.90, 0.15, 0.10)
-const COLOR_WORKER:  Color = Color(0.90, 0.75, 0.20)
-const DETECT_RANGE:    float = 120.0
-const ATTACK_RANGE:    float = 32.0
+const COLOR_WORKER: Color = Color(0.90, 0.75, 0.20)
+const DETECT_RANGE: float = 120.0
+const ATTACK_RANGE: float = 32.0
 const ATTACK_COOLDOWN: float = 1.5
 
 var data: NpcData = null
-var npc_name:   String = ""
+var npc_name: String = ""
 var npc_gender: String = "male"
-var strength:   int    = 5
-var max_hp:     int    = 30
-var current_hp: int    = 30
-var is_hostile: bool   = false
-var speed:      float  = 60.0
+var strength: int = 5
+var max_hp: int = 30
+var current_hp: int = 30
+var is_hostile: bool = false
+var speed: float = 60.0
 var _ai: AiState = AiState.IDLE
-var _wander_timer: float   = 2.0
-var _wander_dir:   Vector2 = Vector2.ZERO
-var _target:       Node2D  = null
+var _wander_timer: float = 2.0
+var _wander_dir: Vector2 = Vector2.ZERO
+var _target: Node2D = null
 var _attack_timer: float = 0.0
 var _pending_randomize: bool = false
-var _pending_seed:      int  = -1
+var _pending_seed: int = -1
 var _player_near: bool = false
 
-@onready var _appearance:       Node      = $CharacterAppearance
-@onready var _name_label:       Label     = $NameLabel
-@onready var _color_rect:       ColorRect = $ColorRect
-@onready var _interaction_area: Area2D    = $InteractionArea
+@onready var _appearance: Node = $CharacterAppearance
+@onready var _name_label: Label = $NameLabel
+@onready var _color_rect: ColorRect = $ColorRect
+@onready var _interaction_area: Area2D = $InteractionArea
 
 
 func _ready() -> void:
@@ -53,7 +53,7 @@ func _ready() -> void:
 func randomize_full(seed_val: int = -1) -> void:
 	if not is_inside_tree() or _appearance == null:
 		_pending_randomize = true
-		_pending_seed      = seed_val
+		_pending_seed = seed_val
 		return
 	_do_randomize(seed_val)
 
@@ -62,14 +62,14 @@ func _do_randomize(seed_val: int) -> void:
 	_pending_randomize = false
 	if seed_val >= 0:
 		seed(seed_val)
-	data       = NpcData.generate_random()
-	npc_name   = data.npc_name
+	data = NpcData.generate_random()
+	npc_name = data.npc_name
 	npc_gender = _gender_from_archetype(data.archetype)
-	strength   = data.stats.force
-	max_hp     = data.stats.max_hp
+	strength = data.stats.force
+	max_hp = data.stats.max_hp
 	current_hp = max_hp
 	is_hostile = data.archetype == NpcData.Archetype.BANDIT or randf() < 0.2
-	speed      = randf_range(40.0, 90.0)
+	speed = randf_range(40.0, 90.0)
 	if _appearance:
 		_appearance.randomize_appearance()
 		var adat: Dictionary = _appearance.get_appearance_data()
@@ -95,9 +95,9 @@ func _update_color_rect() -> void:
 		_color_rect.color = COLOR_WORKER
 		return
 	match npc_gender:
-		"female":  _color_rect.color = COLOR_FEMALE
+		"female": _color_rect.color = COLOR_FEMALE
 		"monster": _color_rect.color = COLOR_MONSTER
-		_:         _color_rect.color = COLOR_MALE
+		_: _color_rect.color = COLOR_MALE
 
 
 func _physics_process(delta: float) -> void:
@@ -275,7 +275,7 @@ func _start_working(initial_job: String) -> void:
 	worker.set_name("WorkerAI")
 	add_child(worker)
 	worker.job = initial_job
-	push_warning("[RandomNpc] WorkerAI créé pour %s avec job=%s" % [npc_name, initial_job])
+	push_warning("[RandomNpc] WorkerAI cree pour %s avec job=%s" % [npc_name, initial_job])
 
 
 func get_worker_ai() -> Node:
@@ -293,24 +293,24 @@ func change_job(new_job: String) -> void:
 
 func _build_kingdom_entry(role: String) -> Dictionary:
 	var entry: Dictionary = {
-		"name":     npc_name,
-		"gender":   npc_gender,
-		"role":     role,
-		"job":      "",
+		"name": npc_name,
+		"gender": npc_gender,
+		"role": role,
+		"job": "",
 		"strength": strength,
-		"max_hp":   max_hp,
+		"max_hp": max_hp,
 		"archetype": "",
-		"skills":   {},
+		"skills": {},
 		"happiness": 100,
 	}
 	if data != null:
 		entry["archetype"] = NpcData.Archetype.keys()[data.archetype]
 		entry["skills"] = {
-			"farming":     data.stats.skill_farming,
+			"farming": data.stats.skill_farming,
 			"woodcutting": data.stats.skill_woodcutting,
-			"mining":      data.stats.skill_mining,
-			"combat":      data.stats.skill_combat,
-			"trading":     data.stats.skill_trading,
+			"mining": data.stats.skill_mining,
+			"combat": data.stats.skill_combat,
+			"trading": data.stats.skill_trading,
 		}
 	return entry
 
@@ -354,7 +354,7 @@ func _pick_wander_dir() -> void:
 func _update_facing() -> void:
 	if velocity.length() < 5.0:
 		return
-	var dominant: String
+	var dominant: String = ""
 	if abs(velocity.x) > abs(velocity.y):
 		dominant = "right" if velocity.x > 0 else "left"
 	else:

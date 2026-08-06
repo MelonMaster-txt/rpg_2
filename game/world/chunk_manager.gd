@@ -1,18 +1,14 @@
 extends Node2D
 
-# chunk_manager.gd
-# Le joueur est injecté via set_player() depuis overworld.gd
-# (le joueur n'existe pas en tant que nœud statique dans la scène)
-
 signal chunk_loaded(chunk_pos: Vector2i)
 signal chunk_unloaded(chunk_pos: Vector2i)
 
 const CHUNK_SIZE: int = 16
-const TILE_SIZE:  int = 32
+const TILE_SIZE: int = 32
 
-@export var load_radius:          int = 3
-@export var lazy_radius:          int = 5
-@export var spawn_chunk_radius:   int = 1
+@export var load_radius: int = 3
+@export var lazy_radius: int = 5
+@export var spawn_chunk_radius: int = 1
 @export var max_chunks_per_frame: int = 1
 @export var chunk_scene: PackedScene = null
 
@@ -43,7 +39,7 @@ func _world_to_chunk(world_pos: Vector2) -> Vector2i:
 func _load_around(center: Vector2i) -> void:
 	for dx: int in range(-load_radius, load_radius + 1):
 		for dy: int in range(-load_radius, load_radius + 1):
-			var cpos := Vector2i(center.x + dx, center.y + dy)
+			var cpos: Vector2i = Vector2i(center.x + dx, center.y + dy)
 			if _loaded_chunks.has(cpos):
 				continue
 			_spawn_chunk(cpos)

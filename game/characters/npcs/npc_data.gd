@@ -1,7 +1,6 @@
 extends Resource
 class_name NpcData
 
-# ─── ARCHETYPE ─────────────────────────────────────────────────────────────────
 enum Archetype {
 	HUNTER,
 	FARMER,
@@ -12,7 +11,6 @@ enum Archetype {
 	SAGE,
 }
 
-# ─── STATS INNER CLASS ─────────────────────────────────────────────────────────
 class NpcStats:
 	var force: int = 5
 	var max_hp: int = 30
@@ -22,7 +20,7 @@ class NpcStats:
 	var skill_combat: int = 0
 	var skill_trading: int = 0
 
-# ─── EXPORTS ───────────────────────────────────────────────────────────────────
+
 @export var npc_id: String = ""
 @export var npc_name: String = "Inconnu"
 @export var npc_type: String = "random"
