@@ -40,13 +40,13 @@ func _draw_character() -> void:
 		if data.has("outfit_color"):
 			c_outfit = data["outfit_color"]
 
-	var half: int = tile_size / 2
+	var half: float = tile_size / 2.0
 	# Corps
-	draw_rect(Rect2(-half / 2, -half, half, half), c_outfit)
+	draw_rect(Rect2(-half / 2.0, -half, half, half), c_outfit)
 	# Tête
-	draw_circle(Vector2(0, -half - half / 2), half / 2, c_skin)
+	draw_circle(Vector2(0.0, -half - half / 2.0), half / 2.0, c_skin)
 	# Yeux
-	draw_circle(Vector2(-half / 6, -half - half / 2), 1.0, c_eyes)
-	draw_circle(Vector2(half / 6, -half - half / 2), 1.0, c_eyes)
+	draw_circle(Vector2(-half / 6.0, -half - half / 2.0), 1.0, c_eyes)
+	draw_circle(Vector2(half / 6.0, -half - half / 2.0), 1.0, c_eyes)
 	# Cheveux (trait simple au-dessus de la tête)
-	draw_rect(Rect2(-half / 2, -half * 2 - half / 4, half, half / 4), c_hair)
+	draw_rect(Rect2(-half / 2.0, -half * 2.0 - half / 4.0, half, half / 4.0), c_hair)
