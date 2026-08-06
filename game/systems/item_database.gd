@@ -1,74 +1,74 @@
 # ItemDatabase - Autoload
-# Pour ajouter un item : ajouter une entrée dans ITEMS
+# To add an item: add an entry to ITEMS
 extends Node
 
 const ITEMS: Dictionary = {
-	"bois": {
-		"nom": "Bois",
-		"description": "Du bois brut coupé dans la forêt.",
-		"icon": "res://game/assets/icons/bois.png",
+	"wood": {
+		"name": "Wood",
+		"description": "Raw wood chopped from the forest.",
+		"icon": "res://game/assets/icons/wood.png",
 		"stackable": true,
 		"max_stack": 99,
 		"craftable": false,
-		"recette": {}
+		"recipe": {}
 	},
-	"pierre": {
-		"nom": "Pierre",
-		"description": "Une pierre ramassée par terre.",
-		"icon": "res://game/assets/icons/pierre.png",
+	"stone": {
+		"name": "Stone",
+		"description": "A stone picked up off the ground.",
+		"icon": "res://game/assets/icons/stone.png",
 		"stackable": true,
 		"max_stack": 99,
 		"craftable": false,
-		"recette": {}
+		"recipe": {}
 	},
-	"baies": {
-		"nom": "Baies",
-		"description": "Des baies comestibles. Restaure 10 HP.",
-		"icon": "res://game/assets/icons/baies.png",
+	"berries": {
+		"name": "Berries",
+		"description": "Edible berries. Restores 10 HP.",
+		"icon": "res://game/assets/icons/berries.png",
 		"stackable": true,
 		"max_stack": 99,
 		"craftable": false,
-		"recette": {},
-		"consommable": true,
+		"recipe": {},
+		"consumable": true,
 		"hp_restore": 10
 	},
-	"pioche": {
-		"nom": "Pioche",
-		"description": "Permet de bêcher la terre pour planter.",
-		"icon": "res://game/assets/icons/pioche.png",
+	"hoe": {
+		"name": "Hoe",
+		"description": "Used to till the soil for planting.",
+		"icon": "res://game/assets/icons/hoe.png",
 		"stackable": false,
 		"max_stack": 1,
 		"craftable": true,
-		"recette": {"bois": 2, "pierre": 3}
+		"recipe": {"wood": 2, "stone": 3}
 	},
-	"arrosoir": {
-		"nom": "Arrosoir",
-		"description": "Accélère la pousse des plantes x2.",
-		"icon": "res://game/assets/icons/arrosoir.png",
+	"watering_can": {
+		"name": "Watering Can",
+		"description": "Speeds up plant growth x2.",
+		"icon": "res://game/assets/icons/watering_can.png",
 		"stackable": false,
 		"max_stack": 1,
 		"craftable": true,
-		"recette": {"bois": 3, "pierre": 1}
+		"recipe": {"wood": 3, "stone": 1}
 	},
-	"graine_baie": {
-		"nom": "Graine de baie",
-		"description": "Se plante sur une tuile bêchée.",
-		"icon": "res://game/assets/icons/graine_baie.png",
+	"berry_seed": {
+		"name": "Berry Seed",
+		"description": "Plant it on tilled soil.",
+		"icon": "res://game/assets/icons/berry_seed.png",
 		"stackable": true,
 		"max_stack": 99,
 		"craftable": true,
-		"recette": {"baies": 2}
+		"recipe": {"berries": 2}
 	}
 }
 
-# Retourne les données d'un item, null si inexistant
+# Returns item data, empty dict if not found
 func get_item(id: String) -> Dictionary:
 	if ITEMS.has(id):
 		return ITEMS[id]
-	push_warning("ItemDatabase: item inconnu '%s'" % id)
+	push_warning("ItemDatabase: unknown item '%s'" % id)
 	return {}
 
-# Retourne tous les items craftables
+# Returns all craftable items
 func get_craftable_items() -> Array:
 	var result = []
 	for id in ITEMS:
@@ -76,13 +76,13 @@ func get_craftable_items() -> Array:
 			result.append(id)
 	return result
 
-# Vérifie si l'inventaire a les ressources pour crafter un item
+# Checks if the inventory has the resources to craft an item
 func can_craft(item_id: String, inventory: Dictionary) -> bool:
 	var data = get_item(item_id)
 	if data.is_empty() or not data.get("craftable", false):
 		return false
-	for resource in data["recette"]:
-		var needed = data["recette"][resource]
+	for resource in data["recipe"]:
+		var needed = data["recipe"][resource]
 		if inventory.get(resource, 0) < needed:
 			return false
 	return true

@@ -21,16 +21,16 @@ func _do_change_scene(scene_path: String) -> void:
 		await get_tree().process_frame
 		current_scene = null
 
-	# Toujours utiliser la scène root actuelle comme conteneur
+	# Always use the current root scene as the container
 	var container: Node = get_tree().current_scene
 	if container == null:
-		push_error("SceneManager: scène root introuvable")
+		push_error("SceneManager: root scene not found")
 		_is_changing = false
 		return
 
 	var res := load(scene_path)
 	if res == null:
-		push_error("SceneManager: impossible de charger " + scene_path)
+		push_error("SceneManager: cannot load " + scene_path)
 		_is_changing = false
 		return
 

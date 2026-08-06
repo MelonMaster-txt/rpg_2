@@ -1,10 +1,10 @@
-# HUD Inventaire - branche sur ItemDatabase (autoload) + GameManager
+# HUD Inventory - uses ItemDatabase (autoload) + GameManager
 extends Control
 
 @onready var slots_container: HBoxContainer = $HBoxContainer
 @onready var held_label: Label = $HeldLabel
 
-const SLOT_ORDER: Array[String] = ["bois", "pierre", "baies", "graine_baie", "pioche", "arrosoir", "nourriture"]
+const SLOT_ORDER: Array[String] = ["wood", "stone", "berries", "berry_seed", "hoe", "watering_can", "food"]
 
 var _slot_labels: Dictionary = {}
 
@@ -25,8 +25,8 @@ func _build_slots() -> void:
 		var slot := VBoxContainer.new()
 		slot.name = item_id
 		var icon_lbl := Label.new()
-		var nom: String = data.get("nom", item_id)
-		icon_lbl.text = nom.left(3).to_upper()
+		var item_name: String = data.get("name", item_id)
+		icon_lbl.text = item_name.left(3).to_upper()
 		icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		icon_lbl.add_theme_font_size_override("font_size", 10)
 		var qty_lbl := Label.new()
@@ -57,5 +57,5 @@ func _on_held_item_changed(item_id: String) -> void:
 		held_label.text = ""
 	else:
 		var data: Dictionary = ItemDatabase.get_item(item_id)
-		var nom: String = data.get("nom", item_id)
-		held_label.text = "✋ " + nom
+		var item_name: String = data.get("name", item_id)
+		held_label.text = "✋ " + item_name

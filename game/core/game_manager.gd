@@ -3,6 +3,7 @@ extends Node
 
 # ─── INVENTORY ────────────────────────────────────────────────────────────────
 var inventory: Dictionary = {
+<<<<<<< HEAD
 	"wood":        0,
 	"berries":     0,
 	"stone":       0,
@@ -10,6 +11,15 @@ var inventory: Dictionary = {
 	"pickaxe":     0,
 	"watering_can": 0,
 	"gold":        0,
+=======
+	"wood":         0,
+	"berries":      0,
+	"stone":        0,
+	"berry_seed":   0,
+	"hoe":          0,
+	"watering_can": 0,
+	"gold":         0,
+>>>>>>> origin/test_recover
 }
 
 signal inventory_changed(item: String, amount: int)
@@ -36,10 +46,16 @@ var life: int         = 100
 var force: int        = 10
 var stamina: int      = 10
 var luck: int         = 5
+<<<<<<< HEAD
 var intelligence: int = 8
 var charisma: int     = 8
 var speed: int        = 10
 var build_points: int = 0
+=======
+var intelligence: int = 5
+var charisma: int     = 5
+var speed: int        = 10
+>>>>>>> origin/test_recover
 
 # ─── SPAWN POSITION ───────────────────────────────────────────────────────────
 var saved_spawn_position: Vector2 = Vector2.ZERO
@@ -80,16 +96,29 @@ func _pos_key(pos: Vector2) -> String:
 const DAY_DURATION: float = 240.0
 
 var current_time: float = 0.0
+<<<<<<< HEAD
 var current_day: int = 1
 var hour: int = 6
 var minute: int = 0
 var is_day: bool = true
+=======
+var current_day: int    = 1
+var hour: int           = 6
+var minute: int         = 0
+var is_day: bool        = true
+
+# Total playtime (incremented here since GameManager always runs, outside pause)
+>>>>>>> origin/test_recover
 var play_time: float = 0.0
 
 signal time_changed(hour: int, minute: int, day: int)
 signal day_night_changed(is_day: bool)
 
 func _process(delta: float) -> void:
+<<<<<<< HEAD
+=======
+	# Real playtime (does not tick when game is paused)
+>>>>>>> origin/test_recover
 	if not get_tree().paused:
 		play_time += delta
 
@@ -99,13 +128,13 @@ func _process(delta: float) -> void:
 		current_day += 1
 		CompanionManager.process_daily_production()
 
-	var progress: float = current_time / DAY_DURATION
+	var progress: float       = current_time / DAY_DURATION
 	var game_hour_float: float = 6.0 + progress * 24.0
-	var real_hour: int = int(game_hour_float) % 24
-	var real_minute: int = int((game_hour_float - int(game_hour_float)) * 60)
+	var real_hour: int         = int(game_hour_float) % 24
+	var real_minute: int       = int((game_hour_float - int(game_hour_float)) * 60)
 
 	if real_hour != hour or real_minute != minute:
-		hour = real_hour
+		hour   = real_hour
 		minute = real_minute
 		emit_signal("time_changed", hour, minute, current_day)
 

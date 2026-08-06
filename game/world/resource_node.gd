@@ -1,9 +1,18 @@
 # ResourceNode.gd
+<<<<<<< HEAD
+=======
+# Scene structure:
+#   ResourceNode (Area2D)
+#     ├── CollisionShape2D
+#     ├── Sprite2D
+#     ├── InteractHint (Label)
+#     └── RespawnTimer (Timer)
+>>>>>>> origin/test_recover
 extends Area2D
 
-enum ResourceType { BOIS, BAIES, PIERRE }
+enum ResourceType { WOOD, BERRIES, STONE }
 
-@export var resource_type: ResourceType = ResourceType.BOIS
+@export var resource_type: ResourceType = ResourceType.WOOD
 @export var amount_min: int = 1
 @export var amount_max: int = 3
 @export var respawn_time: float = 30.0
@@ -38,9 +47,9 @@ func _ready() -> void:
 	interact_hint.visible = false
 	# Texte hint selon le type
 	match resource_type:
-		ResourceType.BOIS:   interact_hint.text = "[E] Couper le bois"
-		ResourceType.BAIES:  interact_hint.text = "[E] Cueillir des baies"
-		ResourceType.PIERRE: interact_hint.text = "[E] Ramasser de la pierre"
+		ResourceType.WOOD:    interact_hint.text = "[E] Chop wood"
+		ResourceType.BERRIES: interact_hint.text = "[E] Pick berries"
+		ResourceType.STONE:   interact_hint.text = "[E] Gather stone"
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -68,6 +77,7 @@ func harvest(requested: int = -1) -> int:
 	var item_key:   String = ""
 	var label_text: String = ""
 	match resource_type:
+<<<<<<< HEAD
 		ResourceType.BOIS:
 			item_key   = "bois"
 			label_text = "+%d Bois" % amount
@@ -78,6 +88,18 @@ func harvest(requested: int = -1) -> int:
 			item_key   = "pierre"
 			label_text = "+%d Pierre" % amount
 	if item_key != "" and requested < 0:
+=======
+		ResourceType.WOOD:
+			item_key   = "wood"
+			label_text = "+%d Wood" % amount
+		ResourceType.BERRIES:
+			item_key   = "berries"
+			label_text = "+%d Berries" % amount
+		ResourceType.STONE:
+			item_key   = "stone"
+			label_text = "+%d Stone" % amount
+	if item_key != "":
+>>>>>>> origin/test_recover
 		GameManager.add_item(item_key, amount)
 		_show_pickup_text(label_text)
 	_deplete()

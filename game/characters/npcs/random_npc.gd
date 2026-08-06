@@ -2,6 +2,7 @@
 class_name RandomNpc
 extends CharacterBody2D
 
+<<<<<<< HEAD
 const COLOR_MALE    := Color(0.25, 0.50, 1.00)
 const COLOR_FEMALE  := Color(1.00, 0.45, 0.70)
 const COLOR_MONSTER := Color(0.10, 0.75, 0.20)
@@ -11,6 +12,17 @@ const COLOR_WORKER  := Color(0.90, 0.75, 0.20)
 const DETECT_RANGE    := 120.0
 const ATTACK_RANGE    := 32.0
 const ATTACK_COOLDOWN := 1.5
+=======
+signal interaction_requested(npc)
+signal npc_defeated(npc)
+signal npc_captured(npc)
+
+@export var npc_name:   String = ""
+@export var max_hp:     int    = 30
+@export var strength:   int    = 5
+@export var speed:      float  = 60.0
+@export var is_hostile: bool   = false
+>>>>>>> origin/test_recover
 
 signal interaction_requested(npc: Node)
 signal npc_defeated(npc: Node)
@@ -19,6 +31,7 @@ signal npc_recruited(npc: Node)
 
 enum AiState { IDLE, WANDER, FLEE, CHASE, DEAD, WORKING }
 
+<<<<<<< HEAD
 var data: NpcData = null
 var npc_name:   String = ""
 var npc_gender: String = "male"
@@ -29,6 +42,8 @@ var is_hostile: bool   = false
 var speed:      float  = 60.0
 var _npc_state:     int    = 0
 var _ai: AiState = AiState.IDLE
+=======
+>>>>>>> origin/test_recover
 var _wander_timer: float   = 2.0
 var _wander_dir:   Vector2 = Vector2.ZERO
 var _target:       Node2D  = null
@@ -43,11 +58,21 @@ var _player_near: bool = false
 @onready var _interaction_area: Area2D    = $InteractionArea
 
 
+
 func _ready() -> void:
+<<<<<<< HEAD
 	current_hp = max_hp
 	add_to_group("npc")
 	_interaction_area.body_entered.connect(_on_player_enter)
 	_interaction_area.body_exited.connect(_on_player_exit)
+=======
+	current_hp  = max_hp
+	_appearance = $CharacterAppearance
+	_name_label = $NameLabel
+	# FIX : connexions faites une seule fois (étaient doublées avant)
+	$InteractionArea.body_entered.connect(_on_player_enter)
+	$InteractionArea.body_exited.connect(_on_player_exit)
+>>>>>>> origin/test_recover
 	if _pending_randomize:
 		_do_randomize(_pending_seed)
 	_update_color_rect()

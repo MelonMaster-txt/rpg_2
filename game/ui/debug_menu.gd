@@ -1,13 +1,21 @@
+<<<<<<< HEAD
 # debug_menu.gd - Menu debug F1
 # Give items, teleport, vitesse, spawn NPC, stats joueur
+=======
+# debug_menu.gd - Menu debug F1 (version UI — redirige vers l'Autoload DebugMenu)
+# Ce fichier existait en doublon. Il est désormais vide car
+# le vrai debug menu est l'Autoload game/core/debug_menu.gd (DebugMenu).
+# FIX : clés alignées sur GameManager.inventory (anglais)
+>>>>>>> origin/test_recover
 extends CanvasLayer
 
 const GIVE_SETS: Array[Dictionary] = [
-	{"label": "Tout x20",      "items": {"bois":20,"pierre":20,"baies":20,"graine_baie":10,"pioche":1,"arrosoir":1}},
-	{"label": "Outils",        "items": {"pioche":1,"arrosoir":1}},
-	{"label": "Ressources",    "items": {"bois":20,"pierre":20}},
-	{"label": "Graines x10",   "items": {"graine_baie":10}},
-	{"label": "Baies x20",     "items": {"baies":20}},
+	{"label": "Tout x20",    "items": {"wood":20,"stone":20,"berries":20,"berry_seed":10,"hoe":1,"watering_can":1,"gold":50}},
+	{"label": "Outils",      "items": {"hoe":1,"watering_can":1}},
+	{"label": "Ressources",  "items": {"wood":20,"stone":20}},
+	{"label": "Graines x10", "items": {"berry_seed":10}},
+	{"label": "Baies x20",   "items": {"berries":20}},
+	{"label": "Or x100",     "items": {"gold":100}},
 ]
 
 # stat_key -> [label_display, couleur_bouton]

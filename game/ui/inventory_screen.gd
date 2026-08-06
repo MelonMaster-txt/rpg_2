@@ -1,20 +1,20 @@
 # inventory_screen.gd
-# Panneau inventaire ouvert/ferme avec la touche I
+# Inventory panel toggled with the I key
 extends Control
 
 const ITEM_META := {
-	"bois":        { "nom": "Bois",          "icone": "🪵", "consommable": false },
-	"pierre":      { "nom": "Pierre",        "icone": "🪨", "consommable": false },
-	"baies":       { "nom": "Baies",         "icone": "🍇", "consommable": true  },
-	"graine_baie": { "nom": "Graine (baie)", "icone": "🌱", "consommable": false },
-	"pioche":      { "nom": "Pioche",        "icone": "⛏️",  "consommable": false },
-	"arrosoir":    { "nom": "Arrosoir",      "icone": "🪣", "consommable": false },
+	"wood":        { "name": "Wood",        "icon": "🪵", "consumable": false },
+	"stone":       { "name": "Stone",       "icon": "🪨", "consumable": false },
+	"berries":     { "name": "Berries",     "icon": "🍇", "consumable": true  },
+	"berry_seed":  { "name": "Berry Seed",  "icon": "🌱", "consumable": false },
+	"hoe":         { "name": "Hoe",         "icon": "⛏️",  "consumable": false },
+	"watering_can":{ "name": "Watering Can","icon": "🪣", "consumable": false },
 }
 
 var _is_open: bool = false
 var _dirty: bool = false
 
-@onready var grid:      GridContainer = $BG/Panel/VBox/Grid
+@onready var grid: GridContainer = $BG/Panel/VBox/Grid
 
 func _ready() -> void:
 	add_to_group("inventory_screen")
@@ -65,16 +65,16 @@ func _rebuild() -> void:
 		var vbox := VBoxContainer.new()
 		vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 
-		var icone_lbl := Label.new()
-		icone_lbl.text = meta["icone"]
-		icone_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		icone_lbl.add_theme_font_size_override("font_size", 28)
+		var icon_lbl := Label.new()
+		icon_lbl.text = meta["icon"]
+		icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		icon_lbl.add_theme_font_size_override("font_size", 28)
 
-		var nom_lbl := Label.new()
-		nom_lbl.text = meta["nom"]
-		nom_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		nom_lbl.add_theme_font_size_override("font_size", 11)
-		nom_lbl.modulate = Color.WHITE if qty > 0 else Color(0.5, 0.5, 0.5)
+		var name_lbl := Label.new()
+		name_lbl.text = meta["name"]
+		name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		name_lbl.add_theme_font_size_override("font_size", 11)
+		name_lbl.modulate = Color.WHITE if qty > 0 else Color(0.5, 0.5, 0.5)
 
 		var qty_lbl := Label.new()
 		qty_lbl.text = "x%d" % qty
@@ -82,13 +82,13 @@ func _rebuild() -> void:
 		qty_lbl.add_theme_font_size_override("font_size", 13)
 		qty_lbl.modulate = Color(1, 0.9, 0.4) if qty > 0 else Color(0.4, 0.4, 0.4)
 
-		vbox.add_child(icone_lbl)
-		vbox.add_child(nom_lbl)
+		vbox.add_child(icon_lbl)
+		vbox.add_child(name_lbl)
 		vbox.add_child(qty_lbl)
 
-		if meta["consommable"] and qty > 0:
+		if meta["consumable"] and qty > 0:
 			var eat_btn := Button.new()
-			eat_btn.text = "Manger"
+			eat_btn.text = "Eat"
 			eat_btn.process_mode = Node.PROCESS_MODE_ALWAYS
 			eat_btn.add_theme_font_size_override("font_size", 10)
 			eat_btn.pressed.connect(_on_eat_pressed.bind(item_id))
@@ -100,7 +100,7 @@ func _rebuild() -> void:
 func _on_eat_pressed(item_id: String) -> void:
 	if GameManager.remove_item(item_id, 1):
 		var popup := Label.new()
-		popup.text = "Miam ! (+faim bientot)"
+		popup.text = "Nom! (+hunger soon)"
 		popup.add_theme_font_size_override("font_size", 14)
 		popup.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
 		popup.set_anchors_preset(Control.PRESET_CENTER)

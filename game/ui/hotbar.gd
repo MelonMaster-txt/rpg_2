@@ -1,11 +1,11 @@
-# hotbar.gd - Une seule case qui affiche l'outil actif
-# TAB cycle entre les outils disponibles dans l'inventaire
+# hotbar.gd - Single slot showing the active tool
+# TAB cycles between available tools in the inventory
 extends CanvasLayer
 
 const TOOLS: Array[Dictionary] = [
-	{"id": "pioche",       "icon": "[ / ]", "label": "Pioche",   "color": Color(0.85, 0.70, 0.45)},
-	{"id": "arrosoir",    "icon": "[~]",   "label": "Arrosoir", "color": Color(0.40, 0.75, 0.90)},
-	{"id": "graine_baie", "icon": "[o]",   "label": "Graine",   "color": Color(0.55, 0.85, 0.35)},
+	{"id": "hoe",          "icon": "[ / ]", "label": "Hoe",          "color": Color(0.85, 0.70, 0.45)},
+	{"id": "watering_can", "icon": "[~]",   "label": "Watering Can", "color": Color(0.40, 0.75, 0.90)},
+	{"id": "berry_seed",   "icon": "[o]",   "label": "Berry Seed",   "color": Color(0.55, 0.85, 0.35)},
 ]
 
 @onready var slots_container: HBoxContainer = $HotbarPanel/SlotsRow
@@ -48,7 +48,7 @@ func _make_style(active: bool, tool_color: Color) -> StyleBoxFlat:
 	return s
 
 func _build_slot() -> void:
-	# Vide les anciens slots si rebuild
+	# Clear old slots if rebuilding
 	for c in slots_container.get_children():
 		c.queue_free()
 	_slot = PanelContainer.new()
@@ -93,7 +93,7 @@ func _on_held_item_changed(item_id: String) -> void:
 	var hint_lbl: Label = vb.get_node("HintLabel")
 
 	if item_id == "":
-		# Aucun outil selectionne
+		# No tool selected
 		_slot.add_theme_stylebox_override("panel", _make_style(false, Color.WHITE))
 		icon_lbl.text = ""
 		icon_lbl.add_theme_color_override("font_color", Color(0.4, 0.4, 0.4))
@@ -101,7 +101,7 @@ func _on_held_item_changed(item_id: String) -> void:
 		hint_lbl.text = "[TAB]"
 		return
 
-	# Trouver les infos de l'outil
+	# Find tool info
 	var info: Dictionary = {}
 	for t in TOOLS:
 		if t["id"] == item_id:
@@ -115,4 +115,4 @@ func _on_held_item_changed(item_id: String) -> void:
 	icon_lbl.add_theme_color_override("font_color", info["color"])
 	name_lbl.text = info["label"]
 	name_lbl.add_theme_color_override("font_color", info["color"])
-	hint_lbl.text = "[TAB] suiv."
+	hint_lbl.text = "[TAB] next"
