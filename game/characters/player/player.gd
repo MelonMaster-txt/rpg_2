@@ -11,8 +11,8 @@ const INTERACT_RADIUS: float = 40.0
 
 @export var interact_area: Area2D = null
 
-@onready var _anim: AnimatedSprite2D = $AnimatedSprite2D
-@onready var _interact_hint: Label = $InteractHint
+var _anim: AnimatedSprite2D = null
+var _interact_hint: Label = null
 
 var _roll_timer: float = 0.0
 var _is_rolling: bool = false
@@ -22,6 +22,8 @@ var _facing: Vector2 = Vector2.DOWN
 
 
 func _ready() -> void:
+	_anim = get_node_or_null("AnimatedSprite2D") as AnimatedSprite2D
+	_interact_hint = get_node_or_null("InteractHint") as Label
 	add_to_group("player")
 	if _interact_hint:
 		_interact_hint.visible = false
