@@ -22,8 +22,15 @@ func _ready() -> void:
 	_build_grid()
 
 
+func toggle() -> void:
+	if visible:
+		hide()
+	else:
+		show()
+		_build_grid()
+
+
 func _build_grid() -> void:
-	# Vide la grille avant de reconstruire
 	for child in _grid.get_children():
 		child.queue_free()
 	_slot_nodes.clear()
@@ -40,7 +47,6 @@ func _on_inventory_changed(item: String, amount: int) -> void:
 	if _slot_nodes.has(item):
 		_slot_nodes[item].text = "%s\n%d" % [item, amount]
 	else:
-		# Nouvel item apparu, reconstruire
 		_build_grid()
 
 

@@ -53,9 +53,9 @@ func _on_slot_8_pressed() -> void: _handle_slot(7)
 func _handle_slot(slot_idx: int) -> void:
 	_selected_slot = slot_idx
 	if _mode == "save":
-		emit_signal("save_requested", slot_idx)
+		save_requested.emit(slot_idx)
 	else:
-		emit_signal("load_requested", slot_idx)
+		load_requested.emit(slot_idx)
 
 
 func _on_back_pressed() -> void:

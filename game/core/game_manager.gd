@@ -78,12 +78,12 @@ func add_item(item: String, amount: int = 1) -> void:
 		inventory[item] += amount
 	else:
 		inventory[item] = amount
-	emit_signal("inventory_changed", item, inventory[item])
+	inventory_changed.emit(item, inventory[item])
 
 func remove_item(item: String, amount: int = 1) -> bool:
 	if inventory.get(item, 0) >= amount:
 		inventory[item] -= amount
-		emit_signal("inventory_changed", item, inventory[item])
+		inventory_changed.emit(item, inventory[item])
 		return true
 	return false
 
@@ -94,8 +94,8 @@ func get_item(item: String) -> int:
 func apply_buff(stat: String, amount: int, duration: float) -> void:
 	_active_buffs[stat] = {"amount": amount, "timer": duration}
 	_apply_stat_delta(stat, amount)
-	emit_signal("buff_applied", stat, amount, duration)
-	emit_signal("stats_changed")
+	buff_applied.emit(stat, amount, duration)
+	stats_changed.emit()
 
 func _apply_stat_delta(stat: String, delta: int) -> void:
 	match stat:
@@ -109,7 +109,7 @@ func _apply_stat_delta(stat: String, delta: int) -> void:
 
 func heal(amount: int) -> void:
 	life = clampi(life + amount, 0, max_life)
-	emit_signal("stats_changed")
+	stats_changed.emit()
 
 # ─── SPAWN METHODS ────────────────────────────────────────────────────────────
 func save_spawn_position(pos: Vector2) -> void:
@@ -123,15 +123,17 @@ func consume_spawn_position() -> Vector2:
 # ─── FARM TILES METHODS ───────────────────────────────────────────────────────
 func save_farm_tiles(tile_map: Dictionary) -> void:
 	farm_tiles_data.clear()
-	for tile in tile_map.values():
+	for tile: Variant in tile_map.values():
 		if is_instance_valid(tile) and tile.has_method("get_save_data"):
 			farm_tiles_data.append(tile.get_save_data())
 
 func restore_farm_tiles(container: Node, tile_map: Dictionary) -> void:
 	if container == null or farm_tiles_data.is_empty():
 		return
-	var scene := load("res://game/world/farm_tile.tscn")
-	for data in farm_tiles_data:
+	var scene: Resource = load("res://game/world/farm_tile.tscn")
+	if scene == null:
+		return
+	for data: Variant in farm_tiles_data:
 		var tile: Node2D = scene.instantiate()
 		tile.global_position = data["pos"]
 		container.add_child(tile)
@@ -147,13 +149,13 @@ func get_time_string() -> String:
 # ─── PROCESS ──────────────────────────────────────────────────────────────────
 func _process(delta: float) -> void:
 	var expired: Array = []
-	for stat in _active_buffs:
+	for stat: String in _active_buffs:
 		_active_buffs[stat]["timer"] -= delta
 		if _active_buffs[stat]["timer"] <= 0.0:
 			_apply_stat_delta(stat, -_active_buffs[stat]["amount"])
 			expired.append(stat)
-			emit_signal("stats_changed")
-	for stat in expired:
+			stats_changed.emit()
+	for stat: String in expired:
 		_active_buffs.erase(stat)
 
 	if not get_tree().paused:
@@ -172,8 +174,8 @@ func _process(delta: float) -> void:
 	if real_hour != hour or real_minute != minute:
 		hour   = real_hour
 		minute = real_minute
-		emit_signal("time_changed", hour, minute, current_day)
+		time_changed.emit(hour, minute, current_day)
 		var new_is_day: bool = (hour >= 6 and hour < 20)
 		if new_is_day != is_day:
 			is_day = new_is_day
-			emit_signal("day_night_changed", is_day)
+			day_night_changed.emit(is_day)

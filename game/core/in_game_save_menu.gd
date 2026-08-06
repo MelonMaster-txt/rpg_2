@@ -27,7 +27,7 @@ func close() -> void:
 	if _save_menu:
 		_save_menu.visible = false
 	get_tree().paused = false
-	emit_signal("resume_requested")
+	resume_requested.emit()
 
 
 # Callbacks connectés via .tscn

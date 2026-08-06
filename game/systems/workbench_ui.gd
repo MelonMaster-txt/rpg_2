@@ -28,7 +28,8 @@ func _on_recipe_pressed(recipe: Resource) -> void:
 	var recipe_id: String = recipe.get("recipe_id") if recipe.get("recipe_id") else ""
 	if recipe_id.is_empty():
 		return
-	var cost: Dictionary = recipe.get("cost") if recipe.get("cost") else {}
+	var raw_cost: Variant = recipe.get("cost")
+	var cost: Dictionary = raw_cost as Dictionary if raw_cost is Dictionary else {}
 	for item: String in cost:
 		if GameManager.get_item(item) < cost[item]:
 			_info_label.text = "Ressources insuffisantes."
@@ -40,4 +41,4 @@ func _on_recipe_pressed(recipe: Resource) -> void:
 	if not output.is_empty():
 		GameManager.add_item(output, qty)
 	_info_label.text = "Fabriqué : %s x%d" % [output, qty]
-	emit_signal("crafted", recipe_id)
+	crafted.emit(recipe_id)

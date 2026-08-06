@@ -11,7 +11,7 @@ extends CanvasLayer
 @onready var intelligence_label:  Label = $HUDPanel/HUDContainer/IntelligenceLabel
 @onready var charisma_label:      Label = $HUDPanel/HUDContainer/CharismaLabel
 
-@onready var inventory_screen = $InventoryScreen
+@onready var inventory_screen: Control = $InventoryScreen
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
