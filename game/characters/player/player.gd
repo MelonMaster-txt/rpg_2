@@ -74,7 +74,7 @@ func _process_interact() -> void:
 	if _nearby_npc == null:
 		return
 	if Input.is_action_just_pressed("interact"):
-		emit_signal("interacted_with_npc", _nearby_npc)
+		interacted_with_npc.emit(_nearby_npc)
 
 func _play_anim(anim: String) -> void:
 	if _anim and _anim.sprite_frames and _anim.sprite_frames.has_animation(anim):
@@ -87,11 +87,10 @@ func set_nearby_npc(npc: Node) -> void:
 		_interact_hint.visible = npc != null
 
 func take_damage(amount: int) -> void:
-	# BUG FIX : émettre stats_changed pour que le HUD se mette à jour
 	GameManager.life -= amount
 	if GameManager.life <= 0:
 		GameManager.life = 0
-		GameManager.emit_signal("stats_changed")
-		emit_signal("player_died")
+		GameManager.stats_changed.emit()
+		player_died.emit()
 		return
-	GameManager.emit_signal("stats_changed")
+	GameManager.stats_changed.emit()

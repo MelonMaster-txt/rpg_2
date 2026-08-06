@@ -169,7 +169,8 @@ func _melee_attack() -> void:
 		_target.take_damage(dmg)
 
 
-func _unhandled_input(event: InputEvent) -> void:
+# _unhandled_key_input évite le double déclenchement quand le menu NPC est ouvert
+func _unhandled_key_input(event: InputEvent) -> void:
 	if _player_near and _ai != AiState.DEAD and event.is_action_pressed("interact"):
 		get_viewport().set_input_as_handled()
 		interaction_requested.emit(self)

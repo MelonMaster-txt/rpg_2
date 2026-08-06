@@ -19,7 +19,7 @@ var inventory: Dictionary    = {}
 var current_time: float      = 0.0
 var current_day_gm: int      = 1
 var farm_tiles_data: Array   = []
-var time_string: String      = "06:00"  # in-game time at the moment of save
+var time_string: String      = "06:00"
 
 
 func to_dict() -> Dictionary:
@@ -47,8 +47,12 @@ func to_dict() -> Dictionary:
 func from_dict(data: Dictionary) -> void:
 	player_name     = str(data.get("player_name",   "Barbarian"))
 	player_health   = int(data.get("player_health",  100))
-	var pos: Dictionary = data.get("player_position", {"x": 0.0, "y": 0.0})
-	player_position = Vector2(float(pos.get("x", 0.0)), float(pos.get("y", 0.0)))
+	# Cast sécurisé : player_position peut être un Dictionary ou manquer
+	var raw_pos: Variant = data.get("player_position", null)
+	if raw_pos is Dictionary:
+		player_position = Vector2(float(raw_pos.get("x", 0.0)), float(raw_pos.get("y", 0.0)))
+	else:
+		player_position = Vector2.ZERO
 	player_gold     = int(data.get("player_gold",   0))
 	player_level    = int(data.get("player_level",  1))
 	current_scene   = str(data.get("current_scene", OVERWORLD))
@@ -81,12 +85,13 @@ func sync_from_game_manager() -> void:
 	player_health   = GameManager.life
 	player_level    = GameManager.force
 	farm_tiles_data = []
-	for tile: Dictionary in GameManager.farm_tiles_data:
-		farm_tiles_data.append(tile)
+	# Itérateur non typé car Array générique peut contenir des non-Dictionary (ex: JSON chargé)
+	for tile in GameManager.farm_tiles_data:
+		if tile is Dictionary:
+			farm_tiles_data.append(tile)
 	var players: Array[Node] = get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
 		player_position = (players[0] as Node2D).global_position
-	# displayed time in HUD at save moment
 	time_string = GameManager.get_time_string()
 
 

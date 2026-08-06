@@ -18,7 +18,7 @@ func save_game(slot: int) -> bool:
 	DirAccess.make_dir_recursive_absolute(SAVE_DIR)
 	if has_node("/root/GameManager"):
 		GameState.sync_from_game_manager()
-	var data := GameState.to_dict()
+	var data: Dictionary = GameState.to_dict()
 	data["save_date"] = Time.get_datetime_string_from_system()
 	data["slot"]      = slot
 	var file := FileAccess.open(get_save_path(slot), FileAccess.WRITE)
@@ -44,10 +44,10 @@ func load_game(slot: int) -> bool:
 		push_error("[SaveSystem] Invalid JSON slot %d" % slot)
 		return false
 	file.close()
-	var data = json.get_data()
-	if typeof(data) != TYPE_DICTIONARY:
+	var parsed: Variant = json.get_data()
+	if typeof(parsed) != TYPE_DICTIONARY:
 		return false
-	GameState.from_dict(data)
+	GameState.from_dict(parsed as Dictionary)
 	if has_node("/root/GameManager"):
 		GameState.apply_to_game_manager()
 	print("[SaveSystem] Slot %d loaded." % slot)
@@ -76,8 +76,11 @@ func get_slot_info(slot: int) -> Dictionary:
 		file.close()
 		return {}
 	file.close()
-	var d = json.get_data()
-	var raw_play: float = d.get("play_time", 0.0)
+	var parsed: Variant = json.get_data()
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return {}
+	var d: Dictionary = parsed as Dictionary
+	var raw_play: float = float(d.get("play_time", 0.0))
 	var play_sec: int = int(raw_play)
 	return {
 		"save_date":    str(d.get("save_date",    "")),
