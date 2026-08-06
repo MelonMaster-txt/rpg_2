@@ -1,34 +1,32 @@
 extends Control
 
-# ─── SIGNALS ──────────────────────────────────────────────────────────────────
 signal regenerated
 
-# ─── CONSTS ───────────────────────────────────────────────────────────────────
 const MAP_SIZE: int = 256
 const TILE_PIXEL: int = 2
 
-# ─── EXPORTS ──────────────────────────────────────────────────────────────────
 @export var noise_scale: float = 50.0
 @export var octaves: int = 4
 @export var persistence: float = 0.5
 @export var lacunarity: float = 2.0
 
-# ─── ONREADY ──────────────────────────────────────────────────────────────────
 @onready var _texture_rect: TextureRect = $TextureRect
 @onready var _seed_input: SpinBox = $VBox/SeedInput
 @onready var _regen_btn: Button = $VBox/RegenButton
 @onready var _info_label: Label = $VBox/InfoLabel
 
-# ─── VARS ─────────────────────────────────────────────────────────────────────
 var _noise: FastNoiseLite = FastNoiseLite.new()
 var _current_seed: int = 0
+
 
 func _ready() -> void:
 	_regen_btn.pressed.connect(_on_regen_pressed)
 	_generate(randi())
 
+
 func _on_regen_pressed() -> void:
 	_generate(int(_seed_input.value))
+
 
 func _generate(seed_val: int) -> void:
 	_current_seed = seed_val
@@ -42,12 +40,13 @@ func _generate(seed_val: int) -> void:
 	regenerated.emit()
 	_info_label.text = "Seed: %d" % seed_val
 
+
 func _build_texture() -> void:
 	var img: Image = Image.create(
-			MAP_SIZE * TILE_PIXEL,
-			MAP_SIZE * TILE_PIXEL,
-			false,
-			Image.FORMAT_RGB8
+		MAP_SIZE * TILE_PIXEL,
+		MAP_SIZE * TILE_PIXEL,
+		false,
+		Image.FORMAT_RGB8
 	)
 	for y: int in range(MAP_SIZE):
 		for x: int in range(MAP_SIZE):
@@ -56,12 +55,13 @@ func _build_texture() -> void:
 			for py: int in range(TILE_PIXEL):
 				for px: int in range(TILE_PIXEL):
 					img.set_pixel(
-							x * TILE_PIXEL + px,
-							y * TILE_PIXEL + py,
-							col
+						x * TILE_PIXEL + px,
+						y * TILE_PIXEL + py,
+						col
 					)
 	var tex: ImageTexture = ImageTexture.create_from_image(img)
 	_texture_rect.texture = tex
+
 
 func _noise_to_color(val: float) -> Color:
 	if val < 0.3:

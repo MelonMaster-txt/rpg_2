@@ -1,7 +1,7 @@
-extends CanvasLayer
 # DebugMenu — Autoload *script-only* (pas de .tscn associée).
 # Les nœuds UI sont créés dynamiquement dans _ready().
 # Touche : F9 (ne dépend pas de l'InputMap).
+extends CanvasLayer
 
 var _panel: Panel = null
 var _label: RichTextLabel = null
@@ -19,21 +19,21 @@ func _ready() -> void:
 func _build_ui() -> void:
 	_panel = Panel.new()
 	_panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	_panel.offset_right  = 440.0
+	_panel.offset_right = 440.0
 	_panel.offset_bottom = 270.0
-	_panel.offset_left   = 8.0
-	_panel.offset_top    = 8.0
-	var sb := StyleBoxFlat.new()
+	_panel.offset_left = 8.0
+	_panel.offset_top = 8.0
+	var sb: StyleBoxFlat = StyleBoxFlat.new()
 	sb.bg_color = Color(0.0, 0.0, 0.0, 0.75)
 	sb.set_corner_radius_all(6)
 	_panel.add_theme_stylebox_override("panel", sb)
 	add_child(_panel)
 
-	var scroll := ScrollContainer.new()
+	var scroll: ScrollContainer = ScrollContainer.new()
 	scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_panel.add_child(scroll)
 
-	var vbox := VBoxContainer.new()
+	var vbox: VBoxContainer = VBoxContainer.new()
 	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(vbox)
 
@@ -46,7 +46,6 @@ func _build_ui() -> void:
 	vbox.add_child(_label)
 
 
-# Utilise KEY_F9 directement — pas besoin d'InputMap
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.physical_keycode == KEY_F9:
@@ -66,7 +65,7 @@ func _process(delta: float) -> void:
 
 
 func _refresh() -> void:
-	var gm := GameManager
+	var gm: Node = GameManager
 	var lines: PackedStringArray = [
 		"[b][color=#ffd080]== DEBUG F9 ==[/color][/b]",
 		"Jour : %d  Heure : %s" % [gm.current_day, gm.get_time_string()],

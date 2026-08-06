@@ -1,17 +1,17 @@
-extends Node2D
 # overworld.gd
 # Le joueur est instancié depuis game/characters/player/player.tscn
 # et ajouté dans PlayerContainer au _ready.
+extends Node2D
 
 const PLAYER_SCENE: String = "res://game/characters/player/player.tscn"
 
-@onready var _chunk_manager:    Node        = $ChunkManager
-@onready var _player_container: Node2D      = $PlayerContainer
-@onready var _farm_container:   Node2D      = $FarmContainer
-@onready var _hud:              CanvasLayer = $HUD
+@onready var _chunk_manager: Node = $ChunkManager
+@onready var _player_container: Node2D = $PlayerContainer
+@onready var _farm_container: Node2D = $FarmContainer
+@onready var _hud: CanvasLayer = $HUD
 
-var _player:     CharacterBody2D = null
-var _farm_tiles: Dictionary      = {}
+var _player: CharacterBody2D = null
+var _farm_tiles: Dictionary = {}
 
 
 func _ready() -> void:

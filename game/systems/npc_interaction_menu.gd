@@ -3,24 +3,21 @@
 # Instancié dynamiquement par random_npc._open_interaction_menu()
 extends CanvasLayer
 
-# ─── ONREADY ──────────────────────────────────────────────────────────────────
-@onready var _panel:        PanelContainer = $Panel
-@onready var _name_label:   Label          = $Panel/VBox/NameLabel
-@onready var _btn_discuss:  Button         = $Panel/VBox/BtnDiscuss
-@onready var _btn_recruit:  Button         = $Panel/VBox/BtnRecruit
-@onready var _btn_capture:  Button         = $Panel/VBox/BtnCapture
-@onready var _btn_leave:    Button         = $Panel/VBox/BtnLeave
+@onready var _panel: PanelContainer = $Panel
+@onready var _name_label: Label = $Panel/VBox/NameLabel
+@onready var _btn_discuss: Button = $Panel/VBox/BtnDiscuss
+@onready var _btn_recruit: Button = $Panel/VBox/BtnRecruit
+@onready var _btn_capture: Button = $Panel/VBox/BtnCapture
+@onready var _btn_leave: Button = $Panel/VBox/BtnLeave
 
-# ─── VARS ─────────────────────────────────────────────────────────────────────
 var _npc: Node = null
 
-# ─── OPEN ─────────────────────────────────────────────────────────────────────
+
 func open(npc: Node) -> void:
 	_npc = npc
 	if _name_label:
 		var display_name: String = npc.get("npc_name") if npc.get("npc_name") != null else "Inconnu"
 		_name_label.text = display_name
-	# Pause le jeu pendant le menu
 	get_tree().paused = true
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_btn_discuss.pressed.connect(_on_discuss)
@@ -28,12 +25,12 @@ func open(npc: Node) -> void:
 	_btn_capture.pressed.connect(_on_capture)
 	_btn_leave.pressed.connect(_on_leave)
 
-# ─── ACTIONS ──────────────────────────────────────────────────────────────────
+
 func _on_discuss() -> void:
 	_close()
 	if _npc != null and is_instance_valid(_npc):
 		var display_name: String = _npc.get("npc_name") if _npc.get("npc_name") != null else "???"
-		print("[Interaction] Discussion avec ", display_name)
+		push_warning("[Interaction] Discussion avec %s" % display_name)
 
 
 func _on_recruit() -> void:
@@ -51,9 +48,8 @@ func _on_capture() -> void:
 func _on_leave() -> void:
 	_close()
 
-# ─── CLOSE ────────────────────────────────────────────────────────────────────
+
 func _close() -> void:
-	# Déconnexion des signaux avant destruction pour éviter les doublons
 	if _btn_discuss.pressed.is_connected(_on_discuss):
 		_btn_discuss.pressed.disconnect(_on_discuss)
 	if _btn_recruit.pressed.is_connected(_on_recruit):
