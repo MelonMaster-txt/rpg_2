@@ -44,12 +44,12 @@ func remove_member(member_name: String) -> void:
 
 
 func assign_job(member_name: String, new_job: String) -> void:
-	for member in companions:
+	for member: Dictionary in companions:
 		if member.get("name", "") == member_name:
 			member["job"] = new_job
 			job_changed.emit(member_name, new_job)
 			return
-	for member in slaves:
+	for member: Dictionary in slaves:
 		if member.get("name", "") == member_name:
 			member["job"] = new_job
 			job_changed.emit(member_name, new_job)
@@ -69,7 +69,7 @@ func get_population_count() -> int:
 
 func get_workers_by_job(job: String) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
-	for member in get_all_members():
+	for member: Dictionary in get_all_members():
 		if member.get("job", "") == job:
 			result.append(member)
 	return result
@@ -83,5 +83,13 @@ func save_data() -> Dictionary:
 
 
 func load_data(d: Dictionary) -> void:
-	companions = d.get("companions", [])
-	slaves     = d.get("slaves",     [])
+	var raw_companions: Array = d.get("companions", [])
+	var raw_slaves: Array = d.get("slaves", [])
+	companions.clear()
+	for entry: Variant in raw_companions:
+		if entry is Dictionary:
+			companions.append(entry)
+	slaves.clear()
+	for entry: Variant in raw_slaves:
+		if entry is Dictionary:
+			slaves.append(entry)

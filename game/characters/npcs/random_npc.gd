@@ -25,7 +25,6 @@ var max_hp:     int    = 30
 var current_hp: int    = 30
 var is_hostile: bool   = false
 var speed:      float  = 60.0
-var state:      int    = 0
 var _ai: AiState = AiState.IDLE
 var _wander_timer: float   = 2.0
 var _wander_dir:   Vector2 = Vector2.ZERO
@@ -221,7 +220,6 @@ func _get_population_manager() -> Node:
 
 
 func recruit() -> void:
-	state = 1
 	is_hostile = false
 	var entry: Dictionary = _build_kingdom_entry("companion")
 	var pm: Node = _get_population_manager()
@@ -233,7 +231,6 @@ func recruit() -> void:
 
 
 func capture() -> void:
-	state = 2
 	is_hostile = false
 	var entry: Dictionary = _build_kingdom_entry("slave")
 	var pm: Node = _get_population_manager()
@@ -245,7 +242,7 @@ func capture() -> void:
 
 
 func _add_relation_component() -> void:
-	var existing = get_node_or_null("RelationComponent")
+	var existing: Node = get_node_or_null("RelationComponent")
 	if existing:
 		return
 	var rel_script: Script = load(
@@ -270,14 +267,13 @@ func _start_working(initial_job: String) -> void:
 	if worker_script == null:
 		push_error("RandomNpc: worker_ai.gd introuvable")
 		return
-	var old = get_node_or_null("WorkerAI")
+	var old: Node = get_node_or_null("WorkerAI")
 	if old:
 		old.queue_free()
 	var worker: Node = Node.new()
 	worker.set_script(worker_script)
 	worker.set_name("WorkerAI")
 	add_child(worker)
-	# Assigner le job après add_child pour que _ready() soit passé
 	worker.job = initial_job
 	print("[RandomNpc] WorkerAI créé pour ", npc_name, " avec job=", initial_job)
 
@@ -287,7 +283,7 @@ func get_worker_ai() -> Node:
 
 
 func change_job(new_job: String) -> void:
-	var w = get_worker_ai()
+	var w: Node = get_worker_ai()
 	if w != null:
 		w.update_job(new_job)
 	else:

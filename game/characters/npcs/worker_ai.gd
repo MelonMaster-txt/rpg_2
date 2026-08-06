@@ -19,18 +19,22 @@ func _process(delta: float) -> void:
 
 
 func _do_work() -> void:
+	var gm: Node = get_node_or_null("/root/GameManager")
+	if gm == null:
+		push_warning("[WorkerAI] GameManager introuvable")
+		return
 	match job:
 		"farmer":
-			GameManager.add_item("berries", 1)
+			gm.add_item("berries", 1)
 			print("[WorkerAI] ", _get_owner_name(), " produit 1 baie")
 		"woodcutter", "lumberjack":
-			GameManager.add_item("wood", 2)
+			gm.add_item("wood", 2)
 			print("[WorkerAI] ", _get_owner_name(), " produit 2 bois")
 		"miner":
-			GameManager.add_item("stone", 1)
+			gm.add_item("stone", 1)
 			print("[WorkerAI] ", _get_owner_name(), " produit 1 pierre")
 		"blacksmith":
-			GameManager.add_item("flint", 1)
+			gm.add_item("flint", 1)
 			print("[WorkerAI] ", _get_owner_name(), " produit 1 silex")
 		"priest":
 			var rm: Node = get_node_or_null("/root/ReligionManager")

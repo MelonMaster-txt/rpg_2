@@ -31,7 +31,6 @@ func open(npc: Node) -> void:
 # ─── ACTIONS ──────────────────────────────────────────────────────────────────
 func _on_discuss() -> void:
 	_close()
-	# Dialogue basique — à enrichir avec DialogueManager plus tard
 	if _npc != null and is_instance_valid(_npc):
 		var npc_name_str: String = _npc.get("npc_name") if _npc.get("npc_name") != null else "???"
 		print("[Interaction] Discussion avec ", npc_name_str)
@@ -54,6 +53,15 @@ func _on_leave() -> void:
 
 # ─── CLOSE ────────────────────────────────────────────────────────────────────
 func _close() -> void:
+	# Déconnexion des signaux avant destruction pour éviter les doublons
+	if _btn_discuss.pressed.is_connected(_on_discuss):
+		_btn_discuss.pressed.disconnect(_on_discuss)
+	if _btn_recruit.pressed.is_connected(_on_recruit):
+		_btn_recruit.pressed.disconnect(_on_recruit)
+	if _btn_capture.pressed.is_connected(_on_capture):
+		_btn_capture.pressed.disconnect(_on_capture)
+	if _btn_leave.pressed.is_connected(_on_leave):
+		_btn_leave.pressed.disconnect(_on_leave)
 	get_tree().paused = false
 	queue_free()
 

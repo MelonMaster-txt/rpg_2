@@ -15,10 +15,6 @@ enum State { IDLE, WANDER, FLEE, WORK, FOLLOW, COMBAT }
 @export var detection_range: float = 150.0
 @export var npc_data: Resource = null
 
-# ─── ONREADY ──────────────────────────────────────────────────────────────────
-@onready var _anim: AnimatedSprite2D = $AnimatedSprite2D
-@onready var _nav: NavigationAgent2D = $NavigationAgent2D
-
 # ─── VARS ─────────────────────────────────────────────────────────────────────
 var current_health: int = 50
 var current_state: State = State.IDLE
@@ -38,8 +34,6 @@ func take_damage(amount: int) -> void:
 
 func die() -> void:
 	npc_died.emit(self)
-	# BUG FIX : on ne notifie plus manuellement le spawner ici.
-	# Le signal tree_exited connecté dans npc_spawner.spawn_at() s'en charge.
 	queue_free()
 
 
@@ -70,19 +64,24 @@ func _process_wander(delta: float) -> void:
 				randf_range(-80.0, 80.0),
 				randf_range(-80.0, 80.0)
 		)
-		_nav.target_position = _wander_target
-	if not _nav.is_navigation_finished():
-		var dir: Vector2 = _nav.get_next_path_position() - global_position
-		velocity = dir.normalized() * move_speed
-		move_and_slide()
+	var nav: NavigationAgent2D = get_node_or_null("NavigationAgent2D")
+	if nav != null:
+		nav.target_position = _wander_target
+		if not nav.is_navigation_finished():
+			var dir: Vector2 = nav.get_next_path_position() - global_position
+			velocity = dir.normalized() * move_speed
+			move_and_slide()
 
 
 func _process_follow() -> void:
 	var player: Node = get_tree().get_first_node_in_group("player")
 	if player == null:
 		return
-	_nav.target_position = player.global_position
-	if not _nav.is_navigation_finished():
-		var dir: Vector2 = _nav.get_next_path_position() - global_position
+	var nav: NavigationAgent2D = get_node_or_null("NavigationAgent2D")
+	if nav == null:
+		return
+	nav.target_position = player.global_position
+	if not nav.is_navigation_finished():
+		var dir: Vector2 = nav.get_next_path_position() - global_position
 		velocity = dir.normalized() * move_speed
 		move_and_slide()
