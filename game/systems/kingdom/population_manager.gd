@@ -1,5 +1,7 @@
 # population_manager.gd — Autoload
 # Gère la liste des compagnons et esclaves du joueur.
+# Utilise Engine.get_singleton() pour éviter les erreurs de compilation
+# dues à l'ordre de chargement des Autoloads.
 extends Node
 
 signal population_changed
@@ -12,12 +14,18 @@ func _ready() -> void:
 	pass
 
 
+func _get_km() -> Node:
+	return Engine.get_singleton("KingdomManager")
+
+
 # --- Compagnons ---
 
 func add_companion(entry: Dictionary) -> void:
 	entry["role"] = "companion"
 	companions.append(entry)
-	KingdomManager.add_member(entry)
+	var km: Node = _get_km()
+	if km:
+		km.add_member(entry)
 	population_changed.emit()
 
 
@@ -38,7 +46,9 @@ func get_companions() -> Array[Dictionary]:
 func add_slave(entry: Dictionary) -> void:
 	entry["role"] = "slave"
 	slaves.append(entry)
-	KingdomManager.add_member(entry)
+	var km: Node = _get_km()
+	if km:
+		km.add_member(entry)
 	population_changed.emit()
 
 
