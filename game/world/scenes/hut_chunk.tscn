@@ -2,8 +2,7 @@
 
 [ext_resource type="Script" uid="uid://bwc46yxk8vnca" path="res://game/world/chunk_visualizer.gd" id="1_kivh5"]
 [ext_resource type="Script" uid="uid://c17u6pq1cpbg4" path="res://game/world/hut_entrance.gd" id="1_upkib"]
-[ext_resource type="Script" path="res://game/world/hut_chunk_spawner.gd" id="1_spawner"]
-[ext_resource type="PackedScene" path="res://game/world/chest.tscn" id="2_chest"]
+[ext_resource type="PackedScene" path="res://game/world/chest.tscn" id="3_chest"]
 
 [sub_resource type="Gradient" id="Gradient_upkib"]
 
@@ -12,11 +11,8 @@ gradient = SubResource("Gradient_upkib")
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_kivh5"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_chest"]
-size = Vector2(32, 32)
-
 [node name="HuteChunk" type="Node2D" unique_id=1023774883]
-script = ExtResource("1_spawner")
+script = ExtResource("1_kivh5")
 
 [node name="HutSprite" type="Sprite2D" parent="." unique_id=1532840433]
 position = Vector2(242.2, 182.83995)
@@ -42,6 +38,9 @@ pivot_offset = Vector2(5, 5)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="HutEntrance" unique_id=2009275994]
 shape = SubResource("RectangleShape2D_kivh5")
+
+[node name="BaseChest" parent="." instance=ExtResource("3_chest")]
+position = Vector2(242, 220)
 
 [connection signal="body_entered" from="HutEntrance" to="HutEntrance" method="_on_body_entered"]
 [connection signal="body_exited" from="HutEntrance" to="HutEntrance" method="_on_body_exited"]
