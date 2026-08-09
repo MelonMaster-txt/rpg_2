@@ -1,7 +1,7 @@
 # chest.gd
 extends Node2D
 
-const ICON: String = "\ud83d\udce6"
+const ICON: String = "[C]"
 
 var inventory: Dictionary = {
 	"food":         0,
@@ -20,7 +20,7 @@ var _ui_open:     bool = false
 var _ui_layer:    CanvasLayer = null
 
 @onready var label:      Label  = $Label
-@onready var hint_label: Label  = $HintLabel       if has_node("HintLabel")    else null
+@onready var hint_label: Label  = $HintLabel       if has_node("HintLabel")     else null
 @onready var detection:  Area2D = $DetectionArea   if has_node("DetectionArea") else null
 
 
@@ -29,7 +29,6 @@ func _ready() -> void:
 	_refresh_label()
 	if hint_label != null:
 		hint_label.visible = false
-	# Connexion avec CONNECT_REFERENCE_COUNTED pour éviter double-connect
 	if detection != null:
 		if not detection.body_entered.is_connected(_on_body_entered):
 			detection.body_entered.connect(_on_body_entered)
@@ -37,7 +36,7 @@ func _ready() -> void:
 			detection.body_exited.connect(_on_body_exited)
 
 
-# ─── Interaction joueur ──────────────────────────────────────────────
+# --- Interaction joueur ---
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not _player_near:
@@ -66,7 +65,7 @@ func _on_body_exited(body: Node) -> void:
 			_close_ui()
 
 
-# ─── UI créée par code ────────────────────────────────────────────────
+# --- UI creee par code ---
 
 func _open_ui() -> void:
 	_ui_open = true
@@ -88,7 +87,7 @@ func _open_ui() -> void:
 	panel.add_child(vbox)
 
 	var title := Label.new()
-	title.text = ICON + " Coffre"
+	title.text = "Coffre"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_size_override("font_size", 18)
 	vbox.add_child(title)
@@ -111,7 +110,7 @@ func _open_ui() -> void:
 		has_items = true
 		var row := HBoxContainer.new()
 		var name_lbl := Label.new()
-		name_lbl.text = _icon_for(key) + "  " + key
+		name_lbl.text = key
 		name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		var qty_lbl := Label.new()
 		qty_lbl.text = str(inventory[key])
@@ -139,28 +138,20 @@ func _close_ui() -> void:
 		_ui_layer = null
 
 
-# ─── Helpers ────────────────────────────────────────────────────────
-
-func _icon_for(key: String) -> String:
-	var icons: Dictionary = {
-		"food": "\ud83e\uddb4", "wood": "\ud83e\udeb5", "stone": "\ud83e\udea8",
-		"ore": "\u26cf", "gold": "\ud83d\udcb0", "build_points": "\ud83d\udd28",
-		"berries": "\ud83ced", "seed_wheat": "\ud83c\udf3e", "herb": "\ud83c\udf3f",
-	}
-	return icons.get(key, ICON)
-
+# --- Helpers ---
 
 func _refresh_label() -> void:
 	if label == null:
 		return
-	var lines: Array[String] = [ICON + " Coffre"]
+	var lines: Array[String] = ["Coffre"]
 	for key: String in inventory:
 		if inventory[key] > 0:
 			lines.append("%s: %d" % [key, inventory[key]])
 	label.text = "\n".join(lines)
 
 
-# ─── Dépôt ──────────────────────────────────────────────────────────
+# --- Depot ---
+
 func deposit(resource: String, amount: int) -> void:
 	if amount <= 0:
 		return
