@@ -1,7 +1,4 @@
-# debug_menu.gd - Menu debug F1 (version UI — redirige vers l'Autoload DebugMenu)
-# Ce fichier existait en doublon. Il est désormais vide car
-# le vrai debug menu est l'Autoload game/core/debug_menu.gd (DebugMenu).
-# FIX : clés alignées sur GameManager.inventory (anglais)
+# debug_menu.gd - Menu debug F1 (instance dynamique dans overworld)
 extends CanvasLayer
 
 const GIVE_SETS: Array[Dictionary] = [
@@ -49,7 +46,7 @@ func _build_ui() -> void:
 
 	_add_separator(vb, "-- Give --")
 
-	for gset in GIVE_SETS:
+	for gset: Dictionary in GIVE_SETS:
 		var btn := Button.new()
 		btn.text = gset["label"]
 		_style_btn(btn, Color(0.2, 0.7, 0.3))
@@ -100,7 +97,7 @@ func _add_separator(vb: VBoxContainer, txt: String) -> void:
 func _style_btn(btn: Button, col: Color) -> void:
 	btn.add_theme_font_size_override("font_size", 11)
 	var normal := StyleBoxFlat.new()
-	normal.bg_color = Color(col.r*0.25, col.g*0.25, col.b*0.25, 0.9)
+	normal.bg_color = Color(col.r * 0.25, col.g * 0.25, col.b * 0.25, 0.9)
 	normal.border_color = col
 	normal.set_border_width_all(1)
 	normal.set_corner_radius_all(4)
@@ -109,7 +106,7 @@ func _style_btn(btn: Button, col: Color) -> void:
 	normal.content_margin_top    = 4
 	normal.content_margin_bottom = 4
 	var hover := StyleBoxFlat.new()
-	hover.bg_color = Color(col.r*0.45, col.g*0.45, col.b*0.45, 0.95)
+	hover.bg_color = Color(col.r * 0.45, col.g * 0.45, col.b * 0.45, 0.95)
 	hover.border_color = col
 	hover.set_border_width_all(1)
 	hover.set_corner_radius_all(4)
@@ -132,17 +129,17 @@ func _toggle() -> void:
 	_panel.visible = _visible
 
 func _on_give_pressed(items: Dictionary) -> void:
-	for id in items:
+	for id: String in items:
 		GameManager.add_item(id, items[id])
 
 func _on_clear_inventory() -> void:
-	for id in GameManager.inventory.keys():
+	for id: String in GameManager.inventory.keys():
 		GameManager.inventory[id] = 0
 
 func _change_speed(delta: int) -> void:
-	var player = get_tree().get_first_node_in_group("player")
+	var player: Node = get_tree().get_first_node_in_group("player")
 	if player == null:
 		return
-	var new_speed: float = clamp(player.move_speed + delta, 40.0, 400.0)
-	player.move_speed = new_speed
+	var new_speed: float = clamp(float(player.get("move_speed")) + float(delta), 40.0, 400.0)
+	player.set("move_speed", new_speed)
 	_speed_label.text = str(int(new_speed))

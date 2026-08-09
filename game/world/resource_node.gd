@@ -1,10 +1,4 @@
 # ResourceNode.gd
-# Scene structure:
-#   ResourceNode (Area2D)
-#     ├── CollisionShape2D
-#     ├── Sprite2D
-#     ├── InteractHint (Label)
-#     └── RespawnTimer (Timer)
 extends Area2D
 
 enum ResourceType { WOOD, BERRIES, STONE }
@@ -14,9 +8,9 @@ enum ResourceType { WOOD, BERRIES, STONE }
 @export var amount_max: int = 3
 @export var respawn_time: float = 30.0
 
-@onready var sprite: Node               = $Sprite2D
-@onready var interact_hint: Label       = $InteractHint
-@onready var respawn_timer: Timer       = $RespawnTimer
+@onready var sprite: Node                = $Sprite2D
+@onready var interact_hint: Label        = $InteractHint
+@onready var respawn_timer: Timer        = $RespawnTimer
 @onready var collision: CollisionShape2D = $CollisionShape2D
 
 var is_depleted: bool   = false
@@ -94,7 +88,7 @@ func _show_pickup_text(text: String) -> void:
 	label.position = Vector2(-20, -40)
 	label.add_theme_color_override("font_color", Color.YELLOW)
 	add_child(label)
-	var tween := create_tween()
+	var tween: Tween = create_tween()
 	tween.tween_property(label, "position", label.position + Vector2(0, -30), 0.8)
 	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.8)
 	tween.tween_callback(label.queue_free)

@@ -1,14 +1,13 @@
 # inventory_screen.gd
-# Inventory panel toggled with the I key
 extends Control
 
-const ITEM_META := {
-	"wood":        { "name": "Wood",        "icon": "🪵", "consumable": false },
-	"stone":       { "name": "Stone",       "icon": "🪨", "consumable": false },
-	"berries":     { "name": "Berries",     "icon": "🍇", "consumable": true  },
-	"berry_seed":  { "name": "Berry Seed",  "icon": "🌱", "consumable": false },
-	"hoe":         { "name": "Hoe",         "icon": "⛏️",  "consumable": false },
-	"watering_can":{ "name": "Watering Can","icon": "🪣", "consumable": false },
+const ITEM_META: Dictionary = {
+	"wood":         { "name": "Wood",         "icon": "[W]", "consumable": false },
+	"stone":        { "name": "Stone",        "icon": "[S]", "consumable": false },
+	"berries":      { "name": "Berries",      "icon": "[B]", "consumable": true  },
+	"berry_seed":   { "name": "Berry Seed",   "icon": "[*]", "consumable": false },
+	"hoe":          { "name": "Hoe",          "icon": "[/]", "consumable": false },
+	"watering_can": { "name": "Watering Can", "icon": "[~]", "consumable": false },
 }
 
 var _is_open: bool = false
@@ -41,20 +40,20 @@ func _process(_delta: float) -> void:
 		_rebuild()
 
 func _rebuild() -> void:
-	for child in grid.get_children():
+	for child: Node in grid.get_children():
 		grid.remove_child(child)
 		child.free()
 
-	for item_id in ITEM_META:
+	for item_id: String in ITEM_META:
 		var meta: Dictionary = ITEM_META[item_id]
 		var qty: int = GameManager.get_item(item_id)
 
 		var card := PanelContainer.new()
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color(0.12, 0.12, 0.16, 0.95) if qty > 0 else Color(0.07, 0.07, 0.09, 0.7)
-		style.corner_radius_top_left    = 6
-		style.corner_radius_top_right   = 6
-		style.corner_radius_bottom_left = 6
+		style.corner_radius_top_left     = 6
+		style.corner_radius_top_right    = 6
+		style.corner_radius_bottom_left  = 6
 		style.corner_radius_bottom_right = 6
 		style.content_margin_left   = 8.0
 		style.content_margin_right  = 8.0
@@ -68,7 +67,7 @@ func _rebuild() -> void:
 		var icon_lbl := Label.new()
 		icon_lbl.text = meta["icon"]
 		icon_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		icon_lbl.add_theme_font_size_override("font_size", 28)
+		icon_lbl.add_theme_font_size_override("font_size", 20)
 
 		var name_lbl := Label.new()
 		name_lbl.text = meta["name"]
@@ -105,7 +104,7 @@ func _on_eat_pressed(item_id: String) -> void:
 		popup.add_theme_color_override("font_color", Color(0.4, 1.0, 0.4))
 		popup.set_anchors_preset(Control.PRESET_CENTER)
 		add_child(popup)
-		var tw := create_tween()
+		var tw: Tween = create_tween()
 		tw.tween_property(popup, "position", popup.position + Vector2(0, -40), 1.0)
 		tw.parallel().tween_property(popup, "modulate:a", 0.0, 1.0)
 		tw.tween_callback(popup.queue_free)

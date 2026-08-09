@@ -5,8 +5,8 @@ extends Control
 
 
 func _ready() -> void:
-	var any_save := false
-	for slot in range(SaveSystem.MAX_SLOTS):
+	var any_save: bool = false
+	for slot: int in range(SaveSystem.MAX_SLOTS):
 		if SaveSystem.slot_exists(slot):
 			any_save = true
 			break
@@ -19,7 +19,7 @@ func _on_btn_new_game_pressed() -> void:
 
 
 func _on_btn_continue_pressed() -> void:
-	for slot in range(SaveSystem.MAX_SLOTS):
+	for slot: int in range(SaveSystem.MAX_SLOTS):
 		if SaveSystem.slot_exists(slot):
 			if SaveSystem.load_game(slot):
 				get_tree().change_scene_to_file(GameState.current_scene)
@@ -27,8 +27,7 @@ func _on_btn_continue_pressed() -> void:
 
 
 func _on_btn_load_game_pressed() -> void:
-	# Passe en mode LOAD via métadonnée lue par save_menu au _ready()
-	GameState.set_meta("open_save_menu_mode", 0)  # 0 = LOAD
+	GameState.set_meta("open_save_menu_mode", 0)
 	get_tree().change_scene_to_file("res://game/core/save_menu.tscn")
 
 

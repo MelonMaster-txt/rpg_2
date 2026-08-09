@@ -18,7 +18,6 @@ const COLOR_READY:   Color = Color(0.90, 0.75, 0.10)
 
 var state: State = State.SOIL
 var _player_nearby: bool = false
-# Cache the player to avoid get_first_node_in_group on every interact
 var _player_cache: Node = null
 
 func _ready() -> void:
@@ -98,7 +97,7 @@ func _show_popup(msg: String) -> void:
 	lbl.add_theme_color_override("font_color", Color(1, 1, 0.4))
 	lbl.position = Vector2(-24, -40)
 	add_child(lbl)
-	var tw := create_tween()
+	var tw: Tween = create_tween()
 	tw.tween_property(lbl, "position", lbl.position + Vector2(0, -28), 0.9)
 	tw.parallel().tween_property(lbl, "modulate:a", 0.0, 0.9)
 	tw.tween_callback(lbl.queue_free)
@@ -118,7 +117,6 @@ func _on_body_exited(body: Node2D) -> void:
 		_player_nearby = false
 		_update_hint("")
 
-# ─── PERSISTENCE ──────────────────────────────────────────────────────────────
 func get_save_data() -> Dictionary:
 	return {
 		"pos":       global_position,

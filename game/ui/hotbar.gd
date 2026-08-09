@@ -1,5 +1,4 @@
 # hotbar.gd - Single slot showing the active tool
-# TAB cycles between available tools in the inventory
 extends CanvasLayer
 
 const TOOLS: Array[Dictionary] = [
@@ -18,7 +17,7 @@ func _ready() -> void:
 	call_deferred("_connect_player")
 
 func _connect_player() -> void:
-	var player := get_tree().get_first_node_in_group("player")
+	var player: Node = get_tree().get_first_node_in_group("player")
 	if player and player.has_signal("held_item_changed"):
 		player.held_item_changed.connect(_on_held_item_changed)
 		_on_held_item_changed(player.get_held_item())
@@ -48,8 +47,7 @@ func _make_style(active: bool, tool_color: Color) -> StyleBoxFlat:
 	return s
 
 func _build_slot() -> void:
-	# Clear old slots if rebuilding
-	for c in slots_container.get_children():
+	for c: Node in slots_container.get_children():
 		c.queue_free()
 	_slot = PanelContainer.new()
 	_slot.custom_minimum_size = Vector2(72, 64)
@@ -87,13 +85,12 @@ func _build_slot() -> void:
 func _on_held_item_changed(item_id: String) -> void:
 	if _slot == null:
 		return
-	var vb := _slot.get_child(0)
+	var vb: Node = _slot.get_child(0)
 	var icon_lbl: Label = vb.get_node("IconLabel")
 	var name_lbl: Label = vb.get_node("NameLabel")
 	var hint_lbl: Label = vb.get_node("HintLabel")
 
 	if item_id == "":
-		# No tool selected
 		_slot.add_theme_stylebox_override("panel", _make_style(false, Color.WHITE))
 		icon_lbl.text = ""
 		icon_lbl.add_theme_color_override("font_color", Color(0.4, 0.4, 0.4))
@@ -101,9 +98,8 @@ func _on_held_item_changed(item_id: String) -> void:
 		hint_lbl.text = "[TAB]"
 		return
 
-	# Find tool info
 	var info: Dictionary = {}
-	for t in TOOLS:
+	for t: Dictionary in TOOLS:
 		if t["id"] == item_id:
 			info = t
 			break

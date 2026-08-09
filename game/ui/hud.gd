@@ -5,13 +5,13 @@ extends CanvasLayer
 @onready var day_label:          Label = $HUDPanel/HUDContainer/DayLabel
 @onready var money_label:        Label = $HUDPanel/HUDContainer/MoneyLabel
 @onready var life_label:         Label = $HUDPanel/HUDContainer/LifeLabel
-@onready var Force_label:        Label = $HUDPanel/HUDContainer/ForceLabel
-@onready var Stamina_label:      Label = $HUDPanel/HUDContainer/StaminaLabel
-@onready var Luck_label:         Label = $HUDPanel/HUDContainer/LuckLabel
-@onready var Intelligence_label: Label = $HUDPanel/HUDContainer/IntelligenceLabel
-@onready var Charisma_label:     Label = $HUDPanel/HUDContainer/CharismaLabel
+@onready var force_label:        Label = $HUDPanel/HUDContainer/ForceLabel
+@onready var stamina_label:      Label = $HUDPanel/HUDContainer/StaminaLabel
+@onready var luck_label:         Label = $HUDPanel/HUDContainer/LuckLabel
+@onready var intelligence_label: Label = $HUDPanel/HUDContainer/IntelligenceLabel
+@onready var charisma_label:     Label = $HUDPanel/HUDContainer/CharismaLabel
 
-@onready var inventory_screen = $InventoryScreen
+@onready var inventory_screen: Control = $InventoryScreen
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -29,11 +29,11 @@ func _refresh_all() -> void:
 	day_label.text          = "Day %d" % GameManager.current_day
 	money_label.text        = "Gold: %d" % GameManager.get_item("gold")
 	life_label.text         = "HP: %d" % GameManager.life
-	Force_label.text        = "Str: %d" % GameManager.force
-	Stamina_label.text      = "Stam: %d" % GameManager.stamina
-	Luck_label.text         = "Luck: %d" % GameManager.luck
-	Intelligence_label.text = "Int: %d" % GameManager.intelligence
-	Charisma_label.text     = "Cha: %d" % GameManager.charisma
+	force_label.text        = "Str: %d" % GameManager.force
+	stamina_label.text      = "Stam: %d" % GameManager.stamina
+	luck_label.text         = "Luck: %d" % GameManager.luck
+	intelligence_label.text = "Int: %d" % GameManager.intelligence
+	charisma_label.text     = "Cha: %d" % GameManager.charisma
 
 func _on_time_changed(h: int, m: int, d: int) -> void:
 	time_label.text = "%02d:%02d" % [h, m]

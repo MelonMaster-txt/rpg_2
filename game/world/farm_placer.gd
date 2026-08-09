@@ -1,9 +1,9 @@
 # farm_placer.gd
 extends Node2D
 
-const FARM_TILE_SCENE := preload("res://game/world/farm_tile.tscn")
-const GRID:      int   = 32
-const GRID_F:    float = 32.0  # version float pour les divisions sans warning
+const FARM_TILE_SCENE: PackedScene = preload("res://game/world/farm_tile.tscn")
+const GRID:   int   = 32
+const GRID_F: float = 32.0
 
 var _container: Node = null
 var _tile_map: Dictionary = {}
@@ -24,14 +24,13 @@ func _notification(what: int) -> void:
 func interact_at(world_pos: Vector2) -> bool:
 	if _container == null:
 		return false
-	var grid_pos := _snap(world_pos)
-	var key := _key(grid_pos)
+	var grid_pos: Vector2 = _snap(world_pos)
+	var key: String = _key(grid_pos)
 	if _tile_map.has(key):
-		var existing = _tile_map[key]
+		var existing: Variant = _tile_map[key]
 		if is_instance_valid(existing) and existing.has_method("_try_interact"):
 			existing._try_interact()
 		return true
-	# Nouvelle tuile
 	var new_tile: Node2D = FARM_TILE_SCENE.instantiate()
 	new_tile.global_position = grid_pos
 	_container.add_child(new_tile)
