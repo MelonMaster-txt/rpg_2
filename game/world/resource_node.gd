@@ -18,10 +18,11 @@ var player_nearby: bool = false
 
 
 func _ready() -> void:
-	# Rejoindre les groupes utilisés par le WorkerAI pour cibler les ressources
+	# Groupes utilisés par WorkerAI pour cibler les ressources
+	# "tree" = woodcutter, "berry" = farmer, "rock" = miner
 	match resource_type:
 		ResourceType.WOOD:    add_to_group("tree")
-		ResourceType.BERRIES: add_to_group("tree")  # farmer cible aussi le groupe tree
+		ResourceType.BERRIES: add_to_group("berry")
 		ResourceType.STONE:   add_to_group("rock")
 	respawn_timer.wait_time = respawn_time
 	respawn_timer.one_shot  = true
@@ -77,7 +78,6 @@ func harvest(requested: int = -1) -> int:
 			item_key   = "stone"
 			label_text = "+%d Stone" % amount
 	# Dépôt direct seulement si c'est le joueur (requested == -1)
-	# Le WorkerAI gère lui-même le dépôt via son inventaire
 	if requested < 0 and item_key != "":
 		GameManager.add_item(item_key, amount)
 		_show_pickup_text(label_text)

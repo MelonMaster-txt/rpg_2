@@ -29,9 +29,11 @@ const JOB_ICON: Dictionary = {
 	"":           "[zzz]",
 }
 
+# Groupe Godot ciblé par job
+# woodcutter -> "tree", farmer -> "berry", miner -> "rock"
 const JOB_TARGET_GROUP: Dictionary = {
 	"woodcutter": "tree",
-	"farmer":     "tree",
+	"farmer":     "berry",
 	"miner":      "rock",
 	"guard":      "",
 	"trader":     "",
@@ -88,7 +90,6 @@ func _update_label() -> void:
 func _physics_process(delta: float) -> void:
 	if _owner_npc == null or not is_instance_valid(_owner_npc):
 		return
-	# Vérifie que la SM est bien en état work (évite conflit avec les autres états)
 	var sm: Node = _owner_npc.get_node_or_null("NpcStateMachine")
 	if sm != null and sm.has_method("is_state") and not sm.is_state("work"):
 		return
@@ -102,16 +103,11 @@ func _physics_process(delta: float) -> void:
 		_do_wander(delta)
 		return
 	match _state:
-		WorkState.IDLE:
-			_on_idle(delta)
-		WorkState.SEEK_TARGET:
-			_on_seek_target(delta)
-		WorkState.HARVEST:
-			_on_harvest(delta)
-		WorkState.RETURN_HOME:
-			_on_return_home(delta)
-		WorkState.DEPOSIT:
-			_on_deposit()
+		WorkState.IDLE:        _on_idle(delta)
+		WorkState.SEEK_TARGET: _on_seek_target(delta)
+		WorkState.HARVEST:     _on_harvest(delta)
+		WorkState.RETURN_HOME: _on_return_home(delta)
+		WorkState.DEPOSIT:     _on_deposit()
 
 
 func _on_idle(delta: float) -> void:
@@ -124,14 +120,11 @@ func _on_idle(delta: float) -> void:
 	_target_node = _find_nearest_target()
 	if _target_node != null:
 		_state = WorkState.SEEK_TARGET
-		print(
-			"[WorkerAI] '%s' -> target '%s' (dist=%.0f)"
-			% [
-				_owner_npc.get("npc_name"),
-				_target_node.name,
-				_owner_npc.global_position.distance_to(_target_node.global_position),
-			]
-		)
+		print("[WorkerAI] '%s' -> '%s' (dist=%.0f)" % [
+			_owner_npc.get("npc_name"),
+			_target_node.name,
+			_owner_npc.global_position.distance_to(_target_node.global_position),
+		])
 	else:
 		_retry_timer = 3.0
 		_pick_wander_dir()
@@ -182,7 +175,6 @@ func _on_return_home(delta: float) -> void:
 	if _chest_node == null or not is_instance_valid(_chest_node):
 		_find_chest()
 	if _chest_node == null:
-		# Pas de coffre : dépôt direct dans GameManager
 		_deposit_to_game_manager()
 		return
 	var dist: float = _owner_npc.global_position.distance_to(_chest_node.global_position)
@@ -199,7 +191,6 @@ func _on_deposit() -> void:
 		if _chest_node != null and is_instance_valid(_chest_node) and _chest_node.has_method("deposit"):
 			_chest_node.deposit(resource, _inventory)
 		else:
-			# Fallback : dépôt direct
 			GameManager.add_item(resource, _inventory)
 		print("[WorkerAI] '%s' déposé %d %s" % [_owner_npc.get("npc_name"), _inventory, resource])
 	_inventory = 0
@@ -281,6 +272,5 @@ func update_job(new_job: String) -> void:
 	print("[WorkerAI] New job: ", new_job)
 
 
-# Appelé manuellement si besoin (ex: par state_work tick fallback)
 func tick() -> void:
 	_on_deposit()
