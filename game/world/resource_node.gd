@@ -16,7 +16,13 @@ enum ResourceType { WOOD, BERRIES, STONE }
 var is_depleted: bool   = false
 var player_nearby: bool = false
 
+
 func _ready() -> void:
+	# Rejoindre les groupes utilisés par le WorkerAI pour cibler les ressources
+	match resource_type:
+		ResourceType.WOOD:    add_to_group("tree")
+		ResourceType.BERRIES: add_to_group("tree")  # farmer cible aussi le groupe tree
+		ResourceType.STONE:   add_to_group("rock")
 	respawn_timer.wait_time = respawn_time
 	respawn_timer.one_shot  = true
 	respawn_timer.timeout.connect(_on_respawn)
@@ -28,10 +34,12 @@ func _ready() -> void:
 		ResourceType.BERRIES: interact_hint.text = "[E] Pick berries"
 		ResourceType.STONE:   interact_hint.text = "[E] Gather stone"
 
+
 func _unhandled_input(event: InputEvent) -> void:
 	if player_nearby and not is_depleted and event.is_action_pressed("interact"):
 		get_viewport().set_input_as_handled()
 		harvest()
+
 
 func _on_body_entered(body: Node2D) -> void:
 	if body.is_in_group("player"):
@@ -39,13 +47,23 @@ func _on_body_entered(body: Node2D) -> void:
 		if not is_depleted:
 			interact_hint.visible = true
 
+
 func _on_body_exited(body: Node2D) -> void:
 	if body.is_in_group("player"):
 		player_nearby = false
 		interact_hint.visible = false
 
-func harvest() -> void:
-	var amount: int = randi_range(amount_min, amount_max)
+
+# Appel joueur (sans paramètre) OU appel WorkerAI (avec quantité demandée)
+# Retourne la quantité effectivement récoltée
+func harvest(requested: int = -1) -> int:
+	if is_depleted:
+		return 0
+	var amount: int
+	if requested > 0:
+		amount = requested
+	else:
+		amount = randi_range(amount_min, amount_max)
 	var item_key: String = ""
 	var label_text: String = ""
 	match resource_type:
@@ -58,13 +76,18 @@ func harvest() -> void:
 		ResourceType.STONE:
 			item_key   = "stone"
 			label_text = "+%d Stone" % amount
-	if item_key != "":
+	# Dépôt direct seulement si c'est le joueur (requested == -1)
+	# Le WorkerAI gère lui-même le dépôt via son inventaire
+	if requested < 0 and item_key != "":
 		GameManager.add_item(item_key, amount)
 		_show_pickup_text(label_text)
 	_deplete()
+	return amount
+
 
 func can_gather() -> bool:
 	return not is_depleted
+
 
 func _deplete() -> void:
 	is_depleted = true
@@ -74,6 +97,7 @@ func _deplete() -> void:
 	collision.disabled = true
 	respawn_timer.start()
 
+
 func _on_respawn() -> void:
 	is_depleted = false
 	if sprite is CanvasItem:
@@ -81,6 +105,7 @@ func _on_respawn() -> void:
 	collision.disabled = false
 	if player_nearby:
 		interact_hint.visible = true
+
 
 func _show_pickup_text(text: String) -> void:
 	var label := Label.new()
