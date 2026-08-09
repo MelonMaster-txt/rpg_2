@@ -1,0 +1,97 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://game/systems/npc_interaction_menu.gd" id="1_script"]
+
+[node name="NpcInteractionMenu" type="CanvasLayer"]
+script = ExtResource("1_script")
+
+[node name="Panel" type="PanelContainer" parent="."]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -200.0
+offset_right = 150.0
+offset_bottom = 200.0
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+
+[node name="NpcNameLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+text = "NPC"
+
+[node name="ArchetypeLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+text = "Archetype"
+
+[node name="DialogueLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+text = "..."
+autowrap_mode = 3
+
+[node name="Buttons" type="HBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+
+[node name="BtnTalk" type="Button" parent="Panel/VBox/Buttons"]
+layout_mode = 2
+text = "Parler"
+
+[node name="BtnRecruit" type="Button" parent="Panel/VBox/Buttons"]
+layout_mode = 2
+text = "Recruter"
+
+[node name="BtnFight" type="Button" parent="Panel/VBox/Buttons"]
+layout_mode = 2
+text = "Combattre"
+
+[node name="ResultLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+text = ""
+autowrap_mode = 3
+
+[node name="JobPanel" type="VBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+visible = false
+
+[node name="JobLabel" type="Label" parent="Panel/VBox/JobPanel"]
+layout_mode = 2
+text = "Assigner un métier :"
+
+[node name="JobOption" type="OptionButton" parent="Panel/VBox/JobPanel"]
+layout_mode = 2
+
+[node name="BtnAssign" type="Button" parent="Panel/VBox/JobPanel"]
+layout_mode = 2
+text = "Confirmer"
+
+[node name="RelationPanel" type="VBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+visible = false
+
+[node name="RelationLabel" type="Label" parent="Panel/VBox/RelationPanel"]
+layout_mode = 2
+text = "Relation..."
+autowrap_mode = 3
+
+[node name="BtnRelTalk" type="Button" parent="Panel/VBox/RelationPanel"]
+layout_mode = 2
+text = "💬 Parler"
+
+[node name="BtnRelGift" type="Button" parent="Panel/VBox/RelationPanel"]
+layout_mode = 2
+text = "🎁 Offrir un cadeau (5 or)"
+
+[node name="BtnRelInsult" type="Button" parent="Panel/VBox/RelationPanel"]
+layout_mode = 2
+text = "💢 Insulter"
+
+[node name="BtnChangeJob" type="Button" parent="Panel/VBox/RelationPanel"]
+layout_mode = 2
+text = "🛠️ Changer métier"
+
+[node name="BtnClose" type="Button" parent="Panel/VBox"]
+layout_mode = 2
+text = "Fermer"
