@@ -1,10 +1,10 @@
-# population_manager.gd — Autoload
-# Gère la liste des compagnons et esclaves du joueur.
-# Utilise Engine.get_singleton() pour éviter les erreurs de compilation
-# dues à l'ordre de chargement des Autoloads.
+# population_manager.gd -- Autoload
+# Gere la liste des compagnons et esclaves du joueur.
+# Verifie HousingManager avant tout ajout.
 extends Node
 
 signal population_changed
+signal housing_full(role: String)
 
 var companions: Array[Dictionary] = []
 var slaves:     Array[Dictionary] = []
@@ -18,15 +18,25 @@ func _get_km() -> Node:
 	return Engine.get_singleton("KingdomManager")
 
 
+func _get_hm() -> Node:
+	return Engine.get_singleton("HousingManager")
+
+
 # --- Compagnons ---
 
-func add_companion(entry: Dictionary) -> void:
+func add_companion(entry: Dictionary) -> bool:
+	var hm: Node = _get_hm()
+	if hm != null and not hm.can_house():
+		housing_full.emit("companion")
+		print("[PopulationManager] Pas de place pour loger un compagnon !")
+		return false
 	entry["role"] = "companion"
 	companions.append(entry)
 	var km: Node = _get_km()
 	if km:
 		km.add_member(entry)
 	population_changed.emit()
+	return true
 
 
 func remove_companion(npc_name: String) -> void:
@@ -43,13 +53,19 @@ func get_companions() -> Array[Dictionary]:
 
 # --- Esclaves ---
 
-func add_slave(entry: Dictionary) -> void:
+func add_slave(entry: Dictionary) -> bool:
+	var hm: Node = _get_hm()
+	if hm != null and not hm.can_house():
+		housing_full.emit("slave")
+		print("[PopulationManager] Pas de place pour loger un esclave !")
+		return false
 	entry["role"] = "slave"
 	slaves.append(entry)
 	var km: Node = _get_km()
 	if km:
 		km.add_member(entry)
 	population_changed.emit()
+	return true
 
 
 func remove_slave(npc_name: String) -> void:
