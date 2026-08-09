@@ -38,12 +38,12 @@ const JOB_TARGET_GROUP: Dictionary = {
 	"builder":    "tree",
 }
 
-enum State { IDLE, SEEK_TARGET, HARVEST, RETURN_HOME, DEPOSIT }
+enum WorkState { IDLE, SEEK_TARGET, HARVEST, RETURN_HOME, DEPOSIT }
 
 var job: String = ""
 var travel_speed: float = 55.0
 var inventory_max: int = 8
-var _state: State = State.IDLE
+var _state: WorkState = WorkState.IDLE
 var _target_node: Node2D = null
 var _chest_node: Node2D = null
 var _harvest_timer: float = 0.0
@@ -62,7 +62,7 @@ func _ready() -> void:
 		push_error("WorkerAI: parent must be a CharacterBody2D")
 		return
 	_create_job_label()
-	_state = State.IDLE
+	_state = WorkState.IDLE
 	print("[WorkerAI] Started for '%s' with job='%s'" % [_owner_npc.get("npc_name"), job])
 
 
@@ -88,6 +88,10 @@ func _update_label() -> void:
 func _physics_process(delta: float) -> void:
 	if _owner_npc == null or not is_instance_valid(_owner_npc):
 		return
+	# Vérifie que la SM est bien en état work (évite conflit avec les autres états)
+	var sm: Node = _owner_npc.get_node_or_null("NpcStateMachine")
+	if sm != null and sm.has_method("is_state") and not sm.is_state("work"):
+		return
 	if _start_timer > 0.0:
 		_start_timer -= delta
 		return
@@ -98,15 +102,15 @@ func _physics_process(delta: float) -> void:
 		_do_wander(delta)
 		return
 	match _state:
-		State.IDLE:
+		WorkState.IDLE:
 			_on_idle(delta)
-		State.SEEK_TARGET:
+		WorkState.SEEK_TARGET:
 			_on_seek_target(delta)
-		State.HARVEST:
+		WorkState.HARVEST:
 			_on_harvest(delta)
-		State.RETURN_HOME:
+		WorkState.RETURN_HOME:
 			_on_return_home(delta)
-		State.DEPOSIT:
+		WorkState.DEPOSIT:
 			_on_deposit()
 
 
@@ -115,11 +119,11 @@ func _on_idle(delta: float) -> void:
 		_owner_npc.velocity = Vector2.ZERO
 		return
 	if _inventory >= inventory_max:
-		_state = State.RETURN_HOME
+		_state = WorkState.RETURN_HOME
 		return
 	_target_node = _find_nearest_target()
 	if _target_node != null:
-		_state = State.SEEK_TARGET
+		_state = WorkState.SEEK_TARGET
 		print(
 			"[WorkerAI] '%s' -> target '%s' (dist=%.0f)"
 			% [
@@ -137,18 +141,18 @@ func _on_idle(delta: float) -> void:
 func _on_seek_target(delta: float) -> void:
 	if not is_instance_valid(_target_node):
 		_target_node = null
-		_state = State.IDLE
+		_state = WorkState.IDLE
 		return
 	if _target_node.get("is_depleted") == true:
 		_target_node = _find_nearest_target(_target_node)
 		if _target_node == null:
-			_state = State.IDLE
+			_state = WorkState.IDLE
 		return
 	var dist: float = _owner_npc.global_position.distance_to(_target_node.global_position)
 	if dist < 32.0:
 		_owner_npc.velocity = Vector2.ZERO
 		_harvest_timer = JOB_HARVEST_TIME.get(job, 4.0)
-		_state = State.HARVEST
+		_state = WorkState.HARVEST
 		return
 	_move_toward(_target_node.global_position, delta)
 
@@ -167,44 +171,54 @@ func _on_harvest(delta: float) -> void:
 	_update_label()
 	_notify_favor()
 	if _inventory >= inventory_max:
-		_state = State.RETURN_HOME
+		_state = WorkState.RETURN_HOME
 	else:
 		var next: Node2D = _find_nearest_target(_target_node)
 		_target_node = next
-		_state = State.SEEK_TARGET if _target_node != null else State.IDLE
+		_state = WorkState.SEEK_TARGET if _target_node != null else WorkState.IDLE
 
 
 func _on_return_home(delta: float) -> void:
 	if _chest_node == null or not is_instance_valid(_chest_node):
 		_find_chest()
 	if _chest_node == null:
-		_inventory = 0
-		_update_label()
-		_state = State.IDLE
+		# Pas de coffre : dépôt direct dans GameManager
+		_deposit_to_game_manager()
 		return
 	var dist: float = _owner_npc.global_position.distance_to(_chest_node.global_position)
 	if dist < 40.0:
 		_owner_npc.velocity = Vector2.ZERO
-		_state = State.DEPOSIT
+		_state = WorkState.DEPOSIT
 		return
 	_move_toward(_chest_node.global_position, delta)
 
 
 func _on_deposit() -> void:
 	var resource: String = JOB_RESOURCE.get(job, "")
-	if resource != "" and _chest_node != null and _chest_node.has_method("deposit"):
-		_chest_node.deposit(resource, _inventory)
-		print(
-			"[WorkerAI] '%s' deposited %d %s in chest"
-			% [_owner_npc.get("npc_name"), _inventory, resource]
-		)
+	if resource != "":
+		if _chest_node != null and is_instance_valid(_chest_node) and _chest_node.has_method("deposit"):
+			_chest_node.deposit(resource, _inventory)
+		else:
+			# Fallback : dépôt direct
+			GameManager.add_item(resource, _inventory)
+		print("[WorkerAI] '%s' déposé %d %s" % [_owner_npc.get("npc_name"), _inventory, resource])
 	_inventory = 0
 	_update_label()
-	_state = State.IDLE
+	_state = WorkState.IDLE
+
+
+func _deposit_to_game_manager() -> void:
+	var resource: String = JOB_RESOURCE.get(job, "")
+	if resource != "" and _inventory > 0:
+		GameManager.add_item(resource, _inventory)
+		print("[WorkerAI] '%s' dépôt direct GM %d %s" % [_owner_npc.get("npc_name"), _inventory, resource])
+	_inventory = 0
+	_update_label()
+	_state = WorkState.IDLE
 
 
 func _pick_wander_dir() -> void:
-	var angle := randf() * TAU
+	var angle: float = randf() * TAU
 	_wander_dir = Vector2(cos(angle), sin(angle))
 	_wander_timer = 1.0
 
@@ -262,6 +276,11 @@ func update_job(new_job: String) -> void:
 	_inventory = 0
 	_target_node = null
 	_retry_timer = 0.0
-	_state = State.IDLE
+	_state = WorkState.IDLE
 	_update_label()
 	print("[WorkerAI] New job: ", new_job)
+
+
+# Appelé manuellement si besoin (ex: par state_work tick fallback)
+func tick() -> void:
+	_on_deposit()
