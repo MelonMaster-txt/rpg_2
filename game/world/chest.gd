@@ -1,8 +1,7 @@
 # chest.gd
-# Coffre global de la cahute / overworld.
 extends Node2D
 
-const ICON: String = "📦"
+const ICON: String = "\ud83d\udce6"
 
 var inventory: Dictionary = {
 	"food":         0,
@@ -18,41 +17,37 @@ signal inventory_changed(inventory: Dictionary)
 
 var _player_near: bool = false
 var _ui_open:     bool = false
+var _ui_layer:    CanvasLayer = null
 
-@onready var label:            Label        = $Label
-@onready var hint_label:       Label        = $HintLabel        if has_node("HintLabel")        else null
-@onready var detection:        Area2D       = $DetectionArea    if has_node("DetectionArea")    else null
-@onready var chest_ui_layer:   CanvasLayer  = $ChestUILayer     if has_node("ChestUILayer")     else null
-@onready var chest_ui:         Control      = $ChestUILayer/ChestUI               if has_node("ChestUILayer/ChestUI")               else null
-@onready var ui_content:       VBoxContainer = $ChestUILayer/ChestUI/Panel/VBox/Content if has_node("ChestUILayer/ChestUI/Panel/VBox/Content") else null
-@onready var btn_close:        Button       = $ChestUILayer/ChestUI/Panel/VBox/BtnClose if has_node("ChestUILayer/ChestUI/Panel/VBox/BtnClose") else null
+@onready var label:      Label  = $Label
+@onready var hint_label: Label  = $HintLabel       if has_node("HintLabel")    else null
+@onready var detection:  Area2D = $DetectionArea   if has_node("DetectionArea") else null
 
 
 func _ready() -> void:
 	add_to_group("chest")
 	_refresh_label()
-	if detection != null:
-		detection.body_entered.connect(_on_body_entered)
-		detection.body_exited.connect(_on_body_exited)
-	if btn_close != null:
-		btn_close.pressed.connect(close_ui)
-	if chest_ui != null:
-		chest_ui.visible = false
 	if hint_label != null:
 		hint_label.visible = false
+	# Connexion avec CONNECT_REFERENCE_COUNTED pour éviter double-connect
+	if detection != null:
+		if not detection.body_entered.is_connected(_on_body_entered):
+			detection.body_entered.connect(_on_body_entered)
+		if not detection.body_exited.is_connected(_on_body_exited):
+			detection.body_exited.connect(_on_body_exited)
 
 
-# ─── Interaction joueur ───────────────────────────────────────────────────────
+# ─── Interaction joueur ──────────────────────────────────────────────
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not _player_near or chest_ui == null:
+	if not _player_near:
 		return
 	if event.is_action_pressed("interact"):
 		get_viewport().set_input_as_handled()
 		if _ui_open:
-			close_ui()
+			_close_ui()
 		else:
-			open_ui()
+			_open_ui()
 
 
 func _on_body_entered(body: Node) -> void:
@@ -68,59 +63,89 @@ func _on_body_exited(body: Node) -> void:
 		if hint_label != null:
 			hint_label.visible = false
 		if _ui_open:
-			close_ui()
+			_close_ui()
 
 
-# ─── UI ───────────────────────────────────────────────────────────────────────
+# ─── UI créée par code ────────────────────────────────────────────────
 
-func open_ui() -> void:
-	if chest_ui_layer == null or chest_ui == null or ui_content == null:
-		return
+func _open_ui() -> void:
 	_ui_open = true
-	chest_ui.visible = true
-	get_tree().paused = true
-	chest_ui_layer.process_mode = Node.PROCESS_MODE_ALWAYS
-	_refresh_ui()
+	if _ui_layer != null and is_instance_valid(_ui_layer):
+		_ui_layer.queue_free()
+	_ui_layer = CanvasLayer.new()
+	_ui_layer.layer = 50
+	_ui_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	get_tree().current_scene.add_child(_ui_layer)
 
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.custom_minimum_size = Vector2(260, 320)
+	panel.position = Vector2(-130, -160)
+	_ui_layer.add_child(panel)
 
-func close_ui() -> void:
-	_ui_open = false
-	if chest_ui != null:
-		chest_ui.visible = false
-	get_tree().paused = false
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	panel.add_child(vbox)
 
+	var title := Label.new()
+	title.text = ICON + " Coffre"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 18)
+	vbox.add_child(title)
 
-func _refresh_ui() -> void:
-	if ui_content == null:
-		return
-	for child: Node in ui_content.get_children():
-		child.queue_free()
+	var sep := HSeparator.new()
+	vbox.add_child(sep)
+
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vbox.add_child(scroll)
+
+	var content := VBoxContainer.new()
+	content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(content)
+
+	var has_items := false
 	for key: String in inventory:
 		if inventory[key] <= 0:
 			continue
-		var row: HBoxContainer = HBoxContainer.new()
-		var name_lbl: Label = Label.new()
+		has_items = true
+		var row := HBoxContainer.new()
+		var name_lbl := Label.new()
 		name_lbl.text = _icon_for(key) + "  " + key
 		name_lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var qty_lbl: Label = Label.new()
+		var qty_lbl := Label.new()
 		qty_lbl.text = str(inventory[key])
 		qty_lbl.modulate = Color(1.0, 0.85, 0.4)
 		row.add_child(name_lbl)
 		row.add_child(qty_lbl)
-		ui_content.add_child(row)
-	if ui_content.get_child_count() == 0:
-		var empty_lbl: Label = Label.new()
-		empty_lbl.text = "(vide)"
-		empty_lbl.modulate = Color(0.6, 0.6, 0.6)
-		ui_content.add_child(empty_lbl)
+		content.add_child(row)
+	if not has_items:
+		var empty := Label.new()
+		empty.text = "(vide)"
+		empty.modulate = Color(0.6, 0.6, 0.6)
+		empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		content.add_child(empty)
 
+	var btn := Button.new()
+	btn.text = "Fermer  [E]"
+	btn.pressed.connect(_close_ui)
+	vbox.add_child(btn)
+
+
+func _close_ui() -> void:
+	_ui_open = false
+	if _ui_layer != null and is_instance_valid(_ui_layer):
+		_ui_layer.queue_free()
+		_ui_layer = null
+
+
+# ─── Helpers ────────────────────────────────────────────────────────
 
 func _icon_for(key: String) -> String:
 	var icons: Dictionary = {
-		"food": "🍖", "wood": "🪵", "stone": "🪨",
-		"ore": "⛏", "gold": "💰", "build_points": "🔨",
-		"seed_berries": "🫐", "seed_wheat": "🌾", "seed_herb": "🌿",
-		"herb": "🌿",
+		"food": "\ud83e\uddb4", "wood": "\ud83e\udeb5", "stone": "\ud83e\udea8",
+		"ore": "\u26cf", "gold": "\ud83d\udcb0", "build_points": "\ud83d\udd28",
+		"berries": "\ud83ced", "seed_wheat": "\ud83c\udf3e", "herb": "\ud83c\udf3f",
 	}
 	return icons.get(key, ICON)
 
@@ -135,8 +160,7 @@ func _refresh_label() -> void:
 	label.text = "\n".join(lines)
 
 
-# ─── Dépôt ────────────────────────────────────────────────────────────────────
-
+# ─── Dépôt ──────────────────────────────────────────────────────────
 func deposit(resource: String, amount: int) -> void:
 	if amount <= 0:
 		return
@@ -146,6 +170,4 @@ func deposit(resource: String, amount: int) -> void:
 	item_deposited.emit(resource, amount)
 	inventory_changed.emit(inventory)
 	_refresh_label()
-	if _ui_open:
-		_refresh_ui()
 	print("[Chest] +%d %s (total: %d)" % [amount, resource, inventory[resource]])
