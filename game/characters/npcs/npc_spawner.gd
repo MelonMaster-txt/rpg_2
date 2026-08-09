@@ -1,82 +1,43 @@
-# npc_spawner.gd
-# Autoload OU Node enfant de la World scene.
-# Gere le spawn/depop des NPC aleatoires dans la foret.
-#
-# USAGE :
-#   NpcSpawner.spawn_at(position)           → 1 NPC random
-#   NpcSpawner.spawn_at(position, data)     → NPC avec apparence forcee
-#   NpcSpawner.spawn_group(positions_array) → groupe de NPC
-#   NpcSpawner.spawn_random_around(center, radius, count) → NPC en cercle
-#   NpcSpawner.despawn_all()                → vide la scene
+# npc_spawner.gd — Autoload
+# Spawne des PNJ aléatoires autour d'une position donnée.
 extends Node
 
-const NPC_SCENE := preload("res://game/characters/npcs/random_npc.tscn")
+const NPC_SCENE: PackedScene = preload("res://game/characters/npcs/random_npc.tscn")
 
-@export var max_npcs: int = 20
-@export var spawn_parent: NodePath = NodePath("")
-
-var _active_npcs: Array[Node] = []
+var _spawned: Array[Node] = []
 
 
-func spawn_at(pos: Vector2, appearance_data: Dictionary = {}) -> Node:
-	if _active_npcs.size() >= max_npcs:
-		push_warning("NpcSpawner: limite de %d NPC atteinte." % max_npcs)
-		return null
-
-	var npc: Node = NPC_SCENE.instantiate()
-	_get_parent_node().add_child(npc)
-	npc.global_position = pos
-
-	if appearance_data.is_empty():
-		npc.randomize_full()
-	else:
-		npc.set_appearance(appearance_data)
-
-	npc.tree_exited.connect(_on_npc_removed.bind(npc))
-	_active_npcs.append(npc)
-	return npc
+func _ready() -> void:
+	pass
 
 
-func spawn_group(positions: Array) -> Array:
-	var spawned: Array = []
-	for pos: Vector2 in positions:
-		var n: Node = spawn_at(pos)
-		if n:
-			spawned.append(n)
-	return spawned
-
-
-func spawn_random_around(center: Vector2, radius: float, count: int) -> Array:
-	var positions: Array = []
-	for i: int in count:
-		var angle: float = randf() * TAU
-		var dist: float = randf() * radius
-		positions.append(center + Vector2(cos(angle), sin(angle)) * dist)
-	return spawn_group(positions)
+func spawn_random_around(origin: Vector2, radius: float, count: int = 1) -> void:
+	var scene_root: Node = get_tree().current_scene
+	if scene_root == null:
+		return
+	for _i: int in range(count):
+		var angle: float  = randf() * TAU
+		var dist:  float  = randf_range(radius * 0.3, radius)
+		var pos:   Vector2 = origin + Vector2(cos(angle), sin(angle)) * dist
+		var npc:   Node   = NPC_SCENE.instantiate()
+		scene_root.add_child(npc)
+		npc.global_position = pos
+		if npc.has_method("randomize_full"):
+			npc.randomize_full()
+		_spawned.append(npc)
+		npc.tree_exited.connect(_on_npc_removed.bind(npc))
 
 
 func despawn_all() -> void:
-	for npc: Node in _active_npcs.duplicate():
+	for npc: Node in _spawned:
 		if is_instance_valid(npc):
 			npc.queue_free()
-	_active_npcs.clear()
+	_spawned.clear()
 
 
-func get_active_count() -> int:
-	return _active_npcs.size()
+func get_spawned_count() -> int:
+	return _spawned.size()
 
 
 func _on_npc_removed(npc: Node) -> void:
-	_active_npcs.erase(npc)
-
-
-func _on_npc_defeated(npc: Node) -> void:
-	_active_npcs.erase(npc)
-
-
-func _get_parent_node() -> Node:
-	if spawn_parent != NodePath(""):
-		var n: Node = get_node_or_null(spawn_parent)
-		if n:
-			return n
-	return get_tree().current_scene
+	_spawned.erase(npc)
