@@ -6,7 +6,6 @@ const NOISE_DEBUG_SCN:       PackedScene = preload("res://game/world/noise_debug
 const DEBUG_MENU_SCR:        GDScript    = preload("res://game/ui/debug_menu.gd")
 const NOISE_KEY_LISTENER:    GDScript    = preload("res://game/world/noise_key_listener.gd")
 const IN_GAME_SAVE_MENU_SCN: PackedScene = preload("res://game/core/in_game_save_menu.tscn")
-const CHEST_SCENE:           PackedScene = preload("res://game/world/chest.tscn")
 
 @onready var _player_container: Node2D   = $PlayerContainer
 @onready var _player_spawn:     Marker2D = $PlayerSpawn
@@ -44,8 +43,8 @@ func _ready() -> void:
 	add_child(save_overlay)
 
 	_spawn_player()
-	_spawn_chest()
 	_setup_loading_screen()
+	# NOTE: le coffre est maintenant dans hut_chunk.tscn, pas ici
 
 
 func _spawn_player() -> void:
@@ -55,12 +54,6 @@ func _spawn_player() -> void:
 	else:
 		player.global_position = _player_spawn.global_position
 	_player_container.add_child(player)
-
-
-func _spawn_chest() -> void:
-	var chest: Node2D = CHEST_SCENE.instantiate() as Node2D
-	chest.position = Vector2(256, 256)
-	add_child(chest)
 
 
 func _setup_loading_screen() -> void:

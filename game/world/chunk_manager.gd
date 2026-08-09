@@ -10,11 +10,10 @@ const CHUNK_NODE_SCENE: PackedScene = preload("res://game/world/chunk_node.tscn"
 
 signal initial_load_completed
 
-# --- Niveaux de ticket (inspiré Minecraft) ---
 enum TicketLevel {
-	ACTIVE = 0,   # Chunk visible, pleinement actif (rendu + process)
-	LAZY   = 1,   # Chunk en mémoire, invisible, process désactivé
-	SLEEP  = 2,   # Chunk dans le pool, non attaché à la scène
+	ACTIVE = 0,
+	LAZY   = 1,
+	SLEEP  = 2,
 }
 
 @export var chunk_size:         int  = 512
@@ -38,7 +37,6 @@ var _last_player_chunk: Vector2i = Vector2i(999999, 999999)
 var _find_player_cd:    int      = 0
 var _spawn_center:      Vector2i = Vector2i(0, 0)
 var _initial_load_done: bool     = false
-# Nombre de chunks appliqués depuis le démarrage — doit être > 0 avant d'émettre
 var _chunks_applied:    int      = 0
 
 
@@ -61,11 +59,6 @@ func _deferred_init() -> void:
 
 func _process(_delta: float) -> void:
 	_flush_ready_queue()
-
-	# N'émet le signal que si :
-	# 1) pas encore émis
-	# 2) au moins un chunk a été appliqué (évite le faux positif au 1er frame)
-	# 3) les deux queues sont vides (thread fini + main thread fini)
 	if not _initial_load_done and _chunks_applied > 0:
 		var gen_empty: bool = false
 		_thread_mutex.lock()
@@ -74,7 +67,6 @@ func _process(_delta: float) -> void:
 		if gen_empty:
 			_initial_load_done = true
 			initial_load_completed.emit()
-
 	if _player == null or not is_instance_valid(_player):
 		_find_player_cd -= 1
 		if _find_player_cd <= 0:
@@ -100,13 +92,10 @@ func _generation_thread_loop() -> void:
 		if _gen_queue.size() > 0:
 			coords = _gen_queue.pop_front()
 		_thread_mutex.unlock()
-
 		if coords == null:
 			OS.delay_msec(4)
 			continue
-
 		var data: Dictionary = _compute_chunk_data(coords as Vector2i)
-
 		_thread_mutex.lock()
 		_ready_queue.append({"coords": coords, "data": data})
 		_thread_mutex.unlock()
@@ -137,6 +126,11 @@ func _flush_ready_queue() -> void:
 			chunk.setup(coords, chunk_size, data["type"])
 			_apply_ticket(coords)
 			_chunks_applied += 1
+			# Restaurer les NPC offline pour ce chunk
+			if Engine.has_singleton("NpcOfflineSim") or has_node("/root/NpcOfflineSim"):
+				var sim: Node = get_node_or_null("/root/NpcOfflineSim")
+				if sim != null:
+					sim.restore_npcs_to_chunk(chunk, coords)
 
 
 func _apply_ticket(coords: Vector2i) -> void:
@@ -162,9 +156,13 @@ func _get_chunk_from_pool() -> Node2D:
 	return CHUNK_NODE_SCENE.instantiate() as Node2D
 
 
-func _return_chunk_to_pool(chunk: Node2D) -> void:
+func _return_chunk_to_pool(chunk: Node2D, coords: Vector2i) -> void:
 	if not is_instance_valid(chunk):
 		return
+	# Sauvegarder les NPC travailleurs avant de retirer le chunk
+	var sim: Node = get_node_or_null("/root/NpcOfflineSim")
+	if sim != null:
+		sim.save_npcs_from_chunk(chunk, coords)
 	chunk.visible = false
 	chunk.process_mode = Node.PROCESS_MODE_DISABLED
 	if chunk.get_parent() != null:
@@ -253,7 +251,7 @@ func _unload_chunk(coords: Vector2i) -> void:
 		return
 	if _loaded_chunks.has(coords):
 		var chunk: Node2D = _loaded_chunks[coords]
-		_return_chunk_to_pool(chunk)
+		_return_chunk_to_pool(chunk, coords)
 		_loaded_chunks.erase(coords)
 		_ticket_levels.erase(coords)
 
@@ -273,6 +271,10 @@ func _world_to_chunk(world_pos: Vector2) -> Vector2i:
 		int(world_pos.x / float(chunk_size)),
 		int(world_pos.y / float(chunk_size))
 	)
+
+
+func get_loaded_count() -> int:
+	return _loaded_chunks.size()
 
 
 func _draw() -> void:
