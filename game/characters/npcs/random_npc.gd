@@ -2,15 +2,16 @@
 class_name RandomNpc
 extends CharacterBody2D
 
-const COLOR_MALE    := Color(0.25, 0.50, 1.00)
-const COLOR_FEMALE  := Color(1.00, 0.45, 0.70)
-const COLOR_MONSTER := Color(0.10, 0.75, 0.20)
-const COLOR_DEAD    := Color(0.30, 0.30, 0.30)
-const COLOR_HOSTILE := Color(0.90, 0.15, 0.10)
-const COLOR_WORKER  := Color(0.90, 0.75, 0.20)
-const DETECT_RANGE    := 120.0
-const ATTACK_RANGE    := 32.0
-const ATTACK_COOLDOWN := 1.5
+const COLOR_MALE:    Color = Color(0.25, 0.50, 1.00)
+const COLOR_FEMALE:  Color = Color(1.00, 0.45, 0.70)
+const COLOR_MONSTER: Color = Color(0.10, 0.75, 0.20)
+const COLOR_DEAD:    Color = Color(0.30, 0.30, 0.30)
+const COLOR_HOSTILE: Color = Color(0.90, 0.15, 0.10)
+const COLOR_WORKER:  Color = Color(0.90, 0.75, 0.20)
+
+const DETECT_RANGE:    float = 120.0
+const ATTACK_RANGE:    float = 32.0
+const ATTACK_COOLDOWN: float = 1.5
 
 signal interaction_requested(npc: Node)
 signal npc_defeated(npc: Node)
@@ -19,17 +20,17 @@ signal npc_recruited(npc: Node)
 
 enum AiState { IDLE, WANDER, FLEE, CHASE, DEAD, WORKING }
 
-var data: NpcData = null
-var npc_name:   String = ""
-var npc_gender: String = "male"
-var strength:   int    = 5
-var max_hp:     int    = 30
-var current_hp: int    = 30
-var is_hostile: bool   = false
-var speed:      float  = 60.0
-var _npc_state:     int    = 0
-var _ai: AiState = AiState.IDLE
-var _wander_timer: float   = 2.0
+var data:       NpcData = null
+var npc_name:   String  = ""
+var npc_gender: String  = "male"
+var strength:   int     = 5
+var max_hp:     int     = 30
+var current_hp: int     = 30
+var is_hostile: bool    = false
+var speed:      float   = 60.0
+var _npc_state: int     = 0
+var _ai:          AiState = AiState.IDLE
+var _wander_timer: float  = 2.0
 var _wander_dir:   Vector2 = Vector2.ZERO
 var _target:       Node2D  = null
 var _attack_timer: float = 0.0
@@ -68,8 +69,9 @@ func _do_randomize(seed_val: int) -> void:
 	data       = NpcData.generate_random()
 	npc_name   = data.npc_name
 	npc_gender = _gender_from_archetype(data.archetype)
+	# Correction : data.stats est un CharacterStats — on accède aux propriétés directement
 	strength   = data.stats.force
-	max_hp     = data.stats.max_hp if data.stats.get("max_hp") != null else randi_range(20, 60)
+	max_hp     = data.stats.max_hp
 	current_hp = max_hp
 	is_hostile = data.archetype == NpcData.Archetype.BANDIT or randf() < 0.2
 	speed      = randf_range(40.0, 90.0)
@@ -256,7 +258,7 @@ func _start_working(initial_job: String) -> void:
 	var worker: Node = Node.new()
 	worker.set_script(worker_script)
 	worker.set_name("WorkerAI")
-	worker.job = initial_job
+	worker.set("job", initial_job)
 	add_child(worker)
 	print("[RandomNpc] WorkerAI cree pour ", npc_name, " avec job=", initial_job)
 
@@ -274,44 +276,25 @@ func change_job(new_job: String) -> void:
 
 func _build_kingdom_entry(role: String) -> Dictionary:
 	var entry: Dictionary = {
-		"name": npc_name,
-		"gender": npc_gender,
-		"role": role,
-		"job": "",
+		"name":     npc_name,
+		"gender":   npc_gender,
+		"role":     role,
+		"job":      "",
 		"strength": strength,
-		"max_hp": max_hp,
+		"max_hp":   max_hp,
 		"archetype": "",
-		"skills": {},
+		"skills":    {},
 		"happiness": 100,
 	}
 	if data != null:
 		entry["archetype"] = NpcData.Archetype.keys()[data.archetype]
 		entry["skills"] = {
-			"farming": (
-				data.stats.get("skill_farming")
-				if data.stats.get("skill_farming") != null
-				else 0
-			),
-			"woodcutting": (
-				data.stats.get("skill_woodcutting")
-				if data.stats.get("skill_woodcutting") != null
-				else 0
-			),
-			"mining": (
-				data.stats.get("skill_mining")
-				if data.stats.get("skill_mining") != null
-				else 0
-			),
-			"combat": (
-				data.stats.get("skill_combat")
-				if data.stats.get("skill_combat") != null
-				else 0
-			),
-			"trading": (
-				data.stats.get("skill_trading")
-				if data.stats.get("skill_trading") != null
-				else 0
-			),
+			"farming":     data.stats.skill_farming,
+			"woodcutting": data.stats.skill_woodcutting,
+			"mining":      data.stats.skill_mining,
+			"crafting":    data.stats.skill_crafting,
+			"combat":      data.stats.skill_combat,
+			"trading":     data.stats.skill_trading,
 		}
 	return entry
 
