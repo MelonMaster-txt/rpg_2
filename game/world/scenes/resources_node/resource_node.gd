@@ -6,29 +6,39 @@ extends Area2D
 @export var gather_amount: int = 1
 @export var respawn_time: float = 12.0
 
-# Couleur du carre de placeholder selon le type
 const TYPE_COLORS := {
-	"wood":   Color(0.20, 0.50, 0.15),  # vert fonce - arbre
-	"berry":  Color(0.55, 0.10, 0.60),  # violet    - baies
-	"stone":  Color(0.55, 0.55, 0.55),  # gris      - pierre
+	"wood":   Color(0.20, 0.50, 0.15),
+	"berry":  Color(0.55, 0.10, 0.60),
+	"stone":  Color(0.55, 0.55, 0.55),
 }
 const DEFAULT_COLOR := Color(0.6, 0.4, 0.2)
 
-var _visual: Node2D   = null
-var _color_rect: ColorRect = null
-var _label: Label = null
-var _gather_shape: CollisionShape2D = null
+# Groupe Godot par type — utilisé par WorkerAI pour cibler
+const TYPE_GROUP := {
+	"wood":  "tree",
+	"berry": "berry",
+	"stone": "rock",
+}
+
+var _visual: Node2D           = null
+var _color_rect: ColorRect    = null
+var _label: Label             = null
+var _gather_shape: CollisionShape2D  = null
 var _blocker_shape: CollisionShape2D = null
-var _respawn_timer: Timer = null
+var _respawn_timer: Timer     = null
 
 var current_health: int = 0
-var is_depleted: bool = false
+var is_depleted: bool   = false
 var player_in_area: bool = false
 
 
 func _ready() -> void:
 	current_health = max_health
 	add_to_group("resource_nodes")
+	# Rejoindre le groupe spécifique pour que le WorkerAI trouve la cible
+	var grp: String = TYPE_GROUP.get(resource_type, "")
+	if grp != "":
+		add_to_group(grp)
 
 	_visual        = get_node_or_null("Visual")
 	_label         = get_node_or_null("Label") as Label
@@ -36,7 +46,6 @@ func _ready() -> void:
 	_blocker_shape = get_node_or_null("Blocker/BlockerShape") as CollisionShape2D
 	_respawn_timer = get_node_or_null("RespawnTimer") as Timer
 
-	# Cree un ColorRect comme sprite placeholder si pas de texture
 	if _visual != null:
 		var sprite := _visual as Sprite2D
 		if sprite != null and sprite.texture == null:
@@ -59,7 +68,6 @@ func _build_color_rect() -> void:
 	var color: Color = TYPE_COLORS.get(resource_type, DEFAULT_COLOR)
 	_color_rect = ColorRect.new()
 	_color_rect.color = color
-	# Taille selon le type
 	var sz: Vector2
 	match resource_type:
 		"wood":  sz = Vector2(20, 28)
@@ -94,21 +102,34 @@ func _on_body_exited(body: Node) -> void:
 			_label.visible = false
 
 
-func _resource_type_to_key(rtype: String) -> String:
-	match rtype:
-		"wood", "bois":              return "bois"
-		"berry", "baies", "berries": return "baies"
-		"stone", "pierre", "rock":   return "pierre"
-		_:                            return rtype
-
-
-func _do_gather() -> void:
+# Appelé par le joueur (sans paramètre) via _do_gather()
+# Appelé par le WorkerAI avec harvest(1) — retourne la quantité récoltée
+func harvest(requested: int = -1) -> int:
+	if is_depleted:
+		return 0
+	var amount: int = gather_amount if requested <= 0 else requested
 	current_health -= 1
-	var inv_key: String = _resource_type_to_key(resource_type)
-	GameManager.add_item(inv_key, gather_amount)
-	_spawn_gather_feedback()
+	if requested < 0:
+		# Appel joueur : dépôt direct + feedback visuel
+		var inv_key: String = _resource_type_to_key(resource_type)
+		GameManager.add_item(inv_key, amount)
+		_spawn_gather_feedback()
 	if current_health <= 0:
 		_deplete()
+	return amount
+
+
+# Gardé pour compatibilité interaction joueur
+func _do_gather() -> void:
+	harvest()
+
+
+func _resource_type_to_key(rtype: String) -> String:
+	match rtype:
+		"wood", "bois":              return "wood"
+		"berry", "baies", "berries": return "berries"
+		"stone", "pierre", "rock":   return "stone"
+		_:                            return rtype
 
 
 func _deplete() -> void:
