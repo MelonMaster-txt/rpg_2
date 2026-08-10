@@ -1,7 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://char_custom_ui"]
+[gd_scene load_steps=2 format=3 uid="uid://char_custom_ui"]
 
 [ext_resource type="Script" path="res://game/ui/character_customization_ui.gd" id="1_ui"]
-[ext_resource type="Script" path="res://game/characters/shared/character_appearance.gd" id="2_app"]
 
 [node name="CharacterCustomizationUI" type="Control"]
 anchors_preset = 15
@@ -12,29 +11,35 @@ anchors_preset = 15
 color = Color(0.07, 0.05, 0.03, 1)
 
 [node name="Title" type="Label" parent="."]
-position = Vector2(0, 16)
+position = Vector2(0, 20)
 size = Vector2(1152, 40)
 text = "Cree ton Barbare"
 horizontal_alignment = 1
 
-[node name="PreviewPlayer" type="Node2D" parent="."]
-position = Vector2(380, 360)
+[node name="PreviewContainer" type="CenterContainer" parent="."]
+anchor_left = 0.0
+anchor_top = 0.1
+anchor_right = 0.5
+anchor_bottom = 0.9
 
-[node name="CharacterAppearance" type="Node" parent="PreviewPlayer"]
-script = ExtResource("2_app")
+[node name="BodySprite" type="Sprite2D" parent="PreviewContainer"]
+scale = Vector2(4, 4)
 
 [node name="UI" type="VBoxContainer" parent="."]
-position = Vector2(620, 80)
-size = Vector2(460, 700)
+anchor_left = 0.5
+anchor_top = 0.1
+anchor_right = 1.0
+anchor_bottom = 0.95
+theme_override_constants/separation = 12
 
 [node name="Rows" type="VBoxContainer" parent="UI"]
-custom_minimum_size = Vector2(0, 140)
+theme_override_constants/separation = 8
 
 [node name="GenderRow" type="HBoxContainer" parent="UI/Rows"]
 
 [node name="BtnPrev" type="Button" parent="UI/Rows/GenderRow"]
 text = "<"
-custom_minimum_size = Vector2(36, 0)
+custom_minimum_size = Vector2(36, 36)
 
 [node name="Label" type="Label" parent="UI/Rows/GenderRow"]
 size_flags_horizontal = 3
@@ -43,54 +48,55 @@ horizontal_alignment = 1
 
 [node name="BtnNext" type="Button" parent="UI/Rows/GenderRow"]
 text = ">"
-custom_minimum_size = Vector2(36, 0)
+custom_minimum_size = Vector2(36, 36)
 
 [node name="HairRow" type="HBoxContainer" parent="UI/Rows"]
 
 [node name="BtnPrev" type="Button" parent="UI/Rows/HairRow"]
 text = "<"
-custom_minimum_size = Vector2(36, 0)
+custom_minimum_size = Vector2(36, 36)
 
 [node name="Label" type="Label" parent="UI/Rows/HairRow"]
 size_flags_horizontal = 3
-text = "Short"
+text = "None"
 horizontal_alignment = 1
 
 [node name="BtnNext" type="Button" parent="UI/Rows/HairRow"]
 text = ">"
-custom_minimum_size = Vector2(36, 0)
+custom_minimum_size = Vector2(36, 36)
 
 [node name="EyesRow" type="HBoxContainer" parent="UI/Rows"]
 
 [node name="BtnPrev" type="Button" parent="UI/Rows/EyesRow"]
 text = "<"
-custom_minimum_size = Vector2(36, 0)
+custom_minimum_size = Vector2(36, 36)
 
 [node name="Label" type="Label" parent="UI/Rows/EyesRow"]
 size_flags_horizontal = 3
-text = "Normal"
+text = "None"
 horizontal_alignment = 1
 
 [node name="BtnNext" type="Button" parent="UI/Rows/EyesRow"]
 text = ">"
-custom_minimum_size = Vector2(36, 0)
+custom_minimum_size = Vector2(36, 36)
 
 [node name="OutfitRow" type="HBoxContainer" parent="UI/Rows"]
 
 [node name="BtnPrev" type="Button" parent="UI/Rows/OutfitRow"]
 text = "<"
-custom_minimum_size = Vector2(36, 0)
+custom_minimum_size = Vector2(36, 36)
 
 [node name="Label" type="Label" parent="UI/Rows/OutfitRow"]
 size_flags_horizontal = 3
-text = "Peasant"
+text = "None"
 horizontal_alignment = 1
 
 [node name="BtnNext" type="Button" parent="UI/Rows/OutfitRow"]
 text = ">"
-custom_minimum_size = Vector2(36, 0)
+custom_minimum_size = Vector2(36, 36)
 
 [node name="Colors" type="VBoxContainer" parent="UI"]
+theme_override_constants/separation = 10
 
 [node name="SkinSection" type="VBoxContainer" parent="UI/Colors"]
 
@@ -98,10 +104,7 @@ custom_minimum_size = Vector2(36, 0)
 text = "Couleur de peau"
 
 [node name="PresetsRow" type="HBoxContainer" parent="UI/Colors/SkinSection"]
-
-[node name="SkinPicker" type="ColorPickerButton" parent="UI/Colors/SkinSection"]
-color = Color(0.89, 0.70, 0.55, 1)
-custom_minimum_size = Vector2(0, 36)
+theme_override_constants/separation = 6
 
 [node name="HairSection" type="VBoxContainer" parent="UI/Colors"]
 
