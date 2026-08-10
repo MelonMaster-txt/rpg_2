@@ -1,7 +1,4 @@
 # character_customization_ui.gd
-# Ecran de personnalisation AVANT le chargement du monde.
-# Appele depuis main_menu via get_tree().change_scene_to_file()
-# Quand le joueur valide : sauvegarde dans GameState puis lance l'overworld.
 extends Control
 
 @onready var _btn_gender_prev  := $UI/Rows/GenderRow/BtnPrev  as Button
@@ -25,17 +22,14 @@ extends Control
 @onready var _btn_back     := $UI/BtnBack    as Button
 @onready var _btn_random   := $UI/BtnRandom  as Button
 
-# Preview : TextureRect dans la zone droite
-@onready var _preview_rect := $PreviewContainer/BodyPreview as TextureRect
+# Preview cree par code (independant du cache tscn)
+var _preview_rect: TextureRect = null
 
-const BASE_PATH: String = "res://game/assets/sprites/characters/body/"
-
-# Taille d'une frame dans le spritesheet
-const FRAME_W: int        = 32
-const FRAME_H: int        = 32
-# Colonne face (down) du spritesheet
-const FRAME_COL_DOWN: int = 1
-const FRAME_ROW: int      = 0
+const BASE_PATH: String    = "res://game/assets/sprites/characters/body/"
+const FRAME_W:   int       = 32
+const FRAME_H:   int       = 32
+const FRAME_COL_DOWN: int  = 1
+const FRAME_ROW: int       = 0
 
 const SKIN_PRESETS: Array = [
 	Color(1.00, 0.87, 0.74),
@@ -48,7 +42,6 @@ const SKIN_PRESETS: Array = [
 	Color(0.20, 0.11, 0.06),
 ]
 
-# female en premier => index 0 = fichier existant par defaut
 const GENDERS:    Array = ["female", "male"]
 const HAIRS:      Array = ["none", "short", "medium", "long", "bald"]
 const EYE_STYLES: Array = ["none", "normal", "closed", "angry", "sad"]
@@ -62,10 +55,30 @@ var _skin_color: Color = SKIN_PRESETS[2]
 
 
 func _ready() -> void:
+	_build_preview_widget()
 	_setup_skin_presets()
 	_connect_signals()
 	_refresh_labels()
 	_refresh_preview()
+
+
+# Cree le TextureRect de preview par code dans la moitie droite
+func _build_preview_widget() -> void:
+	# Conteneur ancre sur la moitie droite
+	var container := CenterContainer.new()
+	container.name = "PreviewZone"
+	container.anchor_left   = 0.35
+	container.anchor_top    = 0.05
+	container.anchor_right  = 1.0
+	container.anchor_bottom = 0.95
+	add_child(container)
+	# TextureRect de preview
+	_preview_rect = TextureRect.new()
+	_preview_rect.name = "BodyPreview"
+	_preview_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_preview_rect.custom_minimum_size = Vector2(128, 128)
+	_preview_rect.expand_mode = TextureRect.EXPAND_KEEP_SIZE
+	container.add_child(_preview_rect)
 
 
 func _setup_skin_presets() -> void:
@@ -127,7 +140,6 @@ func _refresh_preview() -> void:
 		return
 	var gender: String = GENDERS[_idx_gender]
 	var path: String = BASE_PATH + "body_%s.png" % gender
-	# Fallback sur female si le fichier du genre demande n'existe pas encore
 	if not ResourceLoader.exists(path):
 		path = BASE_PATH + "body_female.png"
 	if not ResourceLoader.exists(path):
