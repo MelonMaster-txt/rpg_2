@@ -1,118 +1,130 @@
-# char_draw.gd
-# Node2D qui dessine un personnage LPC-style en pur GDScript (draw calls)
 extends Node2D
 
+# Référence vers character_appearance.gd
 var _appearance: Node = null
 
-const W  := 10
-const TW := 8
-const TH := 9
-const BH := 14
-const LH := 6
-const FH := 4
-const AW := 5
-const AH := 10
-
+@export var tile_size: int = 16
 
 func _draw() -> void:
-	if _appearance == null:
-		return
+	_draw_character()
 
-	var a := _appearance
-	var skin:   Color  = a._color_skin
-	var hair:   Color  = a._color_hair
-	var eyes:   Color  = a._color_eyes
-	var suit:   Color  = a._color_outfit
-	var wo:     float  = a._walk_offset
-	var dir:    String = a._direction
+func refresh() -> void:
+	queue_redraw()
 
-	var flip: bool = dir == "left"
-	if flip:
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2(-1, 1))
+func _draw_character() -> void:
+	# Récupère les couleurs depuis appearance ou valeurs par défaut
+	var c_skin:   Color = Color(0.85, 0.70, 0.55)
+	var c_eyes:   Color = Color(0.20, 0.50, 0.80)
+	var c_hair:   Color = Color(0.30, 0.18, 0.08)
+	var c_outfit: Color = Color(0.55, 0.38, 0.20)
+	var hair_style: String = "short"
+	var eye_style:  String = "normal"
+
+	if _appearance != null:
+		var data: Dictionary = _appearance.get_appearance_data()
+		if data.has("skin_color"):  c_skin   = data["skin_color"]
+		if data.has("eyes_color"):  c_eyes   = data["eyes_color"]
+		if data.has("hair_color"):  c_hair   = data["hair_color"]
+		if data.has("outfit_color"): c_outfit = data["outfit_color"]
+		if data.has("hair"):        hair_style = data["hair"]
+		if data.has("eye_style"):   eye_style  = data["eye_style"]
+
+	var s: float = float(tile_size)
+	var c_outline: Color = Color(0.08, 0.05, 0.03)
+	var c_shadow:  Color = Color(c_skin.r * 0.75, c_skin.g * 0.75, c_skin.b * 0.75)
+	var c_outfit_dark: Color = Color(c_outfit.r * 0.7, c_outfit.g * 0.7, c_outfit.b * 0.7)
+
+	# ── JAMBES ──────────────────────────────────────────────────────────
+	var pants: Color = Color(c_outfit.r * 0.6, c_outfit.g * 0.55, c_outfit.b * 0.8)
+	# Jambe gauche
+	draw_rect(Rect2(-s * 0.35, s * 0.15, s * 0.28, s * 0.55), pants)
+	draw_rect(Rect2(-s * 0.35, s * 0.15, s * 0.28, s * 0.04), c_outline)
+	# Jambe droite
+	draw_rect(Rect2(s * 0.07, s * 0.15, s * 0.28, s * 0.55), pants)
+	draw_rect(Rect2(s * 0.07, s * 0.15, s * 0.28, s * 0.04), c_outline)
+	# Pieds
+	draw_rect(Rect2(-s * 0.38, s * 0.65, s * 0.32, s * 0.12), c_skin)
+	draw_rect(Rect2(s * 0.06, s * 0.65, s * 0.32, s * 0.12), c_skin)
+
+	# ── CORPS / TORSE ───────────────────────────────────────────────────
+	draw_rect(Rect2(-s * 0.38, -s * 0.22, s * 0.76, s * 0.40), c_outfit)
+	# Ligne verticale centrale (ombre)
+	draw_rect(Rect2(-s * 0.04, -s * 0.22, s * 0.08, s * 0.40), c_outfit_dark)
+	# Contour bas du torse
+	draw_rect(Rect2(-s * 0.38, s * 0.15, s * 0.76, s * 0.03), c_outline)
+
+	# ── BRAS ────────────────────────────────────────────────────────────
+	# Bras gauche
+	draw_rect(Rect2(-s * 0.55, -s * 0.22, s * 0.18, s * 0.42), c_skin)
+	draw_rect(Rect2(-s * 0.55, -s * 0.22, s * 0.18, s * 0.03), c_outline)
+	# Main gauche
+	draw_rect(Rect2(-s * 0.57, s * 0.17, s * 0.20, s * 0.12), c_skin)
+	# Bras droit
+	draw_rect(Rect2(s * 0.37, -s * 0.22, s * 0.18, s * 0.42), c_skin)
+	draw_rect(Rect2(s * 0.37, -s * 0.22, s * 0.18, s * 0.03), c_outline)
+	# Main droite
+	draw_rect(Rect2(s * 0.37, s * 0.17, s * 0.20, s * 0.12), c_skin)
+
+	# ── COU ─────────────────────────────────────────────────────────────
+	draw_rect(Rect2(-s * 0.12, -s * 0.38, s * 0.24, s * 0.18), c_skin)
+
+	# ── TÊTE ────────────────────────────────────────────────────────────
+	var head_rect: Rect2 = Rect2(-s * 0.35, -s * 0.95, s * 0.70, s * 0.58)
+	draw_rect(head_rect, c_skin)
+	# Ombre latérale tête
+	draw_rect(Rect2(-s * 0.35, -s * 0.95, s * 0.06, s * 0.58), c_shadow)
+	draw_rect(Rect2(s * 0.29, -s * 0.95, s * 0.06, s * 0.58), c_shadow)
+	# Contour tête
+	draw_rect(Rect2(-s * 0.35, -s * 0.95, s * 0.70, s * 0.03), c_outline)
+	draw_rect(Rect2(-s * 0.35, -s * 0.40, s * 0.70, s * 0.03), c_outline)
+	draw_rect(Rect2(-s * 0.35, -s * 0.95, s * 0.03, s * 0.58), c_outline)
+	draw_rect(Rect2(s * 0.32, -s * 0.95, s * 0.03, s * 0.58), c_outline)
+
+	# ── YEUX ────────────────────────────────────────────────────────────
+	var eye_y: float = -s * 0.65
+	if eye_style == "closed":
+		# Trait horizontal
+		draw_rect(Rect2(-s * 0.22, eye_y, s * 0.14, s * 0.03), c_outline)
+		draw_rect(Rect2(s * 0.08,  eye_y, s * 0.14, s * 0.03), c_outline)
+	elif eye_style == "angry":
+		# Œil plissé + sourcil incliné
+		draw_rect(Rect2(-s * 0.22, eye_y, s * 0.14, s * 0.08), c_eyes)
+		draw_rect(Rect2(s * 0.08,  eye_y, s * 0.14, s * 0.08), c_eyes)
+		draw_rect(Rect2(-s * 0.24, eye_y - s * 0.07, s * 0.16, s * 0.03), c_outline)
+		draw_rect(Rect2(s * 0.08,  eye_y - s * 0.07, s * 0.16, s * 0.03), c_outline)
+	elif eye_style == "sad":
+		draw_rect(Rect2(-s * 0.22, eye_y, s * 0.14, s * 0.10), c_eyes)
+		draw_rect(Rect2(s * 0.08,  eye_y, s * 0.14, s * 0.10), c_eyes)
+		# Larme
+		draw_rect(Rect2(-s * 0.18, eye_y + s * 0.10, s * 0.05, s * 0.08), Color(0.5, 0.7, 1.0, 0.8))
 	else:
-		draw_set_transform(Vector2.ZERO, 0.0, Vector2(1, 1))
+		# Normal : blanc + iris + pupille
+		draw_rect(Rect2(-s * 0.22, eye_y - s * 0.02, s * 0.14, s * 0.13), Color.WHITE)
+		draw_rect(Rect2(s * 0.08,  eye_y - s * 0.02, s * 0.14, s * 0.13), Color.WHITE)
+		draw_rect(Rect2(-s * 0.19, eye_y, s * 0.10, s * 0.09), c_eyes)
+		draw_rect(Rect2(s * 0.09,  eye_y, s * 0.10, s * 0.09), c_eyes)
+		draw_rect(Rect2(-s * 0.16, eye_y + s * 0.02, s * 0.05, s * 0.05), c_outline)
+		draw_rect(Rect2(s * 0.11,  eye_y + s * 0.02, s * 0.05, s * 0.05), c_outline)
+		# Reflet
+		draw_rect(Rect2(-s * 0.13, eye_y + s * 0.01, s * 0.03, s * 0.03), Color.WHITE)
+		draw_rect(Rect2(s * 0.14,  eye_y + s * 0.01, s * 0.03, s * 0.03), Color.WHITE)
 
-	# —— Jambes ——
-	var leg_y: int = 6
-	var lx: float  = -5.0 + (wo if dir in ["left", "right", "down"] else 0.0)
-	var rx: float  =  1.0 - (wo if dir in ["left", "right", "down"] else 0.0)
-	draw_rect(Rect2(lx, leg_y, 4, LH), suit.darkened(0.3))
-	draw_rect(Rect2(lx, leg_y + LH, 4, FH), skin.darkened(0.2))
-	draw_rect(Rect2(rx, leg_y, 4, LH), suit.darkened(0.3))
-	draw_rect(Rect2(rx, leg_y + LH, 4, FH), skin.darkened(0.2))
-
-	# —— Corps ——
-	draw_rect(Rect2(-W, -4, W * 2, BH - LH - FH), suit)
-	draw_rect(Rect2(-W, 3, W * 2, 2), suit.darkened(0.25))
-
-	# —— Bras ——
-	var arm_swing: float = -wo if dir in ["left", "right", "down"] else 0.0
-	draw_rect(Rect2(-W - AW, -4.0 + arm_swing, AW, AH), suit.darkened(0.1))
-	draw_rect(Rect2(-W - AW, -4.0 + arm_swing + float(AH), AW, 3), skin)
-	draw_rect(Rect2(W, -4.0 - arm_swing, AW, AH), suit.darkened(0.1))
-	draw_rect(Rect2(W, -4.0 - arm_swing + float(AH), AW, 3), skin)
-
-	# —— Cou ——
-	draw_rect(Rect2(-3, -10, 6, 6), skin)
-
-	# —— Tête ——
-	var head_y: int = -10 - TH
-	draw_rect(Rect2(-TW, head_y, TW * 2, TH), skin)
-
-	# —— Yeux ——
-	if dir != "up":
-		var ey: int = head_y + 3
-		match a._eye_style:
-			"normal":
-				draw_rect(Rect2(-5, ey, 3, 3), eyes)
-				draw_rect(Rect2( 2, ey, 3, 3), eyes)
-			"closed":
-				draw_line(Vector2(-5, ey + 1), Vector2(-2, ey + 1), eyes, 1.5)
-				draw_line(Vector2( 2, ey + 1), Vector2( 5, ey + 1), eyes, 1.5)
-			"angry":
-				draw_rect(Rect2(-5, ey, 3, 2), eyes)
-				draw_rect(Rect2( 2, ey, 3, 2), eyes)
-				draw_line(Vector2(-6, ey - 2), Vector2(-2, ey), hair, 1.5)
-				draw_line(Vector2( 2, ey),     Vector2( 6, ey - 2), hair, 1.5)
-			"sad":
-				draw_rect(Rect2(-5, ey + 1, 3, 3), eyes)
-				draw_rect(Rect2( 2, ey + 1, 3, 3), eyes)
-				draw_line(Vector2(-3, ey + 4), Vector2(-3, ey + 7), Color(0.5, 0.7, 1.0), 1.0)
-				draw_line(Vector2( 4, ey + 4), Vector2( 4, ey + 7), Color(0.5, 0.7, 1.0), 1.0)
-
-	# —— Bouche ——
-	if dir != "up":
-		draw_line(Vector2(-2, head_y + 7), Vector2(2, head_y + 7), skin.darkened(0.4), 1.0)
-
-	# —— Cheveux ——
-	match a._hair:
-		"short":
-			draw_rect(Rect2(-TW, head_y - 2, TW * 2, 4), hair)
-			# cast float pour éviter integer division sur TH / 2
-			draw_rect(Rect2(-TW, head_y, 3, float(TH) / 2.0), hair)
-			draw_rect(Rect2(TW - 3, head_y, 3, float(TH) / 2.0), hair)
-		"medium":
-			draw_rect(Rect2(-TW, head_y - 3, TW * 2, 5), hair)
-			draw_rect(Rect2(-TW, head_y, 3, TH), hair)
-			draw_rect(Rect2(TW - 3, head_y, 3, TH), hair)
-			draw_rect(Rect2(-4, head_y + 1, 3, 3), hair)
-		"long":
-			draw_rect(Rect2(-TW, head_y - 3, TW * 2, 5), hair)
-			draw_rect(Rect2(-TW - 1, head_y, 4, TH + 6), hair)
-			draw_rect(Rect2(TW - 3, head_y, 4, TH + 6), hair)
+	# ── CHEVEUX ─────────────────────────────────────────────────────────
+	var hair_top: float = -s * 0.97
+	match hair_style:
 		"bald":
-			pass
-
-	# —— Détail tenue ——
-	match a._outfit:
-		"guard":
-			draw_rect(Rect2(-W + 2, -4, (W - 2) * 2, 6), Color(0.75, 0.75, 0.8))
-			draw_rect(Rect2(-W + 2,  2, (W - 2) * 2, 1), Color(0.55, 0.55, 0.65))
-		"mage":
-			draw_rect(Rect2(-W, -4, W * 2, BH + 4), suit.darkened(0.1))
-			draw_circle(Vector2(-4, -1), 2.0, Color(1.0, 0.9, 0.2, 0.8))
-			draw_circle(Vector2( 4, -1), 2.0, Color(1.0, 0.9, 0.2, 0.8))
-		"farmer":
-			draw_rect(Rect2(-W + 1, -6, (W - 1) * 2, 4), suit.lightened(0.15))
-			draw_line(Vector2(-5, -6), Vector2(-7, -10), suit.lightened(0.15), 1.5)
-			draw_line(Vector2( 5, -6), Vector2( 7, -10), suit.lightened(0.15), 1.5)
+			pass  # Rien
+		"short":
+			draw_rect(Rect2(-s * 0.35, hair_top, s * 0.70, s * 0.18), c_hair)
+			draw_rect(Rect2(-s * 0.38, hair_top + s * 0.10, s * 0.08, s * 0.18), c_hair)
+			draw_rect(Rect2(s * 0.30,  hair_top + s * 0.10, s * 0.08, s * 0.18), c_hair)
+		"medium":
+			draw_rect(Rect2(-s * 0.35, hair_top, s * 0.70, s * 0.18), c_hair)
+			draw_rect(Rect2(-s * 0.38, hair_top + s * 0.10, s * 0.08, s * 0.45), c_hair)
+			draw_rect(Rect2(s * 0.30,  hair_top + s * 0.10, s * 0.08, s * 0.45), c_hair)
+			draw_rect(Rect2(-s * 0.35, hair_top + s * 0.50, s * 0.70, s * 0.10), c_hair)
+		"long":
+			draw_rect(Rect2(-s * 0.35, hair_top, s * 0.70, s * 0.18), c_hair)
+			draw_rect(Rect2(-s * 0.40, hair_top + s * 0.10, s * 0.10, s * 0.90), c_hair)
+			draw_rect(Rect2(s * 0.30,  hair_top + s * 0.10, s * 0.10, s * 0.90), c_hair)
+			draw_rect(Rect2(-s * 0.35, hair_top + s * 0.90, s * 0.70, s * 0.10), c_hair)

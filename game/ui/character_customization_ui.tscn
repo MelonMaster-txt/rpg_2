@@ -1,0 +1,168 @@
+[gd_scene load_steps=3 format=3 uid="uid://char_custom_ui"]
+
+[ext_resource type="Script" path="res://game/ui/character_customization_ui.gd" id="1_ui"]
+[ext_resource type="Script" path="res://game/characters/shared/character_appearance.gd" id="2_appearance"]
+
+[node name="CharacterCustomizationUI" type="Control"]
+anchors_preset = 15
+script = ExtResource("1_ui")
+
+[node name="Background" type="ColorRect" parent="."]
+anchors_preset = 15
+color = Color(0.08, 0.06, 0.04, 1)
+
+[node name="Title" type="Label" parent="."]
+position = Vector2(0, 20)
+size = Vector2(1152, 40)
+text = "Crée ton Barbare"
+horizontal_alignment = 1
+
+[node name="PreviewPlayer" type="Node2D" parent="."]
+position = Vector2(576, 360)
+
+[node name="CharacterAppearance" type="Node" parent="PreviewPlayer"]
+script = ExtResource("2_appearance")
+
+[node name="UI" type="VBoxContainer" parent="."]
+position = Vector2(800, 120)
+size = Vector2(300, 600)
+
+[node name="Rows" type="VBoxContainer" parent="UI"]
+
+[node name="GenderRow" type="HBoxContainer" parent="UI/Rows"]
+
+[node name="BtnPrev" type="Button" parent="UI/Rows/GenderRow"]
+text = "<"
+
+[node name="Label" type="Label" parent="UI/Rows/GenderRow"]
+size_flags_horizontal = 3
+text = "Male"
+horizontal_alignment = 1
+
+[node name="BtnNext" type="Button" parent="UI/Rows/GenderRow"]
+text = ">"
+
+[node name="HairRow" type="HBoxContainer" parent="UI/Rows"]
+
+[node name="BtnPrev" type="Button" parent="UI/Rows/HairRow"]
+text = "<"
+
+[node name="Label" type="Label" parent="UI/Rows/HairRow"]
+size_flags_horizontal = 3
+text = "Short"
+horizontal_alignment = 1
+
+[node name="BtnNext" type="Button" parent="UI/Rows/HairRow"]
+text = ">"
+
+[node name="EyesRow" type="HBoxContainer" parent="UI/Rows"]
+
+[node name="BtnPrev" type="Button" parent="UI/Rows/EyesRow"]
+text = "<"
+
+[node name="Label" type="Label" parent="UI/Rows/EyesRow"]
+size_flags_horizontal = 3
+text = "Normal"
+horizontal_alignment = 1
+
+[node name="BtnNext" type="Button" parent="UI/Rows/EyesRow"]
+text = ">"
+
+[node name="OutfitRow" type="HBoxContainer" parent="UI/Rows"]
+
+[node name="BtnPrev" type="Button" parent="UI/Rows/OutfitRow"]
+text = "<"
+
+[node name="Label" type="Label" parent="UI/Rows/OutfitRow"]
+size_flags_horizontal = 3
+text = "Peasant"
+horizontal_alignment = 1
+
+[node name="BtnNext" type="Button" parent="UI/Rows/OutfitRow"]
+text = ">"
+
+[node name="Colors" type="VBoxContainer" parent="UI"]
+
+[node name="LblSkin" type="Label" parent="UI/Colors"]
+text = "Peau"
+
+[node name="SkinRow" type="HBoxContainer" parent="UI/Colors"]
+
+[node name="R" type="HSlider" parent="UI/Colors/SkinRow"]
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 0.85
+size_flags_horizontal = 3
+
+[node name="G" type="HSlider" parent="UI/Colors/SkinRow"]
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 0.70
+size_flags_horizontal = 3
+
+[node name="B" type="HSlider" parent="UI/Colors/SkinRow"]
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 0.55
+size_flags_horizontal = 3
+
+[node name="LblHair" type="Label" parent="UI/Colors"]
+text = "Cheveux"
+
+[node name="HairColorRow" type="HBoxContainer" parent="UI/Colors"]
+
+[node name="R" type="HSlider" parent="UI/Colors/HairColorRow"]
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 0.30
+size_flags_horizontal = 3
+
+[node name="G" type="HSlider" parent="UI/Colors/HairColorRow"]
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 0.18
+size_flags_horizontal = 3
+
+[node name="B" type="HSlider" parent="UI/Colors/HairColorRow"]
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 0.08
+size_flags_horizontal = 3
+
+[node name="LblEyes" type="Label" parent="UI/Colors"]
+text = "Yeux"
+
+[node name="EyeColorRow" type="HBoxContainer" parent="UI/Colors"]
+
+[node name="R" type="HSlider" parent="UI/Colors/EyeColorRow"]
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 0.20
+size_flags_horizontal = 3
+
+[node name="G" type="HSlider" parent="UI/Colors/EyeColorRow"]
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 0.50
+size_flags_horizontal = 3
+
+[node name="B" type="HSlider" parent="UI/Colors/EyeColorRow"]
+min_value = 0.0
+max_value = 1.0
+step = 0.01
+value = 0.80
+size_flags_horizontal = 3
+
+[node name="BtnRandom" type="Button" parent="UI"]
+text = "🎲 Aléatoire"
+
+[node name="BtnConfirm" type="Button" parent="UI"]
+text = "✅ Jouer !"
