@@ -20,30 +20,30 @@ shape = SubResource("CapsuleShape2D_1")
 script = ExtResource("2_appearance")
 
 [node name="BodySprite" type="Sprite2D" parent="CharacterAppearance"]
-hframes = 4
+hframes = 5
 vframes = 1
 frame = 1
 
 [node name="EyesSprite" type="Sprite2D" parent="CharacterAppearance"]
-hframes = 4
+hframes = 5
 vframes = 1
 frame = 1
 visible = false
 
 [node name="HairSprite" type="Sprite2D" parent="CharacterAppearance"]
-hframes = 4
+hframes = 5
 vframes = 1
 frame = 1
 visible = false
 
 [node name="OutfitSprite" type="Sprite2D" parent="CharacterAppearance"]
-hframes = 4
+hframes = 5
 vframes = 1
 frame = 1
 visible = false
 
 [node name="AccessoriesSprite" type="Sprite2D" parent="CharacterAppearance"]
-hframes = 4
+hframes = 5
 vframes = 1
 frame = 1
 visible = false
