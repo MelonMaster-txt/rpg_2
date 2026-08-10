@@ -1,0 +1,132 @@
+[gd_scene format=3 uid="uid://character_creation"]
+
+[ext_resource type="Script" path="res://game/ui/character_creation/character_creation.gd" id="1_cc"]
+[ext_resource type="Script" path="res://game/characters/shared/character_appearance.gd"   id="2_appearance"]
+
+[node name="CharacterCreation" type="Control"]
+script = ExtResource("1_cc")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="PreviewContainer" type="CenterContainer" parent="."]
+anchor_right = 0.5
+anchor_bottom = 1.0
+
+[node name="CharacterPreview" type="Node2D" parent="PreviewContainer"]
+
+[node name="CharacterAppearance" type="Node" parent="PreviewContainer/CharacterPreview"]
+script = ExtResource("2_appearance")
+
+[node name="BodySprite" type="Sprite2D" parent="PreviewContainer/CharacterPreview/CharacterAppearance"]
+hframes = 4
+vframes = 1
+frame = 1
+
+[node name="EyesSprite" type="Sprite2D" parent="PreviewContainer/CharacterPreview/CharacterAppearance"]
+hframes = 4
+vframes = 1
+frame = 1
+visible = false
+
+[node name="HairSprite" type="Sprite2D" parent="PreviewContainer/CharacterPreview/CharacterAppearance"]
+hframes = 4
+vframes = 1
+frame = 1
+visible = false
+
+[node name="OutfitSprite" type="Sprite2D" parent="PreviewContainer/CharacterPreview/CharacterAppearance"]
+hframes = 4
+vframes = 1
+frame = 1
+visible = false
+
+[node name="AccessoriesSprite" type="Sprite2D" parent="PreviewContainer/CharacterPreview/CharacterAppearance"]
+hframes = 4
+vframes = 1
+frame = 1
+visible = false
+
+[node name="PortraitSprite" type="Sprite2D" parent="PreviewContainer/CharacterPreview/CharacterAppearance"]
+visible = false
+
+[node name="PanelContainer" type="PanelContainer" parent="."]
+anchor_left = 0.5
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="VBox" type="VBoxContainer" parent="PanelContainer"]
+
+[node name="Title" type="Label" parent="PanelContainer/VBox"]
+text = "Creer ton personnage"
+
+[node name="GenderRow" type="HBoxContainer" parent="PanelContainer/VBox"]
+
+[node name="LblGenderLabel" type="Label" parent="PanelContainer/VBox/GenderRow"]
+text = "Genre :"
+
+[node name="BtnGender" type="Button" parent="PanelContainer/VBox/GenderRow"]
+text = "Male"
+
+[node name="HairRow" type="HBoxContainer" parent="PanelContainer/VBox"]
+
+[node name="LblHairLabel" type="Label" parent="PanelContainer/VBox/HairRow"]
+text = "Cheveux :"
+
+[node name="BtnHairLeft" type="Button" parent="PanelContainer/VBox/HairRow"]
+text = "<"
+
+[node name="LblHair" type="Label" parent="PanelContainer/VBox/HairRow"]
+text = "Short"
+
+[node name="BtnHairRight" type="Button" parent="PanelContainer/VBox/HairRow"]
+text = ">"
+
+[node name="EyesRow" type="HBoxContainer" parent="PanelContainer/VBox"]
+
+[node name="LblEyesLabel" type="Label" parent="PanelContainer/VBox/EyesRow"]
+text = "Yeux :"
+
+[node name="BtnEyesLeft" type="Button" parent="PanelContainer/VBox/EyesRow"]
+text = "<"
+
+[node name="LblEyes" type="Label" parent="PanelContainer/VBox/EyesRow"]
+text = "Normal"
+
+[node name="BtnEyesRight" type="Button" parent="PanelContainer/VBox/EyesRow"]
+text = ">"
+
+[node name="OutfitRow" type="HBoxContainer" parent="PanelContainer/VBox"]
+
+[node name="LblOutfitLabel" type="Label" parent="PanelContainer/VBox/OutfitRow"]
+text = "Tenue :"
+
+[node name="BtnOutfitLeft" type="Button" parent="PanelContainer/VBox/OutfitRow"]
+text = "<"
+
+[node name="LblOutfit" type="Label" parent="PanelContainer/VBox/OutfitRow"]
+text = "Peasant"
+
+[node name="BtnOutfitRight" type="Button" parent="PanelContainer/VBox/OutfitRow"]
+text = ">"
+
+[node name="SkinRow" type="HBoxContainer" parent="PanelContainer/VBox"]
+
+[node name="LblSkin" type="Label" parent="PanelContainer/VBox/SkinRow"]
+text = "Peau :"
+
+[node name="SkinPicker" type="ColorPickerButton" parent="PanelContainer/VBox/SkinRow"]
+
+[node name="HairColorRow" type="HBoxContainer" parent="PanelContainer/VBox"]
+
+[node name="LblHairColor" type="Label" parent="PanelContainer/VBox/HairColorRow"]
+text = "Couleur cheveux :"
+
+[node name="HairPicker" type="ColorPickerButton" parent="PanelContainer/VBox/HairColorRow"]
+
+[node name="ConfirmButton" type="Button" parent="."]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -50.0
+text = "Commencer l'aventure !"
