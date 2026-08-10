@@ -14,8 +14,8 @@
 # Col 0 = portrait dialogue (via region_rect)
 # Col 1-3 = sprites in-game (via hframes/vframes)
 #
-# Taille image finale : 64 x (32 * TOTAL_ROWS) px
-extends Node2D
+# Taille image finale : 64 x (32 * total_rows) px
+extends Node
 
 # -- Calques monde ----------------------------------------------------------------
 @onready var _body:        Sprite2D = $BodySprite
@@ -28,8 +28,8 @@ extends Node2D
 @onready var _portrait: Sprite2D = $PortraitSprite
 
 # -- Taille cellule ---------------------------------------------------------------
-const CELL_W: int = 16   # largeur  cellule px
-const CELL_H: int = 32   # hauteur  cellule px
+const CELL_W: int = 16
+const CELL_H: int = 32
 
 # Colonnes du sheet
 const TOTAL_COLS: int = 4
@@ -73,7 +73,6 @@ func _ready() -> void:
 
 # -- API publique -----------------------------------------------------------------
 
-## Charge textures + couleurs. Appele depuis player.gd ou NPC.gd
 func apply_appearance(appearance: Dictionary) -> void:
 	if appearance.is_empty():
 		return
@@ -95,16 +94,11 @@ func apply_appearance(appearance: Dictionary) -> void:
 	_refresh_frames()
 
 
-## Affiche/cache le portrait dans la scene (pas dans la UI)
 func show_portrait(show: bool) -> void:
 	if is_instance_valid(_portrait):
 		_portrait.visible = show
 
 
-## Retourne texture + region du portrait pour la boite de dialogue
-## Usage : $DialogueBox/Portrait.texture = data.texture
-##         $DialogueBox/Portrait.region_enabled = true
-##         $DialogueBox/Portrait.region_rect = data.region
 func get_portrait_region() -> Dictionary:
 	if is_instance_valid(_body) and _body.texture != null:
 		return {
@@ -114,13 +108,11 @@ func get_portrait_region() -> Dictionary:
 	return {}
 
 
-## Direction : "down" | "left" | "right" | "up"
 func set_direction(dir: String) -> void:
 	_direction = dir
 	_refresh_frames()
 
 
-## Walk frame — decommenter le corps quand les lignes walk sont dessinees
 func set_walk_frame(_frame: int) -> void:
 	pass
 	# _current_row = ROW_WALK_A if (_frame % 2 == 0) else ROW_WALK_B
@@ -156,7 +148,6 @@ func _load_layer(spr: Sprite2D, folder: String, filename: String) -> void:
 		spr.hframes = TOTAL_COLS
 		spr.vframes = total_rows
 		spr.visible = true
-		# Met a jour le portrait si c'est le calque body
 		if spr == _body:
 			_update_portrait(tex)
 	else:
@@ -167,7 +158,6 @@ func _load_layer(spr: Sprite2D, folder: String, filename: String) -> void:
 func _update_portrait(tex: Texture2D) -> void:
 	if not is_instance_valid(_portrait):
 		return
-	# Meme texture que body, on prend juste la col 0 via region_rect
 	_portrait.texture        = tex
 	_portrait.region_enabled = true
 	_portrait.region_rect    = Rect2(
