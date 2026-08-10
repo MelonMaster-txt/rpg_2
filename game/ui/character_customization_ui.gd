@@ -22,15 +22,11 @@ extends Control
 @onready var _btn_back     := $UI/BtnBack    as Button
 @onready var _btn_random   := $UI/BtnRandom  as Button
 
-# Preview cree par code (independant du cache tscn)
 var _preview_rect: TextureRect = null
 
 const BASE_PATH: String = "res://game/assets/sprites/characters/body/"
-
-# body_female.png = 720x352 => 4 poses de 180x352 (face / profil / dos / profil)
 const POSE_W: int = 180
 const POSE_H: int = 352
-const POSE_FACE: int = 0  # colonne 0 = face avant
 
 const SKIN_PRESETS: Array = [
 	Color(1.00, 0.87, 0.74),
@@ -56,27 +52,35 @@ var _skin_color: Color = SKIN_PRESETS[2]
 
 
 func _ready() -> void:
-	_build_preview_widget()
 	_setup_skin_presets()
 	_connect_signals()
 	_refresh_labels()
-	_refresh_preview()
+	# Le preview est cree apres un frame pour que la taille de la fenetre soit connue
+	call_deferred("_build_preview_widget")
 
 
 func _build_preview_widget() -> void:
-	var container := CenterContainer.new()
-	container.name = "PreviewZone"
-	container.set_anchor(SIDE_LEFT,   0.35)
-	container.set_anchor(SIDE_TOP,    0.05)
-	container.set_anchor(SIDE_RIGHT,  1.0)
-	container.set_anchor(SIDE_BOTTOM, 0.95)
-	add_child(container)
+	# On utilise un simple Control positionne avec position/size absolue
+	# dans la moitie droite de l'ecran
+	var screen_size: Vector2 = get_viewport_rect().size
+	var preview_zone := Control.new()
+	preview_zone.name = "PreviewZone"
+	preview_zone.position = Vector2(screen_size.x * 0.35, screen_size.y * 0.05)
+	preview_zone.size = Vector2(screen_size.x * 0.65, screen_size.y * 0.90)
+	add_child(preview_zone)
+
 	_preview_rect = TextureRect.new()
 	_preview_rect.name = "BodyPreview"
-	_preview_rect.stretch_mode    = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_preview_rect.expand_mode     = TextureRect.EXPAND_KEEP_SIZE
-	_preview_rect.custom_minimum_size = Vector2(180, 352)
-	container.add_child(_preview_rect)
+	_preview_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_preview_rect.expand_mode  = TextureRect.EXPAND_IGNORE_SIZE
+	# Centrer dans la zone
+	_preview_rect.set_anchor_and_offset(SIDE_LEFT,   0.0, 0.0)
+	_preview_rect.set_anchor_and_offset(SIDE_TOP,    0.0, 0.0)
+	_preview_rect.set_anchor_and_offset(SIDE_RIGHT,  1.0, 0.0)
+	_preview_rect.set_anchor_and_offset(SIDE_BOTTOM, 1.0, 0.0)
+	preview_zone.add_child(_preview_rect)
+
+	_refresh_preview()
 
 
 func _setup_skin_presets() -> void:
@@ -142,13 +146,13 @@ func _refresh_preview() -> void:
 		path = BASE_PATH + "body_female.png"
 	if not ResourceLoader.exists(path):
 		_preview_rect.texture = null
-		push_warning("[Preview] Aucun sprite body trouve.")
+		push_warning("[Preview] Aucun sprite body trouve dans : " + BASE_PATH)
 		return
 	var full_tex: Texture2D = load(path)
-	# Decouper la pose face (1ere colonne de 180x352)
 	var atlas := AtlasTexture.new()
 	atlas.atlas  = full_tex
-	atlas.region = Rect2(POSE_FACE * POSE_W, 0, POSE_W, POSE_H)
+	# Pose face = 1ere colonne, 180x352
+	atlas.region = Rect2(0, 0, POSE_W, POSE_H)
 	_preview_rect.texture  = atlas
 	_preview_rect.modulate = _skin_color
 
