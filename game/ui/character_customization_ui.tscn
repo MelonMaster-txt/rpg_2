@@ -131,3 +131,7 @@ custom_minimum_size = Vector2(0, 40)
 [node name="BtnConfirm" type="Button" parent="UI"]
 text = "Jouer !"
 custom_minimum_size = Vector2(0, 48)
+
+[node name="BtnBack" type="Button" parent="UI"]
+text = "<- Retour au menu"
+custom_minimum_size = Vector2(0, 36)

@@ -1,6 +1,6 @@
 # character_customization_ui.gd
 # Ecran de personnalisation AVANT le chargement du monde.
-# Appelé depuis main_menu via get_tree().change_scene_to_file()
+# Appele depuis main_menu via get_tree().change_scene_to_file()
 # Quand le joueur valide : sauvegarde dans GameState puis lance l'overworld.
 extends Control
 
@@ -17,15 +17,13 @@ extends Control
 @onready var _btn_outfit_next  := $UI/Rows/OutfitRow/BtnNext  as Button
 @onready var _lbl_outfit       := $UI/Rows/OutfitRow/Label    as Label
 
-@onready var _preview_sprite   := $PreviewContainer/BodySprite as Sprite2D
+@onready var _presets_row  := $UI/Colors/SkinSection/PresetsRow as HBoxContainer
+@onready var _picker_hair  := $UI/Colors/HairSection/HairPicker  as ColorPickerButton
+@onready var _picker_eyes  := $UI/Colors/EyesSection/EyesPicker  as ColorPickerButton
 
-@onready var _presets_row      := $UI/Colors/SkinSection/PresetsRow as HBoxContainer
-@onready var _picker_hair      := $UI/Colors/HairSection/HairPicker  as ColorPickerButton
-@onready var _picker_eyes      := $UI/Colors/EyesSection/EyesPicker  as ColorPickerButton
-
-@onready var _btn_confirm      := $UI/BtnConfirm as Button
-@onready var _btn_back         := $UI/BtnBack    as Button
-@onready var _btn_random       := $UI/BtnRandom  as Button
+@onready var _btn_confirm  := $UI/BtnConfirm as Button
+@onready var _btn_back     := $UI/BtnBack    as Button
+@onready var _btn_random   := $UI/BtnRandom  as Button
 
 const SKIN_PRESETS: Array = [
 	Color(1.00, 0.87, 0.74),
@@ -125,7 +123,6 @@ func _on_confirm() -> void:
 
 
 func _on_back() -> void:
-	# Retour au menu principal
 	get_tree().change_scene_to_file("res://game/ui/menu/main_menu.tscn")
 
 
