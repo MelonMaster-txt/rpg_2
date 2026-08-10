@@ -25,13 +25,17 @@ extends Control
 @onready var _btn_back     := $UI/BtnBack    as Button
 @onready var _btn_random   := $UI/BtnRandom  as Button
 
-# Preview sprite dans la moitie gauche
-@onready var _preview_sprite := $PreviewContainer/BodySprite as Sprite2D
+# Preview : TextureRect dans la zone droite
+@onready var _preview_rect := $PreviewContainer/BodyPreview as TextureRect
 
 const BASE_PATH: String = "res://game/assets/sprites/characters/body/"
-const FRAME_COL_DOWN: int = 1   # colonne face (col 0 = vide)
-const TOTAL_COLS:     int = 5
-const TOTAL_ROWS:     int = 1
+
+# Taille d'une frame dans le spritesheet (adapter si besoin)
+const FRAME_W: int = 32
+const FRAME_H: int = 32
+# Colonne face (down) du spritesheet walkable 5-col standard
+const FRAME_COL_DOWN: int = 1
+const FRAME_ROW: int     = 0
 
 const SKIN_PRESETS: Array = [
 	Color(1.00, 0.87, 0.74),
@@ -118,22 +122,21 @@ func _refresh_labels() -> void:
 
 
 func _refresh_preview() -> void:
-	if not is_instance_valid(_preview_sprite):
+	if not is_instance_valid(_preview_rect):
 		return
 	var gender: String = GENDERS[_idx_gender]
 	var path: String = BASE_PATH + "body_%s.png" % gender
-	if ResourceLoader.exists(path):
-		var tex: Texture2D = load(path)
-		_preview_sprite.texture  = tex
-		_preview_sprite.hframes  = TOTAL_COLS
-		_preview_sprite.vframes  = TOTAL_ROWS
-		_preview_sprite.frame    = FRAME_COL_DOWN  # col 1 = face
-		_preview_sprite.modulate = _skin_color
-		_preview_sprite.visible  = true
-		print("[Preview] OK : ", path)
-	else:
-		_preview_sprite.visible = false
+	if not ResourceLoader.exists(path):
+		_preview_rect.texture = null
 		push_warning("[Preview] Sprite MANQUANT : " + path)
+		return
+	var full_tex: Texture2D = load(path)
+	# Decouper la frame face (col=1, row=0) via AtlasTexture
+	var atlas := AtlasTexture.new()
+	atlas.atlas  = full_tex
+	atlas.region = Rect2(FRAME_COL_DOWN * FRAME_W, FRAME_ROW * FRAME_H, FRAME_W, FRAME_H)
+	_preview_rect.texture  = atlas
+	_preview_rect.modulate = _skin_color
 
 
 func _build_data() -> Dictionary:

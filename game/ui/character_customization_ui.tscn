@@ -16,19 +16,10 @@ size = Vector2(1152, 40)
 text = "Cree ton Barbare"
 horizontal_alignment = 1
 
-[node name="PreviewContainer" type="CenterContainer" parent="."]
+[node name="UI" type="VBoxContainer" parent="."]
 anchor_left = 0.0
 anchor_top = 0.1
-anchor_right = 0.5
-anchor_bottom = 0.9
-
-[node name="BodySprite" type="Sprite2D" parent="PreviewContainer"]
-scale = Vector2(4, 4)
-
-[node name="UI" type="VBoxContainer" parent="."]
-anchor_left = 0.5
-anchor_top = 0.1
-anchor_right = 1.0
+anchor_right = 0.35
 anchor_bottom = 0.95
 theme_override_constants/separation = 12
 
@@ -135,3 +126,13 @@ custom_minimum_size = Vector2(0, 48)
 [node name="BtnBack" type="Button" parent="UI"]
 text = "<- Retour au menu"
 custom_minimum_size = Vector2(0, 36)
+
+[node name="PreviewContainer" type="CenterContainer" parent="."]
+anchor_left = 0.35
+anchor_top = 0.05
+anchor_right = 1.0
+anchor_bottom = 0.95
+
+[node name="BodyPreview" type="TextureRect" parent="PreviewContainer"]
+custom_minimum_size = Vector2(128, 128)
+stretch_mode = 5
