@@ -30,12 +30,12 @@ extends Control
 
 const BASE_PATH: String = "res://game/assets/sprites/characters/body/"
 
-# Taille d'une frame dans le spritesheet (adapter si besoin)
-const FRAME_W: int = 32
-const FRAME_H: int = 32
-# Colonne face (down) du spritesheet walkable 5-col standard
+# Taille d'une frame dans le spritesheet
+const FRAME_W: int        = 32
+const FRAME_H: int        = 32
+# Colonne face (down) du spritesheet
 const FRAME_COL_DOWN: int = 1
-const FRAME_ROW: int     = 0
+const FRAME_ROW: int      = 0
 
 const SKIN_PRESETS: Array = [
 	Color(1.00, 0.87, 0.74),
@@ -48,7 +48,8 @@ const SKIN_PRESETS: Array = [
 	Color(0.20, 0.11, 0.06),
 ]
 
-const GENDERS:    Array = ["male", "female"]
+# female en premier => index 0 = fichier existant par defaut
+const GENDERS:    Array = ["female", "male"]
 const HAIRS:      Array = ["none", "short", "medium", "long", "bald"]
 const EYE_STYLES: Array = ["none", "normal", "closed", "angry", "sad"]
 const OUTFITS:    Array = ["none", "peasant", "guard", "mage", "farmer"]
@@ -126,12 +127,14 @@ func _refresh_preview() -> void:
 		return
 	var gender: String = GENDERS[_idx_gender]
 	var path: String = BASE_PATH + "body_%s.png" % gender
+	# Fallback sur female si le fichier du genre demande n'existe pas encore
+	if not ResourceLoader.exists(path):
+		path = BASE_PATH + "body_female.png"
 	if not ResourceLoader.exists(path):
 		_preview_rect.texture = null
-		push_warning("[Preview] Sprite MANQUANT : " + path)
+		push_warning("[Preview] Aucun sprite body trouve dans : " + BASE_PATH)
 		return
 	var full_tex: Texture2D = load(path)
-	# Decouper la frame face (col=1, row=0) via AtlasTexture
 	var atlas := AtlasTexture.new()
 	atlas.atlas  = full_tex
 	atlas.region = Rect2(FRAME_COL_DOWN * FRAME_W, FRAME_ROW * FRAME_H, FRAME_W, FRAME_H)
