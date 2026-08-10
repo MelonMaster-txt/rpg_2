@@ -2,25 +2,25 @@
 # Buisson de baies avec 3 étapes de croissance + 3 états de baies
 # Sprite sheet : 6 frames de 32x32 côte à côte
 # Frame 0-2 : croissance (pousse → mi-poussée → plein)
-# Frame 3 : plein + vide | Frame 4 : quelques baies | Frame 5 : plein de baies
+# Frame 2 : plein sans baies | Frame 3 : quelques baies | Frame 4 : plein de baies
 extends Node2D
 
 signal berries_harvested(amount: int)
 signal fully_grown
 signal depleted
 
-enum GrowthStage { SPROUT, HALF, FULL }
-enum BerryStage { EMPTY, FEW, FULL }
+enum GrowthStage { SPROUT, HALF, GROWN }
+enum BerryStage { EMPTY, FEW, RIPE }
 
 const FRAME_MAP: Dictionary = {
 	GrowthStage.SPROUT: 0,
 	GrowthStage.HALF:   1,
-	GrowthStage.FULL:   2,
+	GrowthStage.GROWN:  2,
 }
 const BERRY_FRAME_MAP: Dictionary = {
 	BerryStage.EMPTY: 2,
 	BerryStage.FEW:   3,
-	BerryStage.FULL:  4,
+	BerryStage.RIPE:  4,
 }
 
 @export var growth_time: float       = 30.0
@@ -30,7 +30,7 @@ const BERRY_FRAME_MAP: Dictionary = {
 @export var start_fully_grown: bool  = false
 
 var _growth_stage: GrowthStage = GrowthStage.SPROUT
-var _berry_stage: BerryStage   = BerryStage.FULL
+var _berry_stage: BerryStage   = BerryStage.RIPE
 var _growth_timer: float       = 0.0
 var _berry_timer: float        = 0.0
 var _berry_growing: bool       = false
@@ -41,13 +41,13 @@ var _berry_growing: bool       = false
 func _ready() -> void:
 	_setup_frames()
 	if start_fully_grown:
-		_growth_stage = GrowthStage.FULL
-		_berry_stage  = BerryStage.FULL
+		_growth_stage = GrowthStage.GROWN
+		_berry_stage  = BerryStage.RIPE
 	_update_frame()
 
 
 func _process(delta: float) -> void:
-	if _growth_stage != GrowthStage.FULL:
+	if _growth_stage != GrowthStage.GROWN:
 		_growth_timer += delta
 		if _growth_timer >= growth_time:
 			_growth_timer = 0.0
@@ -55,18 +55,18 @@ func _process(delta: float) -> void:
 		return
 	if _berry_growing:
 		_berry_timer += delta
-		if _berry_timer >= berry_regrow_time / 2.0:
+		if _berry_timer >= berry_regrow_time / 2.0 and _berry_stage == BerryStage.EMPTY:
 			_berry_stage = BerryStage.FEW
 			_update_frame()
 		if _berry_timer >= berry_regrow_time:
-			_berry_stage   = BerryStage.FULL
+			_berry_stage   = BerryStage.RIPE
 			_berry_growing = false
 			_berry_timer   = 0.0
 			_update_frame()
 
 
 func harvest() -> void:
-	if _growth_stage != GrowthStage.FULL or _berry_stage == BerryStage.EMPTY:
+	if _growth_stage != GrowthStage.GROWN or _berry_stage == BerryStage.EMPTY:
 		return
 	var amount: int = randi_range(berry_yield_min, berry_yield_max)
 	if _berry_stage == BerryStage.FEW:
@@ -82,7 +82,7 @@ func harvest() -> void:
 
 
 func is_harvestable() -> bool:
-	return _growth_stage == GrowthStage.FULL and _berry_stage != BerryStage.EMPTY
+	return _growth_stage == GrowthStage.GROWN and _berry_stage != BerryStage.EMPTY
 
 
 func _advance_growth() -> void:
@@ -90,8 +90,8 @@ func _advance_growth() -> void:
 		GrowthStage.SPROUT:
 			_growth_stage = GrowthStage.HALF
 		GrowthStage.HALF:
-			_growth_stage = GrowthStage.FULL
-			_berry_stage  = BerryStage.FULL
+			_growth_stage = GrowthStage.GROWN
+			_berry_stage  = BerryStage.RIPE
 			fully_grown.emit()
 	_update_frame()
 
@@ -100,10 +100,10 @@ func _update_frame() -> void:
 	if not is_instance_valid(_sprite):
 		return
 	var frame_index: int
-	if _growth_stage == GrowthStage.FULL:
-		frame_index = BERRY_FRAME_MAP.get(_berry_stage, 2) as int
+	if _growth_stage == GrowthStage.GROWN:
+		frame_index = int(BERRY_FRAME_MAP.get(_berry_stage, 2))
 	else:
-		frame_index = FRAME_MAP.get(_growth_stage, 0) as int
+		frame_index = int(FRAME_MAP.get(_growth_stage, 0))
 	_sprite.frame = frame_index
 
 
@@ -122,7 +122,7 @@ func _setup_frames() -> void:
 		var atlas: AtlasTexture = AtlasTexture.new()
 		atlas.atlas  = texture
 		atlas.region = Rect2(i * 32, 0, 32, 32)
-		frames.add_frame("default", atlas)
+		frames.add_frame("default", atlas, -1)
 	_sprite.sprite_frames = frames
 	_sprite.animation = "default"
 	_sprite.frame     = 0
