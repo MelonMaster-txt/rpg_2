@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://player_scene"]
 
-[ext_resource type="Script" path="res://game/characters/player/player.gd"         id="1_player"]
+[ext_resource type="Script" path="res://game/characters/player/player.gd"              id="1_player"]
 [ext_resource type="Script" path="res://game/characters/shared/character_appearance.gd" id="2_appearance"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_1"]
@@ -18,6 +18,38 @@ position = Vector2(0, 4)
 
 [node name="CharacterAppearance" type="Node" parent="."]
 script = ExtResource("2_appearance")
+
+[node name="BodySprite" type="Sprite2D" parent="CharacterAppearance"]
+hframes = 4
+vframes = 1
+frame = 1
+
+[node name="EyesSprite" type="Sprite2D" parent="CharacterAppearance"]
+hframes = 4
+vframes = 1
+frame = 1
+visible = false
+
+[node name="HairSprite" type="Sprite2D" parent="CharacterAppearance"]
+hframes = 4
+vframes = 1
+frame = 1
+visible = false
+
+[node name="OutfitSprite" type="Sprite2D" parent="CharacterAppearance"]
+hframes = 4
+vframes = 1
+frame = 1
+visible = false
+
+[node name="AccessoriesSprite" type="Sprite2D" parent="CharacterAppearance"]
+hframes = 4
+vframes = 1
+frame = 1
+visible = false
+
+[node name="PortraitSprite" type="Sprite2D" parent="CharacterAppearance"]
+visible = false
 
 [node name="Camera2D" type="Camera2D" parent="."]
 enabled = false
