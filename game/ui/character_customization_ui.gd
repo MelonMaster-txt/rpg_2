@@ -25,6 +25,14 @@ extends Control
 @onready var _btn_back     := $UI/BtnBack    as Button
 @onready var _btn_random   := $UI/BtnRandom  as Button
 
+# Preview sprite dans la moitie gauche
+@onready var _preview_sprite := $PreviewContainer/BodySprite as Sprite2D
+
+const BASE_PATH: String = "res://game/assets/sprites/characters/body/"
+const FRAME_COL_DOWN: int = 1   # colonne face (col 0 = vide)
+const TOTAL_COLS:     int = 5
+const TOTAL_ROWS:     int = 1
+
 const SKIN_PRESETS: Array = [
 	Color(1.00, 0.87, 0.74),
 	Color(0.96, 0.76, 0.57),
@@ -52,6 +60,7 @@ func _ready() -> void:
 	_setup_skin_presets()
 	_connect_signals()
 	_refresh_labels()
+	_refresh_preview()
 
 
 func _setup_skin_presets() -> void:
@@ -71,6 +80,7 @@ func _setup_skin_presets() -> void:
 		var captured_col: Color = col
 		btn.pressed.connect(func() -> void:
 			_skin_color = captured_col
+			_refresh_preview()
 		)
 
 
@@ -86,6 +96,8 @@ func _connect_signals() -> void:
 	_btn_confirm.pressed.connect(_on_confirm)
 	_btn_back.pressed.connect(_on_back)
 	_btn_random.pressed.connect(_on_random)
+	_picker_hair.color_changed.connect(func(_c: Color) -> void: _refresh_preview())
+	_picker_eyes.color_changed.connect(func(_c: Color) -> void: _refresh_preview())
 
 
 func _cycle(target: String, dir: int) -> void:
@@ -95,6 +107,7 @@ func _cycle(target: String, dir: int) -> void:
 		"eyes":    _idx_eyes   = wrapi(_idx_eyes   + dir, 0, EYE_STYLES.size())
 		"outfit":  _idx_outfit = wrapi(_idx_outfit + dir, 0, OUTFITS.size())
 	_refresh_labels()
+	_refresh_preview()
 
 
 func _refresh_labels() -> void:
@@ -102,6 +115,25 @@ func _refresh_labels() -> void:
 	_lbl_hair.text   = HAIRS[_idx_hair].capitalize()
 	_lbl_eyes.text   = EYE_STYLES[_idx_eyes].capitalize()
 	_lbl_outfit.text = OUTFITS[_idx_outfit].capitalize()
+
+
+func _refresh_preview() -> void:
+	if not is_instance_valid(_preview_sprite):
+		return
+	var gender: String = GENDERS[_idx_gender]
+	var path: String = BASE_PATH + "body_%s.png" % gender
+	if ResourceLoader.exists(path):
+		var tex: Texture2D = load(path)
+		_preview_sprite.texture  = tex
+		_preview_sprite.hframes  = TOTAL_COLS
+		_preview_sprite.vframes  = TOTAL_ROWS
+		_preview_sprite.frame    = FRAME_COL_DOWN  # col 1 = face
+		_preview_sprite.modulate = _skin_color
+		_preview_sprite.visible  = true
+		print("[Preview] OK : ", path)
+	else:
+		_preview_sprite.visible = false
+		push_warning("[Preview] Sprite MANQUANT : " + path)
 
 
 func _build_data() -> Dictionary:
@@ -137,3 +169,4 @@ func _on_random() -> void:
 	if is_instance_valid(_picker_eyes):
 		_picker_eyes.color = Color(randf_range(0.1, 1.0), randf_range(0.2, 1.0), randf_range(0.2, 1.0))
 	_refresh_labels()
+	_refresh_preview()
