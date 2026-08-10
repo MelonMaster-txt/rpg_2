@@ -25,11 +25,12 @@ extends Control
 # Preview cree par code (independant du cache tscn)
 var _preview_rect: TextureRect = null
 
-const BASE_PATH: String    = "res://game/assets/sprites/characters/body/"
-const FRAME_W:   int       = 32
-const FRAME_H:   int       = 32
-const FRAME_COL_DOWN: int  = 1
-const FRAME_ROW: int       = 0
+const BASE_PATH: String = "res://game/assets/sprites/characters/body/"
+
+# body_female.png = 720x352 => 4 poses de 180x352 (face / profil / dos / profil)
+const POSE_W: int = 180
+const POSE_H: int = 352
+const POSE_FACE: int = 0  # colonne 0 = face avant
 
 const SKIN_PRESETS: Array = [
 	Color(1.00, 0.87, 0.74),
@@ -62,22 +63,19 @@ func _ready() -> void:
 	_refresh_preview()
 
 
-# Cree le TextureRect de preview par code dans la moitie droite
 func _build_preview_widget() -> void:
-	# Conteneur ancre sur la moitie droite
 	var container := CenterContainer.new()
 	container.name = "PreviewZone"
-	container.anchor_left   = 0.35
-	container.anchor_top    = 0.05
-	container.anchor_right  = 1.0
-	container.anchor_bottom = 0.95
+	container.set_anchor(SIDE_LEFT,   0.35)
+	container.set_anchor(SIDE_TOP,    0.05)
+	container.set_anchor(SIDE_RIGHT,  1.0)
+	container.set_anchor(SIDE_BOTTOM, 0.95)
 	add_child(container)
-	# TextureRect de preview
 	_preview_rect = TextureRect.new()
 	_preview_rect.name = "BodyPreview"
-	_preview_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_preview_rect.custom_minimum_size = Vector2(128, 128)
-	_preview_rect.expand_mode = TextureRect.EXPAND_KEEP_SIZE
+	_preview_rect.stretch_mode    = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_preview_rect.expand_mode     = TextureRect.EXPAND_KEEP_SIZE
+	_preview_rect.custom_minimum_size = Vector2(180, 352)
 	container.add_child(_preview_rect)
 
 
@@ -144,12 +142,13 @@ func _refresh_preview() -> void:
 		path = BASE_PATH + "body_female.png"
 	if not ResourceLoader.exists(path):
 		_preview_rect.texture = null
-		push_warning("[Preview] Aucun sprite body trouve dans : " + BASE_PATH)
+		push_warning("[Preview] Aucun sprite body trouve.")
 		return
 	var full_tex: Texture2D = load(path)
+	# Decouper la pose face (1ere colonne de 180x352)
 	var atlas := AtlasTexture.new()
 	atlas.atlas  = full_tex
-	atlas.region = Rect2(FRAME_COL_DOWN * FRAME_W, FRAME_ROW * FRAME_H, FRAME_W, FRAME_H)
+	atlas.region = Rect2(POSE_FACE * POSE_W, 0, POSE_W, POSE_H)
 	_preview_rect.texture  = atlas
 	_preview_rect.modulate = _skin_color
 
