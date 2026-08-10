@@ -15,7 +15,8 @@ func _ready() -> void:
 
 func _on_btn_new_game_pressed() -> void:
 	GameState.reset()
-	get_tree().change_scene_to_file(GameState.OVERWORLD)
+	# Ouvre l'ecran de personnalisation avant de lancer le monde
+	get_tree().change_scene_to_file("res://game/ui/character_customization_ui.tscn")
 
 
 func _on_btn_continue_pressed() -> void:

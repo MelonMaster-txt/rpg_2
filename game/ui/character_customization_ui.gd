@@ -1,11 +1,8 @@
 # character_customization_ui.gd
 # Ecran de personnalisation AVANT le chargement du monde.
-# Les layers visuels (cheveux, yeux, etc.) sont vides pour l'instant :
-# on stocke juste les choix dans GameData.player_appearance.
-# Le joueur voit uniquement son body sprite par defaut.
+# Appele depuis main_menu via get_tree().change_scene_to_file()
+# Quand le joueur valide : sauvegarde dans GameData puis lance l'overworld.
 extends Control
-
-signal character_confirmed(appearance_data: Dictionary)
 
 # Boutons navigation
 @onready var _btn_gender_prev  := $UI/Rows/GenderRow/BtnPrev  as Button
@@ -21,10 +18,10 @@ signal character_confirmed(appearance_data: Dictionary)
 @onready var _btn_outfit_next  := $UI/Rows/OutfitRow/BtnNext  as Button
 @onready var _lbl_outfit       := $UI/Rows/OutfitRow/Label    as Label
 
-# Preview : juste le Sprite2D body, pas de generation procedurale
+# Preview body sprite (ton sprite existant, assigne dans l'editeur)
 @onready var _preview_sprite   := $PreviewContainer/BodySprite as Sprite2D
 
-# Boutons couleur skin (presets)
+# Presets peau
 @onready var _presets_row      := $UI/Colors/SkinSection/PresetsRow as HBoxContainer
 @onready var _picker_hair      := $UI/Colors/HairSection/HairPicker  as ColorPickerButton
 @onready var _picker_eyes      := $UI/Colors/EyesSection/EyesPicker  as ColorPickerButton
@@ -32,7 +29,6 @@ signal character_confirmed(appearance_data: Dictionary)
 @onready var _btn_confirm      := $UI/BtnConfirm as Button
 @onready var _btn_random       := $UI/BtnRandom  as Button
 
-# 8 nuances de peau predefinies
 const SKIN_PRESETS: Array = [
 	Color(1.00, 0.87, 0.74),
 	Color(0.96, 0.76, 0.57),
@@ -49,12 +45,11 @@ const HAIRS:      Array = ["none", "short", "medium", "long", "bald"]
 const EYE_STYLES: Array = ["none", "normal", "closed", "angry", "sad"]
 const OUTFITS:    Array = ["none", "peasant", "guard", "mage", "farmer"]
 
-var _idx_gender: int = 0
-var _idx_hair:   int = 0  # 0 = none par defaut
-var _idx_eyes:   int = 0  # 0 = none par defaut
-var _idx_outfit: int = 0  # 0 = none par defaut
-var _skin_color: Color = SKIN_PRESETS[2]  # peche par defaut
-var _selected_preset: int = 2
+var _idx_gender: int  = 0
+var _idx_hair:   int  = 0
+var _idx_eyes:   int  = 0
+var _idx_outfit: int  = 0
+var _skin_color: Color = SKIN_PRESETS[2]
 
 
 func _ready() -> void:
@@ -78,10 +73,8 @@ func _setup_skin_presets() -> void:
 		btn.add_theme_stylebox_override("normal", style)
 		_presets_row.add_child(btn)
 		var captured_col: Color = col
-		var captured_idx: int = i
 		btn.pressed.connect(func() -> void:
 			_skin_color = captured_col
-			_selected_preset = captured_idx
 		)
 
 
@@ -131,8 +124,8 @@ func _build_data() -> Dictionary:
 
 func _on_confirm() -> void:
 	GameData.player_appearance = _build_data()
-	character_confirmed.emit(GameData.player_appearance)
-	queue_free()
+	# Lance directement le monde
+	get_tree().change_scene_to_file(GameState.OVERWORLD)
 
 
 func _on_random() -> void:
@@ -140,8 +133,7 @@ func _on_random() -> void:
 	_idx_hair   = randi() % HAIRS.size()
 	_idx_eyes   = randi() % EYE_STYLES.size()
 	_idx_outfit = randi() % OUTFITS.size()
-	_selected_preset = randi() % SKIN_PRESETS.size()
-	_skin_color = SKIN_PRESETS[_selected_preset]
+	_skin_color = SKIN_PRESETS[randi() % SKIN_PRESETS.size()]
 	_picker_hair.color = Color(randf_range(0.1, 0.9), randf_range(0.05, 0.6), randf_range(0.0, 0.3))
 	_picker_eyes.color = Color(randf_range(0.1, 1.0), randf_range(0.2, 1.0), randf_range(0.2, 1.0))
 	_refresh_labels()
