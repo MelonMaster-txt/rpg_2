@@ -35,7 +35,7 @@ extends Node
 const FRAME_W:     int = 144
 const FRAME_H:     int = 352
 const TOTAL_COLS:  int = 5
-const TOTAL_ROWS:  int = 1   # incrementer quand tu ajoutes des lignes d'animation
+const TOTAL_ROWS:  int = 1
 
 # Colonnes
 const COL_PORTRAIT: int = 0  # reserve futur portrait dialogue
@@ -51,9 +51,9 @@ const DIR_TO_COL: Dictionary = {
 	"left":  COL_LEFT,
 }
 
-# Lignes (a completer quand tu ajoutes des animations)
+# Lignes
 const ROW_IDLE:   int = 0
-# const ROW_WALK_A: int = 1  # a decommenter quand la ligne existe
+# const ROW_WALK_A: int = 1
 # const ROW_WALK_B: int = 2
 # const ROW_ATTACK: int = 3
 # const ROW_WORK:   int = 4
@@ -64,13 +64,21 @@ const BASE_PATH: String = "res://game/assets/sprites/characters/"
 # -- Etat interne -----------------------------------------------------------------
 var _direction:   String = "down"
 var _current_row: int    = ROW_IDLE
-var _gender:      String = "male"
+var _gender:      String = "female"
 
 
 # -- Init -------------------------------------------------------------------------
 func _ready() -> void:
 	if is_instance_valid(_portrait):
 		_portrait.visible = false
+	# Force l'affichage de la col 1 (face) des le debut
+	# meme avant apply_appearance(), pour debug visuel
+	_direction = "down"
+	for spr: Sprite2D in [_body, _eyes, _hair, _outfit, _accessories]:
+		if is_instance_valid(spr):
+			spr.hframes = TOTAL_COLS
+			spr.vframes = TOTAL_ROWS
+			spr.frame   = COL_DOWN  # = 1
 
 
 # -- API publique -----------------------------------------------------------------
@@ -79,7 +87,7 @@ func apply_appearance(appearance: Dictionary) -> void:
 	if appearance.is_empty():
 		return
 
-	_gender = appearance.get("gender", "male")
+	_gender = appearance.get("gender", "female")
 
 	_load_layer(_body,   "body",   "body_%s"   % _gender)
 	_load_layer(_eyes,   "eyes",   "eyes_%s"   % appearance.get("eye_style", "normal"))
@@ -132,11 +140,12 @@ func _load_layer(spr: Sprite2D, folder: String, filename: String) -> void:
 		spr.hframes  = TOTAL_COLS
 		spr.vframes  = TOTAL_ROWS
 		spr.visible  = true
+		print("[CharacterAppearance] OK : ", path, " | size=", tex.get_size(), " | frame=", spr.frame)
 		if spr == _body:
 			_update_portrait(tex)
 	else:
 		spr.visible = false
-		push_warning("[CharacterAppearance] Sprite manquant : " + path)
+		push_warning("[CharacterAppearance] Sprite MANQUANT : " + path)
 
 
 func _update_portrait(tex: Texture2D) -> void:
