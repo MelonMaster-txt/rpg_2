@@ -1,6 +1,6 @@
 # character_customization_ui.gd
 # Ecran de personnalisation AVANT le chargement du monde.
-# Appele depuis main_menu via get_tree().change_scene_to_file()
+# Appelé depuis main_menu via get_tree().change_scene_to_file()
 # Quand le joueur valide : sauvegarde dans GameState puis lance l'overworld.
 extends Control
 
@@ -24,6 +24,7 @@ extends Control
 @onready var _picker_eyes      := $UI/Colors/EyesSection/EyesPicker  as ColorPickerButton
 
 @onready var _btn_confirm      := $UI/BtnConfirm as Button
+@onready var _btn_back         := $UI/BtnBack    as Button
 @onready var _btn_random       := $UI/BtnRandom  as Button
 
 const SKIN_PRESETS: Array = [
@@ -42,10 +43,10 @@ const HAIRS:      Array = ["none", "short", "medium", "long", "bald"]
 const EYE_STYLES: Array = ["none", "normal", "closed", "angry", "sad"]
 const OUTFITS:    Array = ["none", "peasant", "guard", "mage", "farmer"]
 
-var _idx_gender: int  = 0
-var _idx_hair:   int  = 0
-var _idx_eyes:   int  = 0
-var _idx_outfit: int  = 0
+var _idx_gender: int   = 0
+var _idx_hair:   int   = 1
+var _idx_eyes:   int   = 1
+var _idx_outfit: int   = 1
 var _skin_color: Color = SKIN_PRESETS[2]
 
 
@@ -56,7 +57,7 @@ func _ready() -> void:
 
 
 func _setup_skin_presets() -> void:
-	for i in SKIN_PRESETS.size():
+	for i: int in SKIN_PRESETS.size():
 		var col: Color = SKIN_PRESETS[i]
 		var btn := Button.new()
 		btn.custom_minimum_size = Vector2(30, 30)
@@ -85,6 +86,7 @@ func _connect_signals() -> void:
 	_btn_outfit_prev.pressed.connect(func() -> void: _cycle("outfit", -1))
 	_btn_outfit_next.pressed.connect(func() -> void: _cycle("outfit",  1))
 	_btn_confirm.pressed.connect(_on_confirm)
+	_btn_back.pressed.connect(_on_back)
 	_btn_random.pressed.connect(_on_random)
 
 
@@ -118,9 +120,13 @@ func _build_data() -> Dictionary:
 
 
 func _on_confirm() -> void:
-	# Sauvegarde l'apparence dans GameState (autoload existant)
 	GameState.player_appearance = _build_data()
 	get_tree().change_scene_to_file(GameState.OVERWORLD)
+
+
+func _on_back() -> void:
+	# Retour au menu principal
+	get_tree().change_scene_to_file("res://game/ui/menu/main_menu.tscn")
 
 
 func _on_random() -> void:
