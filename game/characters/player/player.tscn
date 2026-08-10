@@ -1,24 +1,24 @@
-[gd_scene format=3 uid="uid://player_scene"]
+[gd_scene format=3 uid="uid://b5dk0jlmgkatf"]
 
-[ext_resource type="Script" path="res://game/characters/player/player.gd"         id="1_player"]
-[ext_resource type="Script" path="res://game/characters/shared/character_appearance.gd" id="2_appearance"]
+[ext_resource type="Script" uid="uid://sixsswmk330m" path="res://game/characters/player/player.gd" id="1_player"]
+[ext_resource type="Script" uid="uid://b06lde6ekt6xi" path="res://game/characters/shared/character_appearance.gd" id="2_appearance"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_1"]
 radius = 7.0
 height = 18.0
 
-[node name="Player" type="CharacterBody2D"]
-script = ExtResource("1_player")
+[node name="Player" type="CharacterBody2D" unique_id=1824880491]
 z_index = 10
 z_as_relative = false
+script = ExtResource("1_player")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("CapsuleShape2D_1")
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=542439573]
 position = Vector2(0, 4)
+shape = SubResource("CapsuleShape2D_1")
 
-[node name="CharacterAppearance" type="Node" parent="."]
+[node name="CharacterAppearance" type="Node" parent="." unique_id=1291738883]
 script = ExtResource("2_appearance")
 
-[node name="Camera2D" type="Camera2D" parent="."]
+[node name="Camera2D" type="Camera2D" parent="." unique_id=205599215]
 enabled = false
 zoom = Vector2(1.5, 1.5)
