@@ -19,6 +19,38 @@ shape = SubResource("CapsuleShape2D_1")
 [node name="CharacterAppearance" type="Node" parent="." unique_id=1291738883]
 script = ExtResource("2_appearance")
 
-[node name="Camera2D" type="Camera2D" parent="." unique_id=205599215]
+[node name="BodySprite" type="Sprite2D" parent="CharacterAppearance"]
+hframes = 4
+vframes = 1
+frame = 1
+
+[node name="EyesSprite" type="Sprite2D" parent="CharacterAppearance"]
+hframes = 4
+vframes = 1
+frame = 1
+visible = false
+
+[node name="HairSprite" type="Sprite2D" parent="CharacterAppearance"]
+hframes = 4
+vframes = 1
+frame = 1
+visible = false
+
+[node name="OutfitSprite" type="Sprite2D" parent="CharacterAppearance"]
+hframes = 4
+vframes = 1
+frame = 1
+visible = false
+
+[node name="AccessoriesSprite" type="Sprite2D" parent="CharacterAppearance"]
+hframes = 4
+vframes = 1
+frame = 1
+visible = false
+
+[node name="PortraitSprite" type="Sprite2D" parent="CharacterAppearance"]
+visible = false
+
+[node name="Camera2D" type="Camera2D" parent="."]
 enabled = false
 zoom = Vector2(1.5, 1.5)
