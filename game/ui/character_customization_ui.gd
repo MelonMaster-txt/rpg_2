@@ -1,10 +1,9 @@
 # character_customization_ui.gd
 # Ecran de personnalisation AVANT le chargement du monde.
 # Appele depuis main_menu via get_tree().change_scene_to_file()
-# Quand le joueur valide : sauvegarde dans GameData puis lance l'overworld.
+# Quand le joueur valide : sauvegarde dans GameState puis lance l'overworld.
 extends Control
 
-# Boutons navigation
 @onready var _btn_gender_prev  := $UI/Rows/GenderRow/BtnPrev  as Button
 @onready var _btn_gender_next  := $UI/Rows/GenderRow/BtnNext  as Button
 @onready var _lbl_gender       := $UI/Rows/GenderRow/Label    as Label
@@ -18,10 +17,8 @@ extends Control
 @onready var _btn_outfit_next  := $UI/Rows/OutfitRow/BtnNext  as Button
 @onready var _lbl_outfit       := $UI/Rows/OutfitRow/Label    as Label
 
-# Preview body sprite (ton sprite existant, assigne dans l'editeur)
 @onready var _preview_sprite   := $PreviewContainer/BodySprite as Sprite2D
 
-# Presets peau
 @onready var _presets_row      := $UI/Colors/SkinSection/PresetsRow as HBoxContainer
 @onready var _picker_hair      := $UI/Colors/HairSection/HairPicker  as ColorPickerButton
 @onready var _picker_eyes      := $UI/Colors/EyesSection/EyesPicker  as ColorPickerButton
@@ -87,8 +84,6 @@ func _connect_signals() -> void:
 	_btn_eyes_next.pressed.connect(func()   -> void: _cycle("eyes",    1))
 	_btn_outfit_prev.pressed.connect(func() -> void: _cycle("outfit", -1))
 	_btn_outfit_next.pressed.connect(func() -> void: _cycle("outfit",  1))
-	_picker_hair.color_changed.connect(func(_c: Color) -> void: pass)
-	_picker_eyes.color_changed.connect(func(_c: Color) -> void: pass)
 	_btn_confirm.pressed.connect(_on_confirm)
 	_btn_random.pressed.connect(_on_random)
 
@@ -116,15 +111,15 @@ func _build_data() -> Dictionary:
 		"eye_style":    EYE_STYLES[_idx_eyes],
 		"outfit":       OUTFITS[_idx_outfit],
 		"skin_color":   _skin_color,
-		"hair_color":   _picker_hair.color,
-		"eyes_color":   _picker_eyes.color,
+		"hair_color":   _picker_hair.color if is_instance_valid(_picker_hair) else Color.BROWN,
+		"eyes_color":   _picker_eyes.color if is_instance_valid(_picker_eyes) else Color.BLUE,
 		"outfit_color": Color(0.55, 0.38, 0.20),
 	}
 
 
 func _on_confirm() -> void:
-	GameData.player_appearance = _build_data()
-	# Lance directement le monde
+	# Sauvegarde l'apparence dans GameState (autoload existant)
+	GameState.player_appearance = _build_data()
 	get_tree().change_scene_to_file(GameState.OVERWORLD)
 
 
@@ -134,6 +129,8 @@ func _on_random() -> void:
 	_idx_eyes   = randi() % EYE_STYLES.size()
 	_idx_outfit = randi() % OUTFITS.size()
 	_skin_color = SKIN_PRESETS[randi() % SKIN_PRESETS.size()]
-	_picker_hair.color = Color(randf_range(0.1, 0.9), randf_range(0.05, 0.6), randf_range(0.0, 0.3))
-	_picker_eyes.color = Color(randf_range(0.1, 1.0), randf_range(0.2, 1.0), randf_range(0.2, 1.0))
+	if is_instance_valid(_picker_hair):
+		_picker_hair.color = Color(randf_range(0.1, 0.9), randf_range(0.05, 0.6), randf_range(0.0, 0.3))
+	if is_instance_valid(_picker_eyes):
+		_picker_eyes.color = Color(randf_range(0.1, 1.0), randf_range(0.2, 1.0), randf_range(0.2, 1.0))
 	_refresh_labels()
