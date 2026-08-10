@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3 uid="uid://berry_bush"]
+
+[ext_resource type="Script" path="res://game/world/berry_bush.gd" id="1_berry"]
+
+[node name="BerryBush" type="Node2D"]
+script = ExtResource("1_berry")
+start_fully_grown = false
+growth_time = 30.0
+berry_regrow_time = 45.0
+berry_yield_min = 1
+berry_yield_max = 4
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+position = Vector2(16, 16)
+
+[node name="InteractionArea" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea"]
