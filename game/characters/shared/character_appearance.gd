@@ -38,11 +38,11 @@ const TOTAL_COLS:  int = 5
 const TOTAL_ROWS:  int = 1
 
 # Colonnes
-const COL_PORTRAIT: int = 0  # reserve futur portrait dialogue
-const COL_DOWN:     int = 1  # face
-const COL_RIGHT:    int = 2  # profil droite
-const COL_UP:       int = 3  # dos
-const COL_LEFT:     int = 4  # profil gauche
+const COL_PORTRAIT: int = 0
+const COL_DOWN:     int = 1
+const COL_RIGHT:    int = 2
+const COL_UP:       int = 3
+const COL_LEFT:     int = 4
 
 const DIR_TO_COL: Dictionary = {
 	"down":  COL_DOWN,
@@ -51,12 +51,13 @@ const DIR_TO_COL: Dictionary = {
 	"left":  COL_LEFT,
 }
 
-# Lignes
-const ROW_IDLE:   int = 0
-# const ROW_WALK_A: int = 1
-# const ROW_WALK_B: int = 2
-# const ROW_ATTACK: int = 3
-# const ROW_WORK:   int = 4
+const ROW_IDLE: int = 0
+
+# -- Options pour la generation aleatoire -----------------------------------------
+const GENDERS:   Array[String] = ["male", "female"]
+const HAIRS:     Array[String] = ["short", "long", "bald"]
+const EYE_STYLES: Array[String] = ["normal", "sharp"]
+const OUTFITS:   Array[String] = ["peasant", "warrior", "mage"]
 
 # -- Chemins ----------------------------------------------------------------------
 const BASE_PATH: String = "res://game/assets/sprites/characters/"
@@ -65,8 +66,10 @@ const BASE_PATH: String = "res://game/assets/sprites/characters/"
 var _direction:   String = "down"
 var _current_row: int    = ROW_IDLE
 var _gender:      String = "female"
-# Walk frame courant (0 quand TOTAL_ROWS == 1, ignore)
 var _walk_frame:  int    = 0
+
+# Donnees d'apparence courantes (pour get_appearance_data)
+var _appearance_data: Dictionary = {}
 
 
 # -- Init -------------------------------------------------------------------------
@@ -78,7 +81,7 @@ func _ready() -> void:
 		if is_instance_valid(spr):
 			spr.hframes = TOTAL_COLS
 			spr.vframes = TOTAL_ROWS
-			spr.frame   = COL_DOWN  # = 1
+			spr.frame   = COL_DOWN
 
 
 # -- API publique -----------------------------------------------------------------
@@ -86,7 +89,7 @@ func _ready() -> void:
 func apply_appearance(appearance: Dictionary) -> void:
 	if appearance.is_empty():
 		return
-
+	_appearance_data = appearance.duplicate()
 	_gender = appearance.get("gender", "female")
 
 	_load_layer(_body,   "body",   "body_%s"   % _gender)
@@ -104,6 +107,33 @@ func apply_appearance(appearance: Dictionary) -> void:
 	_refresh_frame()
 
 
+## Alias utilise par random_npc.gd / npc_offline_sim via apply_appearance_data
+func apply_appearance_data(data: Dictionary) -> void:
+	apply_appearance(data)
+
+
+## Genere une apparence aleatoire et l'applique.
+## Appele par random_npc.gd lors de la randomization.
+func randomize_appearance() -> void:
+	var adat: Dictionary = {
+		"gender":       GENDERS.pick_random(),
+		"hair":         HAIRS.pick_random(),
+		"eye_style":    EYE_STYLES.pick_random(),
+		"outfit":       OUTFITS.pick_random(),
+		"skin_color":   Color(randf_range(0.6, 1.0), randf_range(0.4, 0.8), randf_range(0.3, 0.6)),
+		"hair_color":   Color(randf(), randf(), randf()),
+		"eyes_color":   Color(randf_range(0.0, 0.5), randf_range(0.3, 0.8), randf_range(0.5, 1.0)),
+		"outfit_color": Color(randf_range(0.2, 0.9), randf_range(0.2, 0.9), randf_range(0.2, 0.9)),
+	}
+	apply_appearance(adat)
+
+
+## Retourne les donnees d'apparence courantes.
+## Utilise par random_npc.gd apres randomize_appearance() pour lire le genre.
+func get_appearance_data() -> Dictionary:
+	return _appearance_data.duplicate()
+
+
 func set_direction(dir: String) -> void:
 	_direction = dir
 	_refresh_frame()
@@ -115,14 +145,9 @@ func set_idle() -> void:
 
 
 ## Appele par player.gd a chaque frame d'animation de marche.
-## Quand TOTAL_ROWS == 1 le spritesheet n'a pas de rangees de marche :
-## on ignore la valeur mais on ne crashe plus.
-## Quand des rangees de marche seront ajoutees au sprite, mettre a jour
-## TOTAL_ROWS et la logique ci-dessous.
+## Quand TOTAL_ROWS == 1 : ignore la valeur, applique juste la direction.
 func set_walk_frame(frame_index: int) -> void:
 	_walk_frame = frame_index
-	# Spritesheet actuel : 1 seule ligne -> pas de frames de marche distinctes.
-	# On refresh quand meme pour appliquer la direction.
 	_refresh_frame()
 
 
@@ -152,7 +177,6 @@ func _load_layer(spr: Sprite2D, folder: String, filename: String) -> void:
 		spr.hframes  = TOTAL_COLS
 		spr.vframes  = TOTAL_ROWS
 		spr.visible  = true
-		print("[CharacterAppearance] OK : ", path, " | size=", tex.get_size(), " | frame=", spr.frame)
 		if spr == _body:
 			_update_portrait(tex)
 	else:
@@ -182,9 +206,6 @@ func _tint(spr: Sprite2D, col: Color) -> void:
 
 func _refresh_frame() -> void:
 	var col:   int = DIR_TO_COL.get(_direction, COL_DOWN)
-	# Quand des lignes de marche seront disponibles :
-	# var row: int = _walk_frame % TOTAL_ROWS
-	# var frame: int = row * TOTAL_COLS + col
 	var frame: int = _current_row * TOTAL_COLS + col
 	for spr: Sprite2D in [_body, _eyes, _hair, _outfit, _accessories]:
 		if is_instance_valid(spr) and spr.visible:
