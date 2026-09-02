@@ -12,21 +12,21 @@ config_version=5
 
 config/name="New Game Project"
 config/version="1.0.0"
-run/main_scene="uid://ntyyknt7uumn"
+run/main_scene="res://game/ui/menu/main_menu.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://icon.svg"
 
 [autoload]
 
 SceneManager="*res://game/core/scene_manager.gd"
-Dialogic="*uid://ds2q0uclmolvu"
+Dialogic="*res://addons/dialogic/Core/DialogicGameHandler.gd"
 ChunkGenerator="*res://game/world/chunk_generator.gd"
 GameManager="*res://game/core/game_manager.gd"
 ItemDatabase="*res://game/systems/item_database.gd"
 NpcSpawner="*res://game/characters/npcs/npc_spawner.gd"
 DebugMenu="*res://game/core/debug_menu.gd"
-GameState="*uid://yblsmcdayhxt"
-SaveSystem="*uid://bvitjw1moqcug"
+GameState="*res://game/core/game_state.gd"
+SaveSystem="*res://game/core/save_system.gd"
 PopulationManager="*res://game/systems/kingdom/population_manager.gd"
 KingdomManager="*res://game/systems/kingdom/kingdom_manager.gd"
 <<<<<<<HEADNpcSpawner="*res://game/systems/npc_spawner.gd"
