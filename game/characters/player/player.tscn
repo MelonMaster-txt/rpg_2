@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://b5dk0jlmgkatf"]
 
-[ext_resource type="Script" uid="uid://sixsswmk330m" path="res://game/characters/player/player.gd" id="1_player"]
-[ext_resource type="Script" uid="uid://b06lde6ekt6xi" path="res://game/characters/shared/character_appearance.gd" id="2_appearance"]
+[ext_resource type="Script" path="res://game/characters/player/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://game/characters/shared/character_appearance.gd" id="2_appearance"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_1"]
 radius = 7.0

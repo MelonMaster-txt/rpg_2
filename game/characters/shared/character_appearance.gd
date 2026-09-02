@@ -65,14 +65,14 @@ const BASE_PATH: String = "res://game/assets/sprites/characters/"
 var _direction:   String = "down"
 var _current_row: int    = ROW_IDLE
 var _gender:      String = "female"
+# Walk frame courant (0 quand TOTAL_ROWS == 1, ignore)
+var _walk_frame:  int    = 0
 
 
 # -- Init -------------------------------------------------------------------------
 func _ready() -> void:
 	if is_instance_valid(_portrait):
 		_portrait.visible = false
-	# Force l'affichage de la col 1 (face) des le debut
-	# meme avant apply_appearance(), pour debug visuel
 	_direction = "down"
 	for spr: Sprite2D in [_body, _eyes, _hair, _outfit, _accessories]:
 		if is_instance_valid(spr):
@@ -111,6 +111,18 @@ func set_direction(dir: String) -> void:
 
 func set_idle() -> void:
 	_current_row = ROW_IDLE
+	_refresh_frame()
+
+
+## Appele par player.gd a chaque frame d'animation de marche.
+## Quand TOTAL_ROWS == 1 le spritesheet n'a pas de rangees de marche :
+## on ignore la valeur mais on ne crashe plus.
+## Quand des rangees de marche seront ajoutees au sprite, mettre a jour
+## TOTAL_ROWS et la logique ci-dessous.
+func set_walk_frame(frame_index: int) -> void:
+	_walk_frame = frame_index
+	# Spritesheet actuel : 1 seule ligne -> pas de frames de marche distinctes.
+	# On refresh quand meme pour appliquer la direction.
 	_refresh_frame()
 
 
@@ -170,6 +182,9 @@ func _tint(spr: Sprite2D, col: Color) -> void:
 
 func _refresh_frame() -> void:
 	var col:   int = DIR_TO_COL.get(_direction, COL_DOWN)
+	# Quand des lignes de marche seront disponibles :
+	# var row: int = _walk_frame % TOTAL_ROWS
+	# var frame: int = row * TOTAL_COLS + col
 	var frame: int = _current_row * TOTAL_COLS + col
 	for spr: Sprite2D in [_body, _eyes, _hair, _outfit, _accessories]:
 		if is_instance_valid(spr) and spr.visible:
