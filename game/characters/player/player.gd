@@ -54,14 +54,16 @@ func _process_move(_delta: float) -> void:
 		_play_anim("idle")
 		return
 	_facing = dir
+	# FIX : vérifier le roll AVANT move_and_slide pour éviter un frame de délai
+	if Input.is_action_just_pressed("roll"):
+		_start_roll(dir)
+		return
 	var spd: float = SPEED
 	if Input.is_action_pressed("sprint"):
 		spd *= SPRINT_MULT
 	velocity = dir * spd
 	_play_anim("walk")
 	move_and_slide()
-	if Input.is_action_just_pressed("roll"):
-		_start_roll(dir)
 
 
 func _start_roll(dir: Vector2) -> void:

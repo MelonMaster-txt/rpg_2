@@ -90,7 +90,8 @@ func sync_from_game_manager() -> void:
 	day_count = GameManager.current_day
 	play_time = GameManager.play_time
 	player_health = GameManager.life
-	player_level = GameManager.force
+	# FIX : player_level est un niveau indépendant, pas la force du GameManager
+	# On le laisse inchangé lors du sync (il sera géré par un futur système de XP)
 	farm_tiles_data.clear()
 	for tile: Variant in GameManager.farm_tiles_data:
 		if tile is Dictionary:
@@ -108,6 +109,6 @@ func apply_to_game_manager() -> void:
 	GameManager.current_day = current_day_gm
 	GameManager.play_time = play_time
 	GameManager.life = player_health
-	GameManager.force = player_level
+	# FIX : ne pas écraser GameManager.force avec player_level (sémantique différente)
 	GameManager.farm_tiles_data = farm_tiles_data.duplicate()
 	GameManager.save_spawn_position(player_position)

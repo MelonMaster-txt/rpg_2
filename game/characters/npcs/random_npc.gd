@@ -33,6 +33,8 @@ var _attack_timer: float = 0.0
 var _pending_randomize: bool = false
 var _pending_seed: int = -1
 var _player_near: bool = false
+# FIX : garde pour éviter d'ouvrir deux menus en même temps
+var _interaction_menu_open: bool = false
 
 @onready var _appearance: Node = $CharacterAppearance
 @onready var _name_label: Label = $NameLabel
@@ -77,6 +79,11 @@ func _do_randomize(seed_val: int) -> void:
 	if _name_label:
 		_name_label.text = npc_name
 	_update_color_rect()
+
+
+func set_appearance(appearance_data: Dictionary) -> void:
+	if _appearance and _appearance.has_method("set_appearance_data"):
+		_appearance.set_appearance_data(appearance_data)
 
 
 func _gender_from_archetype(arch: int) -> String:
@@ -165,6 +172,16 @@ func _update_ai(delta: float) -> void:
 					_melee_attack()
 
 
+func _pick_wander_dir() -> void:
+	_wander_timer = randf_range(2.0, 5.0)
+	_wander_dir = Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)).normalized()
+	_ai = AiState.WANDER
+
+
+func _update_facing() -> void:
+	pass
+
+
 func _melee_attack() -> void:
 	_attack_timer = ATTACK_COOLDOWN
 	var dmg: int = max(1, int(float(strength) / 3.0))
@@ -173,13 +190,16 @@ func _melee_attack() -> void:
 
 
 func _unhandled_key_input(event: InputEvent) -> void:
-	if _player_near and _ai != AiState.DEAD and event.is_action_pressed("interact"):
+	# FIX : ne pas ouvrir le menu si déjà ouvert ou si NPC mort
+	if _player_near and _ai != AiState.DEAD and not _interaction_menu_open and event.is_action_pressed("interact"):
 		get_viewport().set_input_as_handled()
 		interaction_requested.emit(self)
 		_open_interaction_menu()
 
 
 func _open_interaction_menu() -> void:
+	if _interaction_menu_open:
+		return
 	var menu_scene: PackedScene = load(
 		"res://game/systems/npc_interaction_menu.tscn"
 	)
@@ -189,6 +209,9 @@ func _open_interaction_menu() -> void:
 	var menu: Node = menu_scene.instantiate()
 	get_tree().current_scene.add_child(menu)
 	menu.open(self)
+	_interaction_menu_open = true
+	# FIX : réinitialiser le flag quand le menu se ferme (via tree_exited)
+	menu.tree_exited.connect(func() -> void: _interaction_menu_open = false)
 
 
 func take_damage(amount: int) -> void:
@@ -202,167 +225,52 @@ func take_damage(amount: int) -> void:
 
 func die() -> void:
 	_ai = AiState.DEAD
-	velocity = Vector2.ZERO
-	if _appearance:
-		_appearance.set_eye_style("closed")
-	if _color_rect:
-		_color_rect.color = COLOR_DEAD
+	_update_color_rect()
 	npc_defeated.emit(self)
-	await get_tree().create_timer(3.0).timeout
 	queue_free()
 
 
-func _get_population_manager() -> Node:
+func capture() -> void:
+	var entry: Dictionary = {
+		"name": npc_name,
+		"archetype": data.archetype if data != null else 0,
+		"strength": strength,
+		"max_hp": max_hp,
+	}
+	npc_captured.emit(self)
 	var pm: Node = get_node_or_null("/root/PopulationManager")
-	if pm != null:
-		return pm
-	var nodes: Array[Node] = get_tree().get_nodes_in_group("population_manager")
-	if nodes.size() > 0:
-		return nodes[0]
-	return null
+	if pm == null:
+		var nodes: Array[Node] = get_tree().get_nodes_in_group("population_manager")
+		if nodes.size() > 0:
+			pm = nodes[0]
+	if pm != null and pm.has_method("add_slave"):
+		pm.add_slave(entry)
+	queue_free()
 
 
 func recruit() -> void:
-	is_hostile = false
-	var entry: Dictionary = _build_kingdom_entry("companion")
-	var pm: Node = _get_population_manager()
-	if pm != null and pm.has_method("add_companion"):
-		pm.add_companion(entry)
-	npc_recruited.emit(self)
-	_start_working("woodcutter")
-	_add_relation_component()
-
-
-func capture() -> void:
-	is_hostile = false
-	var entry: Dictionary = _build_kingdom_entry("slave")
-	var pm: Node = _get_population_manager()
-	if pm != null and pm.has_method("add_slave"):
-		pm.add_slave(entry)
-	npc_captured.emit(self)
-	_start_working("woodcutter")
-	_add_relation_component()
-
-
-func _add_relation_component() -> void:
-	var existing: Node = get_node_or_null("RelationComponent")
-	if existing:
-		return
-	var rel_script: Script = load(
-		"res://game/characters/npcs/npc_relation.gd"
-	)
-	if rel_script == null:
-		push_error("random_npc: npc_relation.gd introuvable")
-		return
-	var rel: Node = Node.new()
-	rel.set_script(rel_script)
-	rel.set_name("RelationComponent")
-	add_child(rel)
-	rel.randomize_mood()
-
-
-func _start_working(initial_job: String) -> void:
-	_ai = AiState.WORKING
-	_update_color_rect()
-	var worker_script: Script = load(
-		"res://game/characters/npcs/worker_ai.gd"
-	)
-	if worker_script == null:
-		push_error("RandomNpc: worker_ai.gd introuvable")
-		return
-	var old: Node = get_node_or_null("WorkerAI")
-	if old:
-		old.queue_free()
-	var worker: Node = Node.new()
-	worker.set_script(worker_script)
-	worker.set_name("WorkerAI")
-	add_child(worker)
-	worker.job = initial_job
-	push_warning("[RandomNpc] WorkerAI cree pour %s avec job=%s" % [npc_name, initial_job])
-
-
-func get_worker_ai() -> Node:
-	return get_node_or_null("WorkerAI")
-
-
-func change_job(new_job: String) -> void:
-	var w: Node = get_worker_ai()
-	if w != null:
-		w.update_job(new_job)
-	else:
-		_start_working(new_job)
-	push_warning("[RandomNpc] %s -> metier : %s" % [npc_name, new_job])
-
-
-func _build_kingdom_entry(role: String) -> Dictionary:
 	var entry: Dictionary = {
 		"name": npc_name,
-		"gender": npc_gender,
-		"role": role,
-		"job": "",
+		"archetype": data.archetype if data != null else 0,
 		"strength": strength,
 		"max_hp": max_hp,
-		"archetype": "",
-		"skills": {},
-		"happiness": 100,
 	}
-	if data != null:
-		entry["archetype"] = NpcData.Archetype.keys()[data.archetype]
-		entry["skills"] = {
-			"farming": data.stats.skill_farming,
-			"woodcutting": data.stats.skill_woodcutting,
-			"mining": data.stats.skill_mining,
-			"combat": data.stats.skill_combat,
-			"trading": data.stats.skill_trading,
-		}
-	return entry
-
-
-func set_appearance(adat: Dictionary) -> void:
-	if _appearance:
-		_appearance.apply_appearance_data(adat)
-	if adat.has("name") and _name_label:
-		npc_name = adat["name"]
-		_name_label.text = npc_name
-	if adat.has("gender"):
-		npc_gender = adat["gender"]
-		_update_color_rect()
+	npc_recruited.emit(self)
+	var pm: Node = get_node_or_null("/root/PopulationManager")
+	if pm == null:
+		var nodes: Array[Node] = get_tree().get_nodes_in_group("population_manager")
+		if nodes.size() > 0:
+			pm = nodes[0]
+	if pm != null and pm.has_method("add_companion"):
+		pm.add_companion(entry)
+	queue_free()
 
 
 func _on_player_enter(body: Node) -> void:
 	if body.is_in_group("player"):
 		_player_near = true
-		if _name_label:
-			_name_label.visible = true
 
 
 func _on_player_exit(body: Node) -> void:
 	if body.is_in_group("player"):
 		_player_near = false
-		if _name_label:
-			_name_label.visible = false
-
-
-func _pick_wander_dir() -> void:
-	if randf() < 0.4:
-		_ai = AiState.IDLE
-		_wander_timer = randf_range(1.5, 3.0)
-		return
-	_ai = AiState.WANDER
-	var angle: float = randf() * TAU
-	_wander_dir = Vector2(cos(angle), sin(angle))
-	_wander_timer = randf_range(0.8, 2.5)
-
-
-func _update_facing() -> void:
-	if velocity.length() < 5.0:
-		return
-	var dominant: String = ""
-	if abs(velocity.x) > abs(velocity.y):
-		dominant = "right" if velocity.x > 0 else "left"
-	else:
-		dominant = "down" if velocity.y > 0 else "up"
-	if _appearance:
-		_appearance.set_direction(dominant)
-		var f: int = (Engine.get_process_frames() >> 3) % 4 + 1
-		_appearance.set_walk_frame(f)

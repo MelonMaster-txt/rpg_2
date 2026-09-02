@@ -16,10 +16,15 @@ var current_health: int = 50
 var current_state: State = State.IDLE
 var _wander_timer: float = 0.0
 var _wander_target: Vector2 = Vector2.ZERO
+# FIX : flag pour savoir si la navigation est prête
+var _nav_ready: bool = false
 
 
 func _ready() -> void:
 	current_health = max_health
+	# FIX : attendre un frame que la NavigationServer soit prête
+	await get_tree().process_frame
+	_nav_ready = true
 
 
 func take_damage(amount: int) -> void:
@@ -43,6 +48,8 @@ func set_state(new_state: State) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if not _nav_ready:
+		return
 	match current_state:
 		State.WANDER:
 			_process_wander(delta)
@@ -59,12 +66,13 @@ func _process_wander(delta: float) -> void:
 			randf_range(-80.0, 80.0)
 		)
 	var nav: NavigationAgent2D = get_node_or_null("NavigationAgent2D")
-	if nav != null:
-		nav.target_position = _wander_target
-		if not nav.is_navigation_finished():
-			var dir: Vector2 = nav.get_next_path_position() - global_position
-			velocity = dir.normalized() * move_speed
-			move_and_slide()
+	if nav == null:
+		return
+	nav.target_position = _wander_target
+	if not nav.is_navigation_finished():
+		var dir: Vector2 = nav.get_next_path_position() - global_position
+		velocity = dir.normalized() * move_speed
+		move_and_slide()
 
 
 func _process_follow() -> void:

@@ -11,6 +11,7 @@ extends CanvasLayer
 @onready var _btn_leave: Button = $Panel/VBox/BtnLeave
 
 var _npc: Node = null
+var _signals_connected: bool = false
 
 
 func open(npc: Node) -> void:
@@ -20,10 +21,13 @@ func open(npc: Node) -> void:
 		_name_label.text = display_name
 	get_tree().paused = true
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_btn_discuss.pressed.connect(_on_discuss)
-	_btn_recruit.pressed.connect(_on_recruit)
-	_btn_capture.pressed.connect(_on_capture)
-	_btn_leave.pressed.connect(_on_leave)
+	# FIX : connexion des signaux une seule fois pour éviter les doublons
+	if not _signals_connected:
+		_btn_discuss.pressed.connect(_on_discuss)
+		_btn_recruit.pressed.connect(_on_recruit)
+		_btn_capture.pressed.connect(_on_capture)
+		_btn_leave.pressed.connect(_on_leave)
+		_signals_connected = true
 
 
 func _on_discuss() -> void:
@@ -50,14 +54,17 @@ func _on_leave() -> void:
 
 
 func _close() -> void:
-	if _btn_discuss.pressed.is_connected(_on_discuss):
-		_btn_discuss.pressed.disconnect(_on_discuss)
-	if _btn_recruit.pressed.is_connected(_on_recruit):
-		_btn_recruit.pressed.disconnect(_on_recruit)
-	if _btn_capture.pressed.is_connected(_on_capture):
-		_btn_capture.pressed.disconnect(_on_capture)
-	if _btn_leave.pressed.is_connected(_on_leave):
-		_btn_leave.pressed.disconnect(_on_leave)
+	# FIX : déconnecter proprement avant queue_free
+	if _signals_connected:
+		if _btn_discuss.pressed.is_connected(_on_discuss):
+			_btn_discuss.pressed.disconnect(_on_discuss)
+		if _btn_recruit.pressed.is_connected(_on_recruit):
+			_btn_recruit.pressed.disconnect(_on_recruit)
+		if _btn_capture.pressed.is_connected(_on_capture):
+			_btn_capture.pressed.disconnect(_on_capture)
+		if _btn_leave.pressed.is_connected(_on_leave):
+			_btn_leave.pressed.disconnect(_on_leave)
+		_signals_connected = false
 	get_tree().paused = false
 	queue_free()
 
